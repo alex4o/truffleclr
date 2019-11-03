@@ -2,22 +2,29 @@
 <project version="4">
   <component name="CompilerConfiguration">
     <bytecodeTargetLevel>
+      <module name="kcl.main" target="1.8" />
+      <module name="kcl.test" target="1.8" />
       <module name="kcl_main" target="1.8" />
       <module name="kcl_test" target="1.8" />
     </bytecodeTargetLevel>
   </component>
   <component name="ExternalStorageConfigurationManager" enabled="true" />
+  <component name="GradleMigrationSettings" migrationVersion="1" />
   <component name="GradleSettings">
     <option name="linkedExternalProjectsSettings">
       <GradleProjectSettings>
+        <option name="delegatedBuild" value="true" />
+        <option name="testRunner" value="GRADLE" />
         <option name="distributionType" value="DEFAULT_WRAPPED" />
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
-        <option name="gradleJvm" value="graalvm-ce-19.0.2 (java 1.8)" />
+        <option name="gradleHome" value="/usr/share/java/gradle" />
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
           </set>
         </option>
+        <option name="useAutoImport" value="true" />
+        <option name="useQualifiedModuleNames" value="true" />
       </GradleProjectSettings>
     </option>
   </component>
@@ -26,6 +33,9 @@
       <option name="myName" value="Project Default" />
     </profile>
     <version value="1.0" />
+  </component>
+  <component name="Kotlin2JvmCompilerArguments">
+    <option name="jvmTarget" value="1.8" />
   </component>
   <component name="ProjectCodeStyleConfiguration">
     <option name="USE_PER_PROJECT_SETTINGS" value="true" />
@@ -40,18 +50,32 @@
   </component>
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/kcl.iml" filepath="$PROJECT_DIR$/kcl.iml" group="kcl" />
+      <module fileurl="file://$PROJECT_DIR$/kcl.iml" filepath="$PROJECT_DIR$/kcl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/kcl.main.iml" filepath="$PROJECT_DIR$/kcl.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/kcl.test.iml" filepath="$PROJECT_DIR$/kcl.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/kcl_main.iml" filepath="$PROJECT_DIR$/kcl_main.iml" group="kcl" />
       <module fileurl="file://$PROJECT_DIR$/kcl_test.iml" filepath="$PROJECT_DIR$/kcl_test.iml" group="kcl" />
     </modules>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_8" project-jdk-name="graalvm-ce-19.0.2 (java 1.8)" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_8" default="false" project-jdk-name="GraalVM" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/out" />
   </component>
   <component name="ScalaSbtSettings">
     <option name="customVMPath" />
   </component>
+  <component name="VcsDirectoryMappings">
+    <mapping directory="$PROJECT_DIR$/.." vcs="Git" />
+  </component>
   <component name="libraryTable">
+    <library name="Gradle: org.antlr:antlr4-runtime:4.7.2">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.antlr/antlr4-runtime/4.7.2/e27d8ab4f984f9d186f54da984a6ab1cccac755e/antlr4-runtime-4.7.2.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.antlr/antlr4-runtime/4.7.2/14fff5b9b6c84f3b3a1fe0980e8560a555df07c0/antlr4-runtime-4.7.2-sources.jar!/" />
+      </SOURCES>
+    </library>
     <library name="Gradle: org.graalvm.sdk:graal-sdk:19.2.0.1">
       <CLASSES>
         <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.graalvm.sdk/graal-sdk/19.2.0.1/cf205ef5dd1a276619bfb7263fb0650d0c75e847/graal-sdk-19.2.0.1.jar!/" />
@@ -122,6 +146,23 @@
       <JAVADOC />
       <SOURCES>
         <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains/annotations/13.0/5991ca87ef1fb5544943d9abc5a9a37583fabe03/annotations-13.0-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="KotlinJavaRuntime">
+      <CLASSES>
+        <root url="jar://$KOTLIN_BUNDLED$/lib/kotlin-stdlib.jar!/" />
+        <root url="jar://$KOTLIN_BUNDLED$/lib/kotlin-reflect.jar!/" />
+        <root url="jar://$KOTLIN_BUNDLED$/lib/kotlin-test.jar!/" />
+        <root url="jar://$KOTLIN_BUNDLED$/lib/kotlin-stdlib-jdk7.jar!/" />
+        <root url="jar://$KOTLIN_BUNDLED$/lib/kotlin-stdlib-jdk8.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$KOTLIN_BUNDLED$/lib/kotlin-stdlib-sources.jar!/" />
+        <root url="jar://$KOTLIN_BUNDLED$/lib/kotlin-reflect-sources.jar!/" />
+        <root url="jar://$KOTLIN_BUNDLED$/lib/kotlin-test-sources.jar!/" />
+        <root url="jar://$KOTLIN_BUNDLED$/lib/kotlin-stdlib-jdk7-sources.jar!/" />
+        <root url="jar://$KOTLIN_BUNDLED$/lib/kotlin-stdlib-jdk8-sources.jar!/" />
       </SOURCES>
     </library>
   </component>
