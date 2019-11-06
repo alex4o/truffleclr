@@ -1,4 +1,5 @@
 package mylang
+import Cil.CilBaseListener
 import Cil.CilLexer
 import Cil.CilParser
 import com.oracle.truffle.api.*
@@ -30,6 +31,7 @@ import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.TokenStream
 import org.antlr.v4.runtime.tree.ParseTree
+import org.antlr.v4.runtime.tree.ParseTreeWalker
 import org.antlr.v4.runtime.tree.RuleNode
 import org.antlr.v4.runtime.tree.Tree
 import java.io.FileReader
@@ -314,64 +316,13 @@ fun run() {
     }
 }
 
-class Type(var name: String) {
-
-}
-
-class Method(var name: String, var arguments: List<Pair<String, Type>>) {
-    var instructions: List<String> = mutableListOf()
-
-}
-
-class Class(var name: String) {
-    var methods: List<Method> = mutableListOf()
-
-}
-
-class Namespace(var name: String) {
-    var classes: List<Class> = mutableListOf()
-
-}
-
-object Global {
-    public var namespaces: MutableMap<String, Namespace> = mutableMapOf("global" to Namespace("global"))
-
-    fun getNamespace(name: String) : Namespace {
-        if(namespaces.containsKey(name)) {
-            return namespaces[name]!!
-        }else{
-            var namespace = Namespace(name)
-            namespaces[name] = namespace
-            return namespace
-        }
-    }
-
-}
-
-class NamespaceVisitor(var namespace: Namespace) : Cil.CilBaseVisitor<Any>() {
 
 
-    override fun visitNamespace(ctx: CilParser.NamespaceContext?): Any {
 
-        for(index in 0 until ctx!!.childCount){
-            (ctx.getChild(index) as ParseTree).accept(NamespaceVisitor(Global.getNamespace(ctx.nameSpaceHead().dottedName.text)))
-        }
-
-        return 0;
-    }
-
-    override fun visitClass(ctx: CilParser.ClassContext?): Any {
-        return super.visitClass(ctx)
-    }
-
-    override fun visitMethod(ctx: CilParser.MethodContext?): Any {
-        return super.visitMethod(ctx)
-    }
-}
 
 fun main(args: Array<String>) {
 
-    var reader = FileReader("/home/alex4o/tmp/test_dnc/test.il");
+    var reader = FileReader("/home/alex4o/test.il");
 
     var stream = CharStreams.fromReader(reader, "useless");
     var lexer = CilLexer(stream)
@@ -381,8 +332,35 @@ fun main(args: Array<String>) {
     var parser = CilParser(tstream)
     var tree: ParseTree = parser.decls()
 
+    for(index in 0 until tree.childCount) {
+        var child: ParseTree = tree.getChild(index)
+        ParseTreeWalker.DEFAULT.walk(object : CilBaseListener() {
+            override fun enterDecls(ctx: CilParser.DeclsContext?) {
+                println("ENTER decls")
+            }
 
-    tree.accept(NamespaceVisitor(Global.getNamespace("global")))
+            override fun enterNamespace(ctx: CilParser.NamespaceContext) {
+                println("ENTER: namespace " + ctx.nameSpaceHead().dottedName.text)
+            }
+
+            override fun exitNamespace(ctx: CilParser.NamespaceContext) {
+                println("EXIT: " + ctx.nameSpaceHead().dottedName.text)
+            }
+
+            override fun enterClass(ctx: CilParser.ClassContext) {
+                println("ENTER: class " + ctx.classHead().classHeadBegin().dottedName.text)
+                ctx.classHead().classHeadBegin().classAttr()
+            }
+
+            override fun exitClass(ctx: CilParser.ClassContext) {
+                println("EXIT: " + ctx.classHead().classHeadBegin().dottedName.text)
+
+            }
+
+        }, child);
+    }
+
+//    tree.accept(NamespaceVisitor(Global.getNamespace("global")))
 //    parser.parseListeners.add()
 
 

@@ -1,0 +1,1429 @@
+%{
+class CilParser {
+
+%}
+
+
+        /* These are returned by the LEXER and have values */
+%token K_ERROR K_BAD_COMMENT K_BAD_LITERAL                         /* bad strings,    */
+%token <string>  ID             /* testing343 */
+%token <string>  DOTTEDNAME     /* System.Object */
+%token <binstr>  QSTRING        /* "Hello World\n" */
+%token <string>  SQSTRING       /* 'Hello World\n' */
+
+/*
+%token <int32>   INT32          /* 3425 0x34FA  0352 
+*/
+
+%token <int64>   INT64          /* 342534523534534      0x34FA434644554 */
+%token <float64> FLOAT64        /* -334234 24E-34 */
+%token <int32>   HEXBYTE        /* 05 1A FA */
+%token <tdd>     TYPEDEF_T
+%token <tdd>     TYPEDEF_M
+%token <tdd>     TYPEDEF_F
+%token <tdd>     TYPEDEF_TS
+%token <tdd>     TYPEDEF_MR
+%token <tdd>     TYPEDEF_CA
+
+
+
+        /* Keywords   Note the undersores are to avoid collisions as these are common names */
+%token K_VOID K_BOOL K_CHAR K_UNSIGNED K_INT K_INT8 K_INT16 K_INT32 K_INT64 K_FLOAT K_FLOAT32 K_FLOAT64 K_BYTEARRAY
+%token K_UINT K_UINT8 K_UINT16 K_UINT32 K_UINT64  K_FLAGS K_CALLCONV K_MDTOKEN
+%token K_OBJECT K_STRING K_NULLREF
+        /* misc keywords */
+%token K_DEFAULT K_CDECL K_VARARG K_STDCALL K_THISCALL K_FASTCALL K_CLASS
+%token K_TYPEDREF K_UNMANAGED K_FINALLY K_HANDLER K_CATCH K_FILTER K_FAULT
+%token K_EXTENDS K_IMPLEMENTS K_TO K_AT K_TLS K_TRUE K_FALSE D_INTERFACEIMPL
+
+        /* class, method, field attributes */
+
+%token K_VALUE K_VALUETYPE K_NATIVE K_INSTANCE K_SPECIALNAME K_FORWARDER
+%token K_STATIC K_PUBLIC K_PRIVATE K_FAMILY K_FINAL K_SYNCHRONIZED K_INTERFACE K_SEALED K_NESTED
+%token K_ABSTRACT K_AUTO K_SEQUENTIAL K_EXPLICIT K_ANSI K_UNICODE K_AUTOCHAR K_IMPORT K_ENUM
+%token K_VIRTUAL K_NOINLINING K_AGGRESSIVEINLINING K_NOOPTIMIZATION K_AGGRESSIVEOPTIMIZATION K_UNMANAGEDEXP K_BEFOREFIELDINIT
+%token K_STRICT K_RETARGETABLE K_WINDOWSRUNTIME K_NOPLATFORM
+%token K_METHOD K_FIELD K_PINNED K_MODREQ K_MODOPT K_SERIALIZABLE K_PROPERTY K_TYPE
+%token K_ASSEMBLY K_FAMANDASSEM K_FAMORASSEM K_PRIVATESCOPE K_HIDEBYSIG K_NEWSLOT K_RTSPECIALNAME K_PINVOKEIMPL
+%token D_CTOR D_CCTOR K_LITERAL K_NOTSERIALIZED K_INITONLY K_REQSECOBJ
+        /* method implementation attributes: K_NATIVE and K_UNMANAGED listed above */
+%token K_CIL K_OPTIL K_MANAGED K_FORWARDREF K_PRESERVESIG K_RUNTIME K_INTERNALCALL
+        /* PInvoke-specific keywords */
+%token D_IMPORT K_NOMANGLE K_LASTERR K_WINAPI K_AS K_BESTFIT K_ON K_OFF K_CHARMAPERROR
+
+        /* intruction tokens (actually instruction groupings) */
+%token <opcode> INSTR_NONE INSTR_VAR INSTR_I INSTR_I8 INSTR_R INSTR_BRTARGET INSTR_METHOD INSTR_FIELD
+%token <opcode> INSTR_TYPE INSTR_STRING INSTR_SIG INSTR_TOK
+%token <opcode> INSTR_SWITCH
+
+        /* assember directives */
+%token D_CLASS D_NAMESPACE D_METHOD D_FIELD D_DATA D_THIS D_BASE D_NESTER
+%token D_EMITBYTE D_TRY D_MAXSTACK D_LOCALS D_ENTRYPOINT D_ZEROINIT
+%token D_EVENT D_ADDON D_REMOVEON D_FIRE D_OTHER
+%token D_PROPERTY D_SET D_GET K_DEFAULT
+%token D_PERMISSION D_PERMISSIONSET
+
+                /* security actions */
+%token K_REQUEST K_DEMAND K_ASSERT K_DENY K_PERMITONLY K_LINKCHECK K_INHERITCHECK
+%token K_REQMIN K_REQOPT K_REQREFUSE K_PREJITGRANT K_PREJITDENY K_NONCASDEMAND
+%token K_NONCASLINKDEMAND K_NONCASINHERITANCE
+
+        /* extern debug info specifier (to be used by precompilers only) */
+%token D_LINE P_LINE D_LANGUAGE
+        /* custom value specifier */
+%token D_CUSTOM
+        /* local vars zeroinit specifier */
+%token K_INIT
+        /* class layout */
+%token D_SIZE D_PACK
+%token D_VTABLE D_VTFIXUP K_FROMUNMANAGED K_CALLMOSTDERIVED D_VTENTRY K_RETAINAPPDOMAIN
+        /* manifest */
+%token D_FILE K_NOMETADATA D_HASH D_ASSEMBLY D_PUBLICKEY D_PUBLICKEYTOKEN K_ALGORITHM D_VER D_LOCALE K_EXTERN
+%token D_MRESOURCE
+%token D_MODULE D_EXPORT
+%token K_LEGACY K_LIBRARY K_X86 K_AMD64 K_ARM K_ARM64
+        /* field marshaling */
+%token K_MARSHAL K_CUSTOM K_SYSSTRING K_FIXED K_VARIANT K_CURRENCY K_SYSCHAR K_DECIMAL K_DATE K_BSTR K_TBSTR K_LPSTR
+%token K_LPWSTR K_LPTSTR K_OBJECTREF K_IUNKNOWN K_IDISPATCH K_STRUCT K_SAFEARRAY K_BYVALSTR K_LPVOID K_ANY K_ARRAY K_LPSTRUCT
+%token K_IIDPARAM
+        /* parameter keywords */
+%token K_IN K_OUT K_OPT
+        /* .param directive */
+%token D_PARAM
+                /* method implementations */
+%token D_OVERRIDE K_WITH
+                /* variant type specifics */
+%token K_NULL K_ERROR K_HRESULT K_CARRAY K_USERDEFINED K_RECORD K_FILETIME K_BLOB K_STREAM K_STORAGE
+%token K_STREAMED_OBJECT K_STORED_OBJECT K_BLOB_OBJECT K_CF K_CLSID K_VECTOR
+                /* header flags */
+%token D_SUBSYSTEM D_CORFLAGS K_ALIGNMENT D_IMAGEBASE D_STACKRESERVE
+
+        /* syntactic sugar */
+%token D_TYPEDEF D_TEMPLATE D_TYPELIST D_MSCORLIB
+
+        /* compilation control directives */
+%token P_DEFINE P_UNDEF P_IFDEF P_IFNDEF P_ELSE P_ENDIF P_INCLUDE
+
+        /* newly added tokens go here */
+%token  K_CONSTRAINT
+
+/* nonTerminals */
+/*
+%type <string> dottedName id methodName atOpt slashedName
+%type <labels> labels
+%type <int32> callConv callKind int32 customHead customHeadWithOwner vtfixupAttr paramAttr ddItemCount variantType repeatOpt truefalse typarAttrib typarAttribs
+%type <int32> iidParamIndex genArity genArityNotEmpty
+%type <float64> float64
+%type <int64> int64
+%type <binstr> sigArgs0 sigArgs1 sigArg type bound bounds1 bytes hexbytes nativeType marshalBlob initOpt compQstring caValue
+%type <binstr> marshalClause
+%type <binstr> fieldInit serInit fieldSerInit
+%type <binstr> f32seq f64seq i8seq i16seq i32seq i64seq boolSeq sqstringSeq classSeq objSeq
+%type <binstr> simpleType
+%type <binstr> tyArgs0 tyArgs1 tyArgs2 typeList typeListNotEmpty tyBound
+%type <binstr> customBlobDescr serializType customBlobArgs customBlobNVPairs
+%type <binstr> secAttrBlob secAttrSetBlob
+%type <int32> fieldOrProp intOrWildcard
+%type <typarlist> typarsRest typars typarsClause
+%type <token> className typeSpec ownerType customType memberRef methodRef mdtoken
+%type <classAttr> classAttr
+%type <methAttr> methAttr
+%type <fieldAttr> fieldAttr
+%type <implAttr> implAttr
+%type <eventAttr> eventAttr
+%type <propAttr> propAttr
+%type <pinvAttr> pinvAttr
+%type <pair> nameValPairs nameValPair
+%type <secAct> secAction
+%type <secAct> psetHead
+%type <fileAttr> fileAttr
+%type <fileAttr> fileEntry
+%type <asmAttr> asmAttr
+%type <exptAttr> exptAttr
+%type <manresAttr> manresAttr
+%type <cad> customDescr customDescrWithOwner
+%type <instr> instr_none instr_var instr_i instr_i8 instr_r instr_brtarget instr_method instr_field
+%type <instr> instr_type instr_string instr_sig instr_tok instr_switch
+%type <instr> instr_r_head
+*/
+
+%token OPEN_BRACE    "{"
+%token CLOSE_BRACE   "}"
+%token OPEN_BRACKET  "["
+%token CLOSE_BRACKET "]"
+%token OPEN_PARENS   "("
+%token CLOSE_PARENS  ")"
+%token COMMA         ","
+%token COLON         ":"
+%token DCOLON        "::"
+%token SEMICOLON     ";"
+%token ASSIGN        "="
+%token STAR          "*"
+%token AMPERSAND     "&"
+%token PLUS          "+"
+%token SLASH         "/"
+%token BANG          "!"
+%token ELIPSIS      "..."
+%token DASH          "-"
+%token OPEN_ANGLE_BRACKET   "<"
+%token CLOSE_ANGLE_BRACKET  ">"
+
+%start decls
+
+%%
+
+decls                   : /* EMPTY */
+                        | decls decl
+                        ;
+/* Module-level declarations */
+decl                    : classHead OPEN_BRACE classDecls CLOSE_BRACE 
+                        | nameSpaceHead OPEN_BRACE decls CLOSE_BRACE 
+                        | methodHead  methodDecls CLOSE_BRACE 
+                        | fieldDecl
+                        | dataDecl
+                        | vtableDecl
+                        | vtfixupDecl
+                        | extSourceSpec
+                        | fileDecl
+                        | assemblyHead OPEN_BRACE assemblyDecls CLOSE_BRACE 
+                        | assemblyRefHead OPEN_BRACE assemblyRefDecls CLOSE_BRACE 
+                        | exptypeHead OPEN_BRACE exptypeDecls CLOSE_BRACE 
+                        | manifestResHead OPEN_BRACE manifestResDecls CLOSE_BRACE 
+                        | moduleHead
+                        | secDecl
+                        | customAttrDecl
+                        | D_SUBSYSTEM int32 
+                        | D_CORFLAGS int32 
+                        | D_FILE K_ALIGNMENT int32 
+                        | D_IMAGEBASE int64 
+                        | D_STACKRESERVE int64 
+                        | languageDecl
+                        | typedefDecl
+                        | compControl
+                        | D_TYPELIST OPEN_BRACE classNameSeq CLOSE_BRACE
+                        | D_MSCORLIB 
+                        ;
+
+classNameSeq            : /* EMPTY */
+                        | className classNameSeq
+                        ;
+
+compQstring             : QSTRING 
+                        | compQstring PLUS QSTRING 
+                        ;
+
+languageDecl            : D_LANGUAGE SQSTRING 
+                        | D_LANGUAGE SQSTRING COMMA SQSTRING 
+                        | D_LANGUAGE SQSTRING COMMA SQSTRING COMMA SQSTRING 
+                        ;
+/*  Basic tokens  */
+id                      : ID 
+                        | SQSTRING 
+                        ;
+
+dottedName              : id 
+                        | DOTTEDNAME
+                        ;
+
+int32                   : INT64 
+                        ;
+
+int64                   : INT64 
+                        ;
+
+float64                 : FLOAT64 
+                        | K_FLOAT32 OPEN_PARENS int32 CLOSE_PARENS 
+                        | K_FLOAT64 OPEN_PARENS int64 CLOSE_PARENS 
+                        ;
+
+/*  Aliasing of types, type specs, methods, fields and custom attributes */
+typedefDecl             : D_TYPEDEF type K_AS dottedName 
+                        | D_TYPEDEF className K_AS dottedName 
+                        | D_TYPEDEF memberRef K_AS dottedName 
+                        | D_TYPEDEF customDescr K_AS dottedName 
+                        | D_TYPEDEF customDescrWithOwner K_AS dottedName 
+                        ;
+
+/*  Compilation control directives are processed within yylex(),
+    displayed here just for grammar completeness */
+compControl             : P_DEFINE dottedName 
+                        | P_DEFINE dottedName compQstring 
+                        | P_UNDEF dottedName 
+                        | P_IFDEF dottedName 
+                        | P_IFNDEF dottedName 
+                        | P_ELSE 
+                        | P_ENDIF 
+                        | P_INCLUDE QSTRING 
+                        | SEMICOLON 
+                        ;
+
+/* Custom attribute declarations  */
+customDescr             : D_CUSTOM customType 
+                        | D_CUSTOM customType ASSIGN compQstring 
+                        | D_CUSTOM customType ASSIGN OPEN_BRACE customBlobDescr CLOSE_BRACE 
+                        | customHead bytes CLOSE_PARENS 
+                        ;
+
+customDescrWithOwner    : D_CUSTOM OPEN_PARENS ownerType CLOSE_PARENS customType 
+                        | D_CUSTOM OPEN_PARENS ownerType CLOSE_PARENS customType ASSIGN compQstring 
+                        | D_CUSTOM OPEN_PARENS ownerType CLOSE_PARENS customType ASSIGN OPEN_BRACE customBlobDescr CLOSE_BRACE 
+                        | customHeadWithOwner bytes CLOSE_PARENS 
+                        ;
+
+customHead              : D_CUSTOM customType ASSIGN OPEN_PARENS 
+                        ;
+
+customHeadWithOwner     : D_CUSTOM OPEN_PARENS ownerType CLOSE_PARENS customType ASSIGN OPEN_PARENS 
+                        ;
+
+customType              : methodRef 
+                        ;
+
+ownerType               : typeSpec 
+                        | memberRef 
+                        ;
+
+/*  Verbal description of custom attribute initialization blob  */
+customBlobDescr         : customBlobArgs customBlobNVPairs 
+                        ;
+
+customBlobArgs          : /* EMPTY */ 
+                        | customBlobArgs serInit 
+                        | customBlobArgs compControl 
+                        ;
+
+customBlobNVPairs       : /* EMPTY */ 
+                        | customBlobNVPairs fieldOrProp serializType dottedName ASSIGN serInit 
+                        | customBlobNVPairs compControl 
+                        ;
+
+fieldOrProp             : K_FIELD 
+                        | K_PROPERTY 
+                        ;
+
+customAttrDecl          : customDescr 
+                        | customDescrWithOwner 
+                        | TYPEDEF_CA 
+                        ;
+
+serializType            : simpleType 
+                        | K_TYPE 
+                        | K_OBJECT 
+                        | K_ENUM K_CLASS SQSTRING 
+                        | K_ENUM className 
+                        | serializType OPEN_BRACKET CLOSE_BRACKET 
+                        ;
+
+
+/*  Module declaration */
+moduleHead              : D_MODULE 
+                        | D_MODULE dottedName 
+                        | D_MODULE K_EXTERN dottedName 
+                        ;
+
+/*  VTable Fixup table declaration  */
+vtfixupDecl             : D_VTFIXUP OPEN_BRACKET int32 CLOSE_BRACKET vtfixupAttr K_AT id 
+                        ;
+
+vtfixupAttr             : /* EMPTY */ 
+                        | vtfixupAttr K_INT32 
+                        | vtfixupAttr K_INT64 
+                        | vtfixupAttr K_FROMUNMANAGED 
+                        | vtfixupAttr K_CALLMOSTDERIVED 
+                        | vtfixupAttr K_RETAINAPPDOMAIN 
+                        ;
+
+vtableDecl              : vtableHead bytes CLOSE_PARENS   /* deprecated */ 
+                        ;
+
+vtableHead              : D_VTABLE ASSIGN OPEN_PARENS        /* deprecated */ 
+                        ;
+
+/*  Namespace and class declaration  */
+nameSpaceHead           : D_NAMESPACE dottedName 
+                        ;
+
+_class                  : D_CLASS 
+                        ;
+
+classHeadBegin          : _class classAttr dottedName typarsClause 
+                        ;
+classHead               : classHeadBegin extendsClause implClause 
+                        ;
+
+classAttr               : /* EMPTY */ 
+                        | classAttr K_PUBLIC 
+                        | classAttr K_PRIVATE 
+                        | classAttr K_VALUE 
+                        | classAttr K_ENUM 
+                        | classAttr K_INTERFACE 
+                        | classAttr K_SEALED 
+                        | classAttr K_ABSTRACT 
+                        | classAttr K_AUTO 
+                        | classAttr K_SEQUENTIAL 
+                        | classAttr K_EXPLICIT 
+                        | classAttr K_ANSI 
+                        | classAttr K_UNICODE 
+                        | classAttr K_AUTOCHAR 
+                        | classAttr K_IMPORT 
+                        | classAttr K_SERIALIZABLE 
+                        | classAttr K_WINDOWSRUNTIME 
+                        | classAttr K_NESTED K_PUBLIC 
+                        | classAttr K_NESTED K_PRIVATE 
+                        | classAttr K_NESTED K_FAMILY 
+                        | classAttr K_NESTED K_ASSEMBLY 
+                        | classAttr K_NESTED K_FAMANDASSEM 
+                        | classAttr K_NESTED K_FAMORASSEM 
+                        | classAttr K_BEFOREFIELDINIT 
+                        | classAttr K_SPECIALNAME 
+                        | classAttr K_RTSPECIALNAME 
+                        | classAttr K_FLAGS OPEN_PARENS int32 CLOSE_PARENS 
+                        ;
+
+extendsClause           : /* EMPTY */
+                        | K_EXTENDS typeSpec 
+                        ;
+
+implClause              : /* EMPTY */
+                        | K_IMPLEMENTS implList
+                        ;
+
+classDecls              : /* EMPTY */
+                        | classDecls classDecl
+                        ;
+
+implList                : implList COMMA typeSpec 
+                        | typeSpec 
+                                        ;
+
+/* Generic type parameters declaration  */
+typeList                : /* EMPTY */ 
+                        | typeListNotEmpty 
+                        ;
+
+typeListNotEmpty        : typeSpec 
+                        | typeListNotEmpty COMMA typeSpec 
+                        ;
+
+typarsClause            : /* EMPTY */ 
+                        | OPEN_ANGLE_BRACKET typars CLOSE_ANGLE_BRACKET 
+                        ;
+
+typarAttrib             : PLUS 
+                        | DASH 
+                        | K_CLASS 
+                        | K_VALUETYPE 
+                        | D_CTOR 
+                        ;
+
+typarAttribs            : /* EMPTY */ 
+                        | typarAttrib typarAttribs 
+                        ;
+
+typars                  : typarAttribs tyBound dottedName typarsRest 
+                        | typarAttribs dottedName typarsRest 
+                        ;
+
+typarsRest              : /* EMPTY */ 
+                        | COMMA typars 
+                        ;
+
+tyBound                 : OPEN_PARENS typeList CLOSE_PARENS 
+                        ;
+
+genArity                : /* EMPTY */ 
+                        | genArityNotEmpty 
+                        ;
+
+genArityNotEmpty        : OPEN_ANGLE_BRACKET OPEN_BRACKET int32 CLOSE_BRACKET CLOSE_ANGLE_BRACKET 
+                        ;
+
+/*  Class body declarations  */
+classDecl               : methodHead  methodDecls CLOSE_BRACE 
+                        | classHead OPEN_BRACE classDecls CLOSE_BRACE 
+                        | eventHead OPEN_BRACE eventDecls CLOSE_BRACE 
+                        | propHead OPEN_BRACE propDecls CLOSE_BRACE 
+                        | fieldDecl
+                        | dataDecl
+                        | secDecl
+                        | extSourceSpec
+                        | customAttrDecl
+                        | D_SIZE int32 
+                        | D_PACK int32 
+                        | exportHead OPEN_BRACE exptypeDecls CLOSE_BRACE 
+                        | D_OVERRIDE typeSpec DCOLON methodName K_WITH callConv type typeSpec DCOLON methodName OPEN_PARENS sigArgs0 CLOSE_PARENS 
+                        | D_OVERRIDE K_METHOD callConv type typeSpec DCOLON methodName genArity OPEN_PARENS sigArgs0 CLOSE_PARENS K_WITH K_METHOD callConv type typeSpec DCOLON methodName genArity OPEN_PARENS sigArgs0 CLOSE_PARENS 
+                        | languageDecl
+                        | compControl
+                        | D_PARAM K_TYPE OPEN_BRACKET int32 CLOSE_BRACKET 
+                        | D_PARAM K_TYPE dottedName 
+                        | D_PARAM K_CONSTRAINT OPEN_BRACKET int32 CLOSE_BRACKET COMMA typeSpec 
+                        | D_PARAM K_CONSTRAINT dottedName COMMA typeSpec 
+                        | D_INTERFACEIMPL K_TYPE typeSpec customDescr 
+                        ;
+
+/*  Field declaration  */
+fieldDecl               : D_FIELD repeatOpt fieldAttr type dottedName atOpt initOpt 
+                        ;
+
+fieldAttr               : /* EMPTY */ 
+                        | fieldAttr K_STATIC 
+                        | fieldAttr K_PUBLIC 
+                        | fieldAttr K_PRIVATE 
+                        | fieldAttr K_FAMILY 
+                        | fieldAttr K_INITONLY 
+                        | fieldAttr K_RTSPECIALNAME  /**/
+                        | fieldAttr K_SPECIALNAME 
+                                                /* <STRIP>commented out because PInvoke for fields is not supported by EE
+                        | fieldAttr K_PINVOKEIMPL OPEN_PARENS compQstring K_AS compQstring pinvAttr CLOSE_PARENS 
+                        | fieldAttr K_PINVOKEIMPL OPEN_PARENS compQstring  pinvAttr CLOSE_PARENS 
+                        | fieldAttr K_PINVOKEIMPL OPEN_PARENS pinvAttr CLOSE_PARENS 
+                                                </STRIP>*/
+                        | fieldAttr K_MARSHAL OPEN_PARENS marshalBlob CLOSE_PARENS 
+                        | fieldAttr K_ASSEMBLY 
+                        | fieldAttr K_FAMANDASSEM 
+                        | fieldAttr K_FAMORASSEM 
+                        | fieldAttr K_PRIVATESCOPE 
+                        | fieldAttr K_LITERAL 
+                        | fieldAttr K_NOTSERIALIZED 
+                        | fieldAttr K_FLAGS OPEN_PARENS int32 CLOSE_PARENS 
+                        ;
+
+atOpt                   : /* EMPTY */ 
+                        | K_AT id 
+                        ;
+
+initOpt                 : /* EMPTY */ 
+                        | ASSIGN fieldInit 
+                                                ;
+
+repeatOpt               : /* EMPTY */ 
+                        | OPEN_BRACKET int32 CLOSE_BRACKET 
+                                                ;
+
+/*  Method referencing  */
+methodRef               : callConv type typeSpec DCOLON methodName tyArgs0 OPEN_PARENS sigArgs0 CLOSE_PARENS 
+                        | callConv type typeSpec DCOLON methodName genArityNotEmpty OPEN_PARENS sigArgs0 CLOSE_PARENS 
+                        | callConv type methodName tyArgs0 OPEN_PARENS sigArgs0 CLOSE_PARENS 
+                        | callConv type methodName genArityNotEmpty OPEN_PARENS sigArgs0 CLOSE_PARENS 
+                        | mdtoken 
+                        | TYPEDEF_M 
+                        | TYPEDEF_MR 
+                        ;
+
+callConv                : K_INSTANCE callConv 
+                        | K_EXPLICIT callConv 
+                        | callKind 
+                        | K_CALLCONV OPEN_PARENS int32 CLOSE_PARENS 
+                        ;
+
+callKind                : /* EMPTY */ 
+                        | K_DEFAULT 
+                        | K_VARARG 
+                        | K_UNMANAGED K_CDECL 
+                        | K_UNMANAGED K_STDCALL 
+                        | K_UNMANAGED K_THISCALL 
+                        | K_UNMANAGED K_FASTCALL 
+                        ;
+
+mdtoken                 : K_MDTOKEN OPEN_PARENS int32 CLOSE_PARENS 
+                        ;
+
+memberRef               : methodSpec methodRef 
+                        | K_FIELD type typeSpec DCOLON dottedName 
+                        | K_FIELD type dottedName 
+                        | K_FIELD TYPEDEF_F 
+                        | K_FIELD TYPEDEF_MR 
+                        | mdtoken 
+                        ;
+
+/*  Event declaration  */
+eventHead               : D_EVENT eventAttr typeSpec dottedName 
+                        | D_EVENT eventAttr dottedName 
+                        ;
+
+
+eventAttr               : /* EMPTY */ 
+                        | eventAttr K_RTSPECIALNAME /**/
+                        | eventAttr K_SPECIALNAME 
+                        ;
+
+eventDecls              : /* EMPTY */
+                        | eventDecls eventDecl
+                        ;
+
+eventDecl               : D_ADDON methodRef 
+                        | D_REMOVEON methodRef 
+                        | D_FIRE methodRef 
+                        | D_OTHER methodRef 
+                        | extSourceSpec
+                        | customAttrDecl
+                        | languageDecl
+                        | compControl
+                        ;
+
+/*  Property declaration  */
+propHead                : D_PROPERTY propAttr callConv type dottedName OPEN_PARENS sigArgs0 CLOSE_PARENS initOpt 
+                        ;
+
+propAttr                : /* EMPTY */ 
+                        | propAttr K_RTSPECIALNAME /**/
+                        | propAttr K_SPECIALNAME 
+                        ;
+
+propDecls               : /* EMPTY */
+                        | propDecls propDecl
+                        ;
+
+
+propDecl                : D_SET methodRef 
+                        | D_GET methodRef 
+                        | D_OTHER methodRef 
+                        | customAttrDecl
+                        | extSourceSpec
+                        | languageDecl
+                        | compControl
+                        ;
+
+/*  Method declaration  */
+methodHeadPart1         : D_METHOD 
+                        ;
+
+marshalClause           : /* EMPTY */ 
+                        | K_MARSHAL OPEN_PARENS marshalBlob CLOSE_PARENS 
+                        ;
+
+marshalBlob             : nativeType 
+                        | marshalBlobHead hexbytes CLOSE_BRACE 
+                        ;
+
+marshalBlobHead         : OPEN_BRACE 
+                        ;
+
+methodHead              : methodHeadPart1 methAttr callConv paramAttr type marshalClause methodName typarsClause OPEN_PARENS sigArgs0 CLOSE_PARENS implAttr OPEN_BRACE 
+                        ;
+
+methAttr                : /* EMPTY */ 
+                        | methAttr K_STATIC 
+                        | methAttr K_PUBLIC 
+                        | methAttr K_PRIVATE 
+                        | methAttr K_FAMILY 
+                        | methAttr K_FINAL 
+                        | methAttr K_SPECIALNAME 
+                        | methAttr K_VIRTUAL 
+                        | methAttr K_STRICT 
+                        | methAttr K_ABSTRACT 
+                        | methAttr K_ASSEMBLY 
+                        | methAttr K_FAMANDASSEM 
+                        | methAttr K_FAMORASSEM 
+                        | methAttr K_PRIVATESCOPE 
+                        | methAttr K_HIDEBYSIG 
+                        | methAttr K_NEWSLOT 
+                        | methAttr K_RTSPECIALNAME /**/
+                        | methAttr K_UNMANAGEDEXP 
+                        | methAttr K_REQSECOBJ 
+                        | methAttr K_FLAGS OPEN_PARENS int32 CLOSE_PARENS 
+                        | methAttr K_PINVOKEIMPL OPEN_PARENS compQstring K_AS compQstring pinvAttr CLOSE_PARENS 
+                        | methAttr K_PINVOKEIMPL OPEN_PARENS compQstring  pinvAttr CLOSE_PARENS 
+                        | methAttr K_PINVOKEIMPL OPEN_PARENS pinvAttr CLOSE_PARENS 
+                        ;
+
+pinvAttr                : /* EMPTY */ 
+                        | pinvAttr K_NOMANGLE 
+                        | pinvAttr K_ANSI 
+                        | pinvAttr K_UNICODE 
+                        | pinvAttr K_AUTOCHAR 
+                        | pinvAttr K_LASTERR 
+                        | pinvAttr K_WINAPI 
+                        | pinvAttr K_CDECL 
+                        | pinvAttr K_STDCALL 
+                        | pinvAttr K_THISCALL 
+                        | pinvAttr K_FASTCALL 
+                        | pinvAttr K_BESTFIT COLON K_ON 
+                        | pinvAttr K_BESTFIT COLON K_OFF 
+                        | pinvAttr K_CHARMAPERROR COLON K_ON 
+                        | pinvAttr K_CHARMAPERROR COLON K_OFF 
+                        | pinvAttr K_FLAGS OPEN_PARENS int32 CLOSE_PARENS 
+                        ;
+
+methodName              : D_CTOR 
+                        | D_CCTOR 
+                        | dottedName 
+                        ;
+
+paramAttr               : /* EMPTY */ 
+                        | paramAttr OPEN_BRACKET K_IN CLOSE_BRACKET 
+                        | paramAttr OPEN_BRACKET K_OUT CLOSE_BRACKET 
+                        | paramAttr OPEN_BRACKET K_OPT CLOSE_BRACKET 
+                        | paramAttr OPEN_BRACKET int32 CLOSE_BRACKET 
+                        ;
+
+implAttr                : /* EMPTY */ 
+                        | implAttr K_NATIVE 
+                        | implAttr K_CIL 
+                        | implAttr K_OPTIL 
+                        | implAttr K_MANAGED 
+                        | implAttr K_UNMANAGED 
+                        | implAttr K_FORWARDREF 
+                        | implAttr K_PRESERVESIG 
+                        | implAttr K_RUNTIME 
+                        | implAttr K_INTERNALCALL 
+                        | implAttr K_SYNCHRONIZED 
+                        | implAttr K_NOINLINING 
+                        | implAttr K_AGGRESSIVEINLINING 
+                        | implAttr K_NOOPTIMIZATION 
+                        | implAttr K_AGGRESSIVEOPTIMIZATION 
+                        | implAttr K_FLAGS OPEN_PARENS int32 CLOSE_PARENS 
+                        ;
+
+localsHead              : D_LOCALS 
+                        ;
+
+methodDecls             : /* EMPTY */
+                        | methodDecls methodDecl
+                        ;
+
+methodDecl              : D_EMITBYTE int32 
+                        | sehBlock 
+                        | D_MAXSTACK int32 
+                        | localsHead OPEN_PARENS sigArgs0 CLOSE_PARENS 
+                        | localsHead K_INIT OPEN_PARENS sigArgs0 CLOSE_PARENS 
+                        | D_ENTRYPOINT 
+                        | D_ZEROINIT 
+                        | dataDecl
+                        | instr
+                        | id COLON 
+                        | secDecl
+                        | extSourceSpec
+                        | languageDecl
+                        | customAttrDecl
+                        | compControl
+                        | D_EXPORT OPEN_BRACKET int32 CLOSE_BRACKET 
+                        | D_EXPORT OPEN_BRACKET int32 CLOSE_BRACKET K_AS id 
+                        | D_VTENTRY int32 COLON int32 
+                        | D_OVERRIDE typeSpec DCOLON methodName 
+
+                        | D_OVERRIDE K_METHOD callConv type typeSpec DCOLON methodName genArity OPEN_PARENS sigArgs0 CLOSE_PARENS 
+                        | scopeBlock
+                        | D_PARAM K_TYPE OPEN_BRACKET int32 CLOSE_BRACKET 
+                        | D_PARAM K_TYPE dottedName 
+                        | D_PARAM K_CONSTRAINT OPEN_BRACKET int32 CLOSE_BRACKET COMMA typeSpec 
+                        | D_PARAM K_CONSTRAINT dottedName COMMA typeSpec 
+
+                        | D_PARAM OPEN_BRACKET int32 CLOSE_BRACKET initOpt 
+                        ;
+
+scopeBlock              : scopeOpen methodDecls CLOSE_BRACE 
+                        ;
+
+scopeOpen               : OPEN_BRACE 
+                        ;
+
+/* Structured exception handling directives  */
+sehBlock                : tryBlock sehClauses
+                        ;
+
+sehClauses              : sehClause sehClauses
+                        | sehClause
+                        ;
+
+tryBlock                : tryHead scopeBlock 
+                        | tryHead id K_TO id 
+                        | tryHead int32 K_TO int32 
+                        ;
+
+tryHead                 : D_TRY 
+                        ;
+
+
+sehClause               : catchClause handlerBlock 
+                        | filterClause handlerBlock 
+                        | finallyClause handlerBlock 
+                        | faultClause handlerBlock 
+                        ;
+
+
+filterClause            : filterHead scopeBlock 
+                        | filterHead id 
+                        | filterHead int32 
+                        ;
+
+filterHead              : K_FILTER 
+                        ;
+
+catchClause             : K_CATCH typeSpec 
+                        ;
+
+finallyClause           : K_FINALLY 
+                        ;
+
+faultClause             : K_FAULT 
+                        ;
+
+handlerBlock            : scopeBlock 
+                        | K_HANDLER id K_TO id 
+                        | K_HANDLER int32 K_TO int32 
+                        ;
+
+/*  Data declaration  */
+dataDecl                : ddHead ddBody
+                        ;
+
+ddHead                  : D_DATA tls id ASSIGN 
+                        | D_DATA tls
+                        ;
+
+tls                     : /* EMPTY */ 
+                        | K_TLS 
+                        | K_CIL 
+                        ;
+
+ddBody                  : OPEN_BRACE ddItemList CLOSE_BRACE
+                        | ddItem
+                        ;
+
+ddItemList              : ddItem COMMA ddItemList
+                        | ddItem
+                        ;
+
+ddItemCount             : /* EMPTY */ 
+                        | OPEN_BRACKET int32 CLOSE_BRACKET 
+                        ;
+
+ddItem                  : K_CHAR STAR OPEN_PARENS compQstring CLOSE_PARENS 
+                        | AMPERSAND OPEN_PARENS id CLOSE_PARENS 
+                        | bytearrayhead bytes CLOSE_PARENS 
+                        | K_FLOAT32 OPEN_PARENS float64 CLOSE_PARENS ddItemCount 
+                        | K_FLOAT64 OPEN_PARENS float64 CLOSE_PARENS ddItemCount 
+                        | K_INT64 OPEN_PARENS int64 CLOSE_PARENS ddItemCount 
+                        | K_INT32 OPEN_PARENS int32 CLOSE_PARENS ddItemCount 
+                        | K_INT16 OPEN_PARENS int32 CLOSE_PARENS ddItemCount 
+                        | K_INT8 OPEN_PARENS int32 CLOSE_PARENS ddItemCount 
+                        | K_FLOAT32 ddItemCount 
+                        | K_FLOAT64 ddItemCount 
+                        | K_INT64 ddItemCount 
+                        | K_INT32 ddItemCount 
+                        | K_INT16 ddItemCount 
+                        | K_INT8 ddItemCount 
+                        ;
+
+/*  Default values declaration for fields, parameters and verbal form of CA blob description  */
+fieldSerInit            : K_FLOAT32 OPEN_PARENS float64 CLOSE_PARENS 
+                        | K_FLOAT64 OPEN_PARENS float64 CLOSE_PARENS 
+                        | K_FLOAT32 OPEN_PARENS int32 CLOSE_PARENS 
+                        | K_FLOAT64 OPEN_PARENS int64 CLOSE_PARENS 
+                        | K_INT64 OPEN_PARENS int64 CLOSE_PARENS 
+                        | K_INT32 OPEN_PARENS int32 CLOSE_PARENS 
+                        | K_INT16 OPEN_PARENS int32 CLOSE_PARENS 
+                        | K_INT8 OPEN_PARENS int32 CLOSE_PARENS 
+                        | K_UNSIGNED K_INT64 OPEN_PARENS int64 CLOSE_PARENS 
+                        | K_UNSIGNED K_INT32 OPEN_PARENS int32 CLOSE_PARENS 
+                        | K_UNSIGNED K_INT16 OPEN_PARENS int32 CLOSE_PARENS 
+                        | K_UNSIGNED K_INT8 OPEN_PARENS int32 CLOSE_PARENS 
+                        | K_UINT64 OPEN_PARENS int64 CLOSE_PARENS 
+                        | K_UINT32 OPEN_PARENS int32 CLOSE_PARENS 
+                        | K_UINT16 OPEN_PARENS int32 CLOSE_PARENS 
+                        | K_UINT8 OPEN_PARENS int32 CLOSE_PARENS 
+                        | K_CHAR OPEN_PARENS int32 CLOSE_PARENS 
+                        | K_BOOL OPEN_PARENS truefalse CLOSE_PARENS 
+                        | bytearrayhead bytes CLOSE_PARENS 
+                        ;
+
+bytearrayhead           : K_BYTEARRAY OPEN_PARENS 
+                        ;
+
+bytes                   : /* EMPTY */ 
+                        | hexbytes 
+                        ;
+
+hexbytes                : HEXBYTE 
+                        | hexbytes HEXBYTE 
+                        ;
+
+/*  Field/parameter initialization  */
+fieldInit               : fieldSerInit 
+                        | compQstring 
+                        | K_NULLREF 
+                        ;
+
+/*  Values for verbal form of CA blob description  */
+serInit                 : fieldSerInit 
+                        | K_STRING OPEN_PARENS K_NULLREF CLOSE_PARENS 
+                        | K_STRING OPEN_PARENS SQSTRING CLOSE_PARENS 
+                        | K_TYPE OPEN_PARENS K_CLASS SQSTRING CLOSE_PARENS 
+                        | K_TYPE OPEN_PARENS className CLOSE_PARENS 
+                        | K_TYPE OPEN_PARENS K_NULLREF CLOSE_PARENS 
+                        | K_OBJECT OPEN_PARENS serInit CLOSE_PARENS 
+                        | K_FLOAT32 OPEN_BRACKET int32 CLOSE_BRACKET OPEN_PARENS f32seq CLOSE_PARENS 
+                        | K_FLOAT64 OPEN_BRACKET int32 CLOSE_BRACKET OPEN_PARENS f64seq CLOSE_PARENS 
+                        | K_INT64 OPEN_BRACKET int32 CLOSE_BRACKET OPEN_PARENS i64seq CLOSE_PARENS 
+                        | K_INT32 OPEN_BRACKET int32 CLOSE_BRACKET OPEN_PARENS i32seq CLOSE_PARENS 
+                        | K_INT16 OPEN_BRACKET int32 CLOSE_BRACKET OPEN_PARENS i16seq CLOSE_PARENS 
+                        | K_INT8 OPEN_BRACKET int32 CLOSE_BRACKET OPEN_PARENS i8seq CLOSE_PARENS 
+                        | K_UINT64 OPEN_BRACKET int32 CLOSE_BRACKET OPEN_PARENS i64seq CLOSE_PARENS 
+                        | K_UINT32 OPEN_BRACKET int32 CLOSE_BRACKET OPEN_PARENS i32seq CLOSE_PARENS 
+                        | K_UINT16 OPEN_BRACKET int32 CLOSE_BRACKET OPEN_PARENS i16seq CLOSE_PARENS 
+                        | K_UINT8 OPEN_BRACKET int32 CLOSE_BRACKET OPEN_PARENS i8seq CLOSE_PARENS 
+                        | K_UNSIGNED K_INT64 OPEN_BRACKET int32 CLOSE_BRACKET OPEN_PARENS i64seq CLOSE_PARENS 
+                        | K_UNSIGNED K_INT32 OPEN_BRACKET int32 CLOSE_BRACKET OPEN_PARENS i32seq CLOSE_PARENS 
+                        | K_UNSIGNED K_INT16 OPEN_BRACKET int32 CLOSE_BRACKET OPEN_PARENS i16seq CLOSE_PARENS 
+                        | K_UNSIGNED K_INT8 OPEN_BRACKET int32 CLOSE_BRACKET OPEN_PARENS i8seq CLOSE_PARENS 
+                        | K_CHAR OPEN_BRACKET int32 CLOSE_BRACKET OPEN_PARENS i16seq CLOSE_PARENS 
+                        | K_BOOL OPEN_BRACKET int32 CLOSE_BRACKET OPEN_PARENS boolSeq CLOSE_PARENS 
+                        | K_STRING OPEN_BRACKET int32 CLOSE_BRACKET OPEN_PARENS sqstringSeq CLOSE_PARENS 
+                        | K_TYPE OPEN_BRACKET int32 CLOSE_BRACKET OPEN_PARENS classSeq CLOSE_PARENS 
+                        | K_OBJECT OPEN_BRACKET int32 CLOSE_BRACKET OPEN_PARENS objSeq CLOSE_PARENS 
+                        ;
+
+
+f32seq                  : /* EMPTY */ 
+                        | f32seq float64 
+                        | f32seq int32 
+                        ;
+
+f64seq                  : /* EMPTY */ 
+                        | f64seq float64 
+                        | f64seq int64 
+                        ;
+
+i64seq                  : /* EMPTY */ 
+                        | i64seq int64 
+                        ;
+
+i32seq                  : /* EMPTY */ 
+                        | i32seq int32 
+                        ;
+
+i16seq                  : /* EMPTY */ 
+                        | i16seq int32 
+                        ;
+
+i8seq                   : /* EMPTY */ 
+                        | i8seq int32 
+                        ;
+
+boolSeq                 : /* EMPTY */ 
+                        | boolSeq truefalse 
+                        ;
+
+sqstringSeq             : /* EMPTY */ 
+                        | sqstringSeq K_NULLREF 
+                        | sqstringSeq SQSTRING 
+                        ;
+
+classSeq                : /* EMPTY */ 
+                        | classSeq K_NULLREF 
+                        | classSeq K_CLASS SQSTRING 
+                        | classSeq className 
+                        ;
+
+objSeq                  : /* EMPTY */ 
+                        | objSeq serInit 
+                        ;
+
+/*  IL instructions and associated definitions  */
+methodSpec              : K_METHOD 
+                        ;
+
+instr_none              : INSTR_NONE 
+                        ;
+
+instr_var               : INSTR_VAR 
+                        ;
+
+instr_i                 : INSTR_I 
+                        ;
+
+instr_i8                : INSTR_I8 
+                        ;
+
+instr_r                 : INSTR_R 
+                        ;
+
+instr_brtarget          : INSTR_BRTARGET 
+                        ;
+
+instr_method            : INSTR_METHOD 
+                        ;
+
+instr_field             : INSTR_FIELD 
+                        ;
+
+instr_type              : INSTR_TYPE 
+                        ;
+
+instr_string            : INSTR_STRING 
+                        ;
+
+instr_sig               : INSTR_SIG 
+                        ;
+
+instr_tok               : INSTR_TOK 
+                        ;
+
+instr_switch            : INSTR_SWITCH 
+                        ;
+
+instr_r_head            : instr_r OPEN_PARENS 
+                        ;
+
+
+instr                   : instr_none 
+                        | instr_var int32 
+                        | instr_var id 
+                        | instr_i int32 
+                        | instr_i8 int64 
+                        | instr_r float64 
+                        | instr_r int64 
+                        | instr_r_head bytes CLOSE_PARENS 
+                        | instr_brtarget int32 
+                        | instr_brtarget id 
+                        | instr_method methodRef 
+                        | instr_field type typeSpec DCOLON dottedName 
+                        | instr_field type dottedName 
+                        | instr_field mdtoken 
+                        | instr_field TYPEDEF_F 
+                        | instr_field TYPEDEF_MR 
+                        | instr_type typeSpec 
+                        | instr_string compQstring 
+                        | instr_string K_ANSI OPEN_PARENS compQstring CLOSE_PARENS 
+                        | instr_string bytearrayhead bytes CLOSE_PARENS 
+                        | instr_sig callConv type OPEN_PARENS sigArgs0 CLOSE_PARENS 
+                        | instr_tok ownerType /* ownerType ::= memberRef | typeSpec */ 
+                        | instr_switch OPEN_PARENS labels CLOSE_PARENS 
+                        ;
+
+labels                  : /* empty */ 
+                        | id COMMA labels 
+                        | int32 COMMA labels 
+                        | id 
+                        | int32 
+                        ;
+
+/*  Signatures  */
+tyArgs0                 : /* EMPTY */ 
+                        | OPEN_ANGLE_BRACKET tyArgs1 CLOSE_ANGLE_BRACKET 
+                        ;
+
+tyArgs1                 : /* EMPTY */ 
+                        | tyArgs2 
+                        ;
+
+tyArgs2                 : type 
+                        | tyArgs2 COMMA type 
+                        ;
+
+
+sigArgs0                : /* EMPTY */ 
+                        | sigArgs1 
+                        ;
+
+sigArgs1                : sigArg 
+                        | sigArgs1 COMMA sigArg 
+                        ;
+
+sigArg                  : ELIPSIS 
+                        | paramAttr type marshalClause 
+                        | paramAttr type marshalClause id 
+                        ;
+
+/*  Class referencing  */
+className               : OPEN_BRACKET dottedName CLOSE_BRACKET slashedName 
+                        | OPEN_BRACKET mdtoken CLOSE_BRACKET slashedName 
+                        | OPEN_BRACKET STAR CLOSE_BRACKET slashedName 
+                        | OPEN_BRACKET D_MODULE dottedName CLOSE_BRACKET slashedName 
+                        | slashedName 
+                        | mdtoken 
+                        | TYPEDEF_T 
+                        | D_THIS 
+                        | D_BASE 
+                        | D_NESTER 
+                        ;
+
+slashedName             : dottedName 
+                        | slashedName SLASH dottedName 
+                        ;
+
+typeSpec                : className 
+                        | OPEN_BRACKET dottedName CLOSE_BRACKET 
+                        | OPEN_BRACKET D_MODULE dottedName CLOSE_BRACKET 
+                        | type 
+                        ;
+
+/*  Native types for marshaling signatures  */
+nativeType              : /* EMPTY */ 
+                        | K_CUSTOM OPEN_PARENS compQstring COMMA compQstring COMMA compQstring COMMA compQstring CLOSE_PARENS 
+                        | K_CUSTOM OPEN_PARENS compQstring COMMA compQstring CLOSE_PARENS 
+                        | K_FIXED K_SYSSTRING OPEN_BRACKET int32 CLOSE_BRACKET 
+                        | K_FIXED K_ARRAY OPEN_BRACKET int32 CLOSE_BRACKET nativeType 
+                        | K_VARIANT 
+                        | K_CURRENCY 
+                        | K_SYSCHAR 
+                        | K_VOID 
+                        | K_BOOL 
+                        | K_INT8 
+                        | K_INT16 
+                        | K_INT32 
+                        | K_INT64 
+                        | K_FLOAT32 
+                        | K_FLOAT64 
+                        | K_ERROR 
+                        | K_UNSIGNED K_INT8 
+                        | K_UNSIGNED K_INT16 
+                        | K_UNSIGNED K_INT32 
+                        | K_UNSIGNED K_INT64 
+                        | K_UINT8 
+                        | K_UINT16 
+                        | K_UINT32 
+                        | K_UINT64 
+                        | nativeType STAR 
+                        | nativeType OPEN_BRACKET CLOSE_BRACKET 
+                        | nativeType OPEN_BRACKET int32 CLOSE_BRACKET 
+                        | nativeType OPEN_BRACKET int32 PLUS int32 CLOSE_BRACKET 
+                        | nativeType OPEN_BRACKET PLUS int32 CLOSE_BRACKET 
+                        | K_DECIMAL 
+                        | K_DATE 
+                        | K_BSTR 
+                        | K_LPSTR 
+                        | K_LPWSTR 
+                        | K_LPTSTR 
+                        | K_OBJECTREF 
+                        | K_IUNKNOWN  iidParamIndex 
+                        | K_IDISPATCH iidParamIndex 
+                        | K_STRUCT 
+                        | K_INTERFACE iidParamIndex 
+                        | K_SAFEARRAY variantType 
+                        | K_SAFEARRAY variantType COMMA compQstring 
+
+                        | K_INT 
+                        | K_UNSIGNED K_INT 
+                        | K_UINT 
+                        | K_NESTED K_STRUCT 
+                        | K_BYVALSTR 
+                        | K_ANSI K_BSTR 
+                        | K_TBSTR 
+                        | K_VARIANT K_BOOL 
+                        | K_METHOD 
+                        | K_AS K_ANY 
+                        | K_LPSTRUCT 
+                        | TYPEDEF_TS 
+                        ;
+
+iidParamIndex           : /* EMPTY */ 
+                        | OPEN_PARENS K_IIDPARAM ASSIGN int32 CLOSE_PARENS 
+                        ;
+
+variantType             : /* EMPTY */ 
+                        | K_NULL 
+                        | K_VARIANT 
+                        | K_CURRENCY 
+                        | K_VOID 
+                        | K_BOOL 
+                        | K_INT8 
+                        | K_INT16 
+                        | K_INT32 
+                        | K_INT64 
+                        | K_FLOAT32 
+                        | K_FLOAT64 
+                        | K_UNSIGNED K_INT8 
+                        | K_UNSIGNED K_INT16 
+                        | K_UNSIGNED K_INT32 
+                        | K_UNSIGNED K_INT64 
+                        | K_UINT8 
+                        | K_UINT16 
+                        | K_UINT32 
+                        | K_UINT64 
+                        | STAR 
+                        | variantType OPEN_BRACKET CLOSE_BRACKET 
+                        | variantType K_VECTOR 
+                        | variantType AMPERSAND 
+                        | K_DECIMAL 
+                        | K_DATE 
+                        | K_BSTR 
+                        | K_LPSTR 
+                        | K_LPWSTR 
+                        | K_IUNKNOWN 
+                        | K_IDISPATCH 
+                        | K_SAFEARRAY 
+                        | K_INT 
+                        | K_UNSIGNED K_INT 
+                        | K_UINT 
+                        | K_ERROR 
+                        | K_HRESULT 
+                        | K_CARRAY 
+                        | K_USERDEFINED 
+                        | K_RECORD 
+                        | K_FILETIME 
+                        | K_BLOB 
+                        | K_STREAM 
+                        | K_STORAGE 
+                        | K_STREAMED_OBJECT 
+                        | K_STORED_OBJECT 
+                        | K_BLOB_OBJECT 
+                        | K_CF 
+                        | K_CLSID 
+                        ;
+
+/*  Managed types for signatures  */
+type                    : K_CLASS className 
+                        | K_OBJECT 
+                        | K_VALUE K_CLASS className 
+                        | K_VALUETYPE className 
+                        | type OPEN_BRACKET CLOSE_BRACKET 
+                        | type OPEN_BRACKET bounds1 CLOSE_BRACKET 
+                        | type AMPERSAND 
+                        | type STAR 
+                        | type K_PINNED 
+                        | type K_MODREQ OPEN_PARENS typeSpec CLOSE_PARENS 
+                        | type K_MODOPT OPEN_PARENS typeSpec CLOSE_PARENS 
+                        | methodSpec callConv type STAR OPEN_PARENS sigArgs0 CLOSE_PARENS 
+                        | type OPEN_ANGLE_BRACKET tyArgs1 CLOSE_ANGLE_BRACKET 
+                        | BANG BANG int32 
+                        | BANG int32 
+                        | BANG BANG dottedName 
+                        | BANG dottedName 
+                        | K_TYPEDREF 
+                        | K_VOID 
+                        | K_NATIVE K_INT 
+                        | K_NATIVE K_UNSIGNED K_INT 
+                        | K_NATIVE K_UINT 
+                        | simpleType 
+                        | ELIPSIS type 
+                        ;
+
+simpleType              : K_CHAR 
+                        | K_STRING 
+                        | K_BOOL 
+                        | K_INT8 
+                        | K_INT16 
+                        | K_INT32 
+                        | K_INT64 
+                        | K_FLOAT32 
+                        | K_FLOAT64 
+                        | K_UNSIGNED K_INT8 
+                        | K_UNSIGNED K_INT16 
+                        | K_UNSIGNED K_INT32 
+                        | K_UNSIGNED K_INT64 
+                        | K_UINT8 
+                        | K_UINT16 
+                        | K_UINT32 
+                        | K_UINT64 
+                        | TYPEDEF_TS 
+                        ;
+
+bounds1                 : bound 
+                        | bounds1 COMMA bound 
+                        ;
+
+bound                   : /* EMPTY */ 
+                        | ELIPSIS 
+                        | int32 
+                        | int32 ELIPSIS int32 
+                        | int32 ELIPSIS 
+                        ;
+
+/*  Security declarations  */
+secDecl                 : D_PERMISSION secAction typeSpec OPEN_PARENS nameValPairs CLOSE_PARENS 
+                        | D_PERMISSION secAction typeSpec ASSIGN OPEN_BRACE customBlobDescr CLOSE_BRACE 
+                        | D_PERMISSION secAction typeSpec 
+                        | psetHead bytes CLOSE_PARENS 
+                        | D_PERMISSIONSET secAction compQstring 
+                        | D_PERMISSIONSET secAction ASSIGN OPEN_BRACE secAttrSetBlob CLOSE_BRACE 
+                        ;
+
+secAttrSetBlob          : /* EMPTY */ 
+                        | secAttrBlob 
+                        | secAttrBlob COMMA secAttrSetBlob 
+                        ;
+
+secAttrBlob             : typeSpec ASSIGN OPEN_BRACE customBlobNVPairs CLOSE_BRACE 
+                        | K_CLASS SQSTRING ASSIGN OPEN_BRACE customBlobNVPairs CLOSE_BRACE 
+                        ;
+
+psetHead                : D_PERMISSIONSET secAction ASSIGN OPEN_PARENS 
+                        | D_PERMISSIONSET secAction K_BYTEARRAY OPEN_PARENS 
+                        ;
+
+nameValPairs            : nameValPair 
+                        | nameValPair COMMA nameValPairs 
+                        ;
+
+nameValPair             : compQstring ASSIGN caValue 
+                        ;
+
+truefalse               : K_TRUE 
+                        | K_FALSE 
+                        ;
+
+caValue                 : truefalse 
+                        | int32 
+                        | K_INT32 OPEN_PARENS int32 CLOSE_PARENS 
+                        | compQstring 
+                        | className OPEN_PARENS K_INT8 COLON int32 CLOSE_PARENS 
+                        | className OPEN_PARENS K_INT16 COLON int32 CLOSE_PARENS 
+                        | className OPEN_PARENS K_INT32 COLON int32 CLOSE_PARENS 
+                        | className OPEN_PARENS int32 CLOSE_PARENS 
+                        ;
+
+secAction               : K_REQUEST 
+                        | K_DEMAND 
+                        | K_ASSERT 
+                        | K_DENY 
+                        | K_PERMITONLY 
+                        | K_LINKCHECK 
+                        | K_INHERITCHECK 
+                        | K_REQMIN 
+                        | K_REQOPT 
+                        | K_REQREFUSE 
+                        | K_PREJITGRANT 
+                        | K_PREJITDENY 
+                        | K_NONCASDEMAND 
+                        | K_NONCASLINKDEMAND 
+                        | K_NONCASINHERITANCE 
+                        ;
+
+/*  External source declarations  */
+esHead                  : D_LINE 
+                        | P_LINE 
+                        ;
+
+extSourceSpec           : esHead int32 SQSTRING 
+                        | esHead int32 
+                        | esHead int32 COLON int32 SQSTRING 
+                        | esHead int32 COLON int32 
+                        | esHead int32 COLON int32 COMMA int32 SQSTRING 
+                        | esHead int32 COLON int32 COMMA int32 
+                        | esHead int32 COMMA int32 COLON int32 SQSTRING 
+                        | esHead int32 COMMA int32 COLON int32 
+                        | esHead int32 COMMA int32 COLON int32 COMMA int32 SQSTRING 
+                        | esHead int32 COMMA int32 COLON int32 COMMA int32 
+                        | esHead int32 QSTRING 
+                        ;
+
+/*  Manifest declarations  */
+fileDecl                : D_FILE fileAttr dottedName fileEntry hashHead bytes CLOSE_PARENS fileEntry 
+                        | D_FILE fileAttr dottedName fileEntry 
+                        ;
+
+fileAttr                : /* EMPTY */ 
+                        | fileAttr K_NOMETADATA 
+                        ;
+
+fileEntry               : /* EMPTY */ 
+                        | D_ENTRYPOINT 
+                        ;
+
+hashHead                : D_HASH ASSIGN OPEN_PARENS 
+                        ;
+
+assemblyHead            : D_ASSEMBLY asmAttr dottedName 
+                        ;
+
+asmAttr                 : /* EMPTY */ 
+                        | asmAttr K_RETARGETABLE 
+                        | asmAttr K_WINDOWSRUNTIME 
+                        | asmAttr K_NOPLATFORM 
+                        | asmAttr K_LEGACY K_LIBRARY 
+                        | asmAttr K_CIL 
+                        | asmAttr K_X86 
+                        | asmAttr K_AMD64 
+                        | asmAttr K_ARM 
+                        | asmAttr K_ARM64 
+                        ;
+
+assemblyDecls           : /* EMPTY */
+                        | assemblyDecls assemblyDecl
+                        ;
+
+assemblyDecl            : D_HASH K_ALGORITHM int32 
+                        | secDecl
+                        | asmOrRefDecl
+                        ;
+
+intOrWildcard           : int32 
+                        | STAR 
+                        ;
+
+asmOrRefDecl            : publicKeyHead bytes CLOSE_PARENS 
+                        | D_VER intOrWildcard COLON intOrWildcard COLON intOrWildcard COLON intOrWildcard 
+                        | D_LOCALE compQstring 
+                        | localeHead bytes CLOSE_PARENS 
+                        | customAttrDecl
+                        | compControl
+                        ;
+
+publicKeyHead           : D_PUBLICKEY ASSIGN OPEN_PARENS 
+                        ;
+
+publicKeyTokenHead      : D_PUBLICKEYTOKEN ASSIGN OPEN_PARENS 
+                        ;
+
+localeHead              : D_LOCALE ASSIGN OPEN_PARENS 
+                        ;
+
+assemblyRefHead         : D_ASSEMBLY K_EXTERN asmAttr dottedName 
+                        | D_ASSEMBLY K_EXTERN asmAttr dottedName K_AS dottedName 
+                        ;
+
+assemblyRefDecls        : /* EMPTY */
+                        | assemblyRefDecls assemblyRefDecl
+                        ;
+
+assemblyRefDecl         : hashHead bytes CLOSE_PARENS 
+                        | asmOrRefDecl
+                        | publicKeyTokenHead bytes CLOSE_PARENS 
+                        | K_AUTO 
+                        ;
+
+exptypeHead             : D_CLASS K_EXTERN exptAttr dottedName 
+                        ;
+
+exportHead              : D_EXPORT exptAttr dottedName   /* deprecated */ 
+                        ;
+
+exptAttr                : /* EMPTY */ 
+                        | exptAttr K_PRIVATE 
+                        | exptAttr K_PUBLIC 
+                        | exptAttr K_FORWARDER 
+                        | exptAttr K_NESTED K_PUBLIC 
+                        | exptAttr K_NESTED K_PRIVATE 
+                        | exptAttr K_NESTED K_FAMILY 
+                        | exptAttr K_NESTED K_ASSEMBLY 
+                        | exptAttr K_NESTED K_FAMANDASSEM 
+                        | exptAttr K_NESTED K_FAMORASSEM 
+                        ;
+
+exptypeDecls            : /* EMPTY */
+                        | exptypeDecls exptypeDecl
+                        ;
+
+exptypeDecl             : D_FILE dottedName 
+                        | D_CLASS K_EXTERN slashedName 
+                        | D_ASSEMBLY K_EXTERN dottedName 
+                        | K_MDTOKEN OPEN_PARENS int32 CLOSE_PARENS 
+                        | D_CLASS  int32 
+                        | customAttrDecl
+                        | compControl
+                        ;
+
+manifestResHead         : D_MRESOURCE manresAttr dottedName 
+                        | D_MRESOURCE manresAttr dottedName K_AS dottedName 
+                        ;
+
+manresAttr              : /* EMPTY */ 
+                        | manresAttr K_PUBLIC 
+                        | manresAttr K_PRIVATE 
+                        ;
+
+manifestResDecls        : /* EMPTY */
+                        | manifestResDecls manifestResDecl
+                        ;
+
+manifestResDecl         : D_FILE dottedName K_AT int32 
+                        | D_ASSEMBLY K_EXTERN dottedName 
+                        | customAttrDecl
+                        | compControl
+                        ;
+
+%%
+}
