@@ -2,6 +2,7 @@ package main
 
 import Cil.CilLexer
 import Cil.CilParser
+import com.oracle.truffle.api.Truffle
 import guru.nidi.graphviz.attribute.Color
 import guru.nidi.graphviz.engine.Format
 import org.antlr.v4.runtime.CharStreams
@@ -32,7 +33,7 @@ fun fromTreeToGraph(tree: Pair<String, LinkedHashMap<String, Block>>) {
                 listOf(node) + graphNodes(it, nextNode)
             }
         }else{
-            listOf()
+            listOf(node)
         }
     }
 
@@ -73,9 +74,16 @@ fun main() {
     var stack = Stack<Long>();
     var locals = Array<Long>(2) { 0 };
 
-    fromTreeToGraph(
-        appDomain.entryPoint.tree
-    )
+
+    val code = appDomain.entryPoint.tree
+
+    fromTreeToGraph(code)
+
+
+
+//
+//    var target = Truffle.getRuntime().createCallTarget()
+//    target.call()
 
     println(rootVisitor)
 }
