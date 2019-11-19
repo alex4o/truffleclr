@@ -2,6 +2,8 @@ package main
 
 import Cil.CilLexer
 import Cil.CilParser
+import guru.nidi.graphviz.attribute.Color
+import guru.nidi.graphviz.engine.Format
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.tree.ParseTree
@@ -9,12 +11,52 @@ import parser.cil.DeclVisitor
 import parser.generic.AppDomain
 import java.io.FileReader
 import java.util.*
+import java.io.File
+import guru.nidi.graphviz.engine.Graphviz
+import guru.nidi.graphviz.model.Factory.mutGraph
+import guru.nidi.graphviz.model.Factory.mutNode
+import guru.nidi.graphviz.model.MutableGraph
+import guru.nidi.graphviz.model.MutableNode
+import parser.generic.Block
+import kotlin.collections.LinkedHashMap
 
+
+
+fun fromTreeToGraph(tree: Pair<String, LinkedHashMap<String, Block>>) {
+    fun graphNodes(target: String, node: MutableNode): List<MutableNode> {
+        val block = tree.second[target]!!
+        return if(block.targets.size > 0) {
+            block.targets.flatMap {
+                val nextNode = mutNode(it)
+                node.addLink(nextNode)
+                listOf(node) + graphNodes(it, nextNode)
+            }
+        }else{
+            listOf()
+        }
+    }
+
+
+    val nodes= mutNode("a").add(Color.RED).addLink(mutNode("b"))
+
+    val g = mutGraph("example1").setDirected(true)
+    graphNodes(tree.first, mutNode(tree.first)).forEach { g.add(it) }
+
+    Graphviz.fromGraph(g).render(Format.XDOT).toFile(File("demo.xdot"))
+    "xdot demo.xdot".runCommand()
+}
+
+fun String.runCommand() {
+    ProcessBuilder(*split(" ").toTypedArray())
+        .directory(File("."))
+        .start()
+}
 
 fun main() {
+
     var appDomain = AppDomain()
 
-    var reader = FileReader("./test/test.il");
+    var reader = FileReader("./test/cond.il");
 
     var stream = CharStreams.fromReader(reader, "useless");
     var lexer = CilLexer(stream)
@@ -31,20 +73,9 @@ fun main() {
     var stack = Stack<Long>();
     var locals = Array<Long>(2) { 0 };
 
-    for(instruction in appDomain.entryPoint.instructions) {
-        when(instruction.instruction) {
-            "nop" -> { }
-            "ldc.i4.1" -> stack.push(1)
-            "stloc.0" -> locals[0] = stack.pop()
-            "ldc.i4.3" -> stack.push(3)
-            "stloc.1" -> locals[1] = stack.pop()
-            "ldloc.0" -> stack.push(locals[0])
-            "ldloc.1" -> stack.push(locals[1])
-            "add" -> stack.push(stack.pop() + stack.pop())
-            "call" -> println(stack.pop())
-            "ret" -> { }
-        }
-    }
+    fromTreeToGraph(
+        appDomain.entryPoint.tree
+    )
 
     println(rootVisitor)
 }
