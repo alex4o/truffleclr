@@ -4,6 +4,8 @@ import Cil.CilLexer
 import Cil.CilParser
 import com.oracle.truffle.api.Truffle
 import guru.nidi.graphviz.attribute.Color
+import guru.nidi.graphviz.attribute.Label
+import guru.nidi.graphviz.attribute.Shape
 import guru.nidi.graphviz.engine.Format
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
@@ -21,14 +23,16 @@ import guru.nidi.graphviz.model.MutableNode
 import parser.generic.Block
 import kotlin.collections.LinkedHashMap
 
-
-
 fun fromTreeToGraph(tree: Pair<String, LinkedHashMap<String, Block>>) {
     fun graphNodes(target: String, node: MutableNode): List<MutableNode> {
+
         val block = tree.second[target]!!
+        node.attrs().add(Label.html("<b>$target</b><br/>${block.instructions.joinToString("<br align='left'/>", postfix = "<br align='left'/>")}").justify(Label.Justification.LEFT))
+        node.attrs().add(Shape.RECTANGLE)
         return if(block.targets.size > 0) {
             block.targets.flatMap {
                 val nextNode = mutNode(it)
+
                 node.addLink(nextNode)
                 listOf(node) + graphNodes(it, nextNode)
             }
@@ -37,12 +41,11 @@ fun fromTreeToGraph(tree: Pair<String, LinkedHashMap<String, Block>>) {
         }
     }
 
-
-    val nodes= mutNode("a").add(Color.RED).addLink(mutNode("b"))
+    val nodes = mutNode("a").add(Color.RED).addLink(mutNode("b"))
 
     val g = mutGraph("example1").setDirected(true)
     graphNodes(tree.first, mutNode(tree.first)).forEach { g.add(it) }
-
+    // Basic block
     Graphviz.fromGraph(g).render(Format.XDOT).toFile(File("demo.xdot"))
     "xdot demo.xdot".runCommand()
 }
@@ -52,6 +55,13 @@ fun String.runCommand() {
         .directory(File("."))
         .start()
 }
+
+/*
+ Evidance that some work is done, start with overview (what is the problem, why is it worth tackeling)
+ Plan of things to do, priorities, and planned time estimates.
+
+ Tell what does not work
+*/
 
 fun main() {
 
@@ -74,12 +84,9 @@ fun main() {
     var stack = Stack<Long>();
     var locals = Array<Long>(2) { 0 };
 
-
     val code = appDomain.entryPoint.tree
 
     fromTreeToGraph(code)
-
-
 
 //
 //    var target = Truffle.getRuntime().createCallTarget()

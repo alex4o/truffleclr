@@ -15,7 +15,7 @@ abstract class ReadStackPtr() : Node() {
     @CompilerDirectives.CompilationFinal
     protected var slot: FrameSlot? = null
 
-    public abstract fun execute(frame: VirtualFrame): Any
+    public abstract fun execute(frame: VirtualFrame): Long
 
     @Specialization(guards = ["isLong(frame)"])
     protected fun readLong(frame: VirtualFrame): Long {

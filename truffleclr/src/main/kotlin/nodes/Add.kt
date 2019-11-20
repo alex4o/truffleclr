@@ -3,9 +3,12 @@ package nodes
 import com.oracle.truffle.api.frame.VirtualFrame
 import com.oracle.truffle.api.nodes.Node
 
-class Add: InstructionNode() {
-
+class Add(@Child var readStackPtr: ReadStackPtr, @Child var writeStackPtr: WriteStackPtr): InstructionNode() {
     override fun execute(env: VirtualFrame, stack: Array<Long>, locals: Array<Long>): Any? {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        val ptr = readStackPtr.execute(env)
+        val res = stack[ptr.toInt()] + stack[(ptr - 1).toInt()]
+        stack[ptr.toInt() - 1] = res
+
+        return writeStackPtr.execute(env, ptr)
     }
 }
