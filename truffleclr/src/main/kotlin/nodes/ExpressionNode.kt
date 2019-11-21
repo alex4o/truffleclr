@@ -5,6 +5,6 @@ import com.oracle.truffle.api.nodes.Node
 import com.oracle.truffle.api.nodes.NodeInfo
 
 @NodeInfo(language = "truffleclr", description = "", shortName = "")
-abstract class InstructionNode: Node() {
-    abstract fun execute(env: VirtualFrame, stack: Array<Long>, locals: Array<Long>): Any?
+abstract class ExpressionNode: Node() {
+    abstract fun execute(env: VirtualFrame): Any?
 }

@@ -18,42 +18,48 @@ class Method(var name: String, var arguments: List<String>) {
 
             val blocks = linkedMapOf<String, Block>()
 
-            return if(instructions.isNotEmpty()) {
+
+
+            return if (instructions.isNotEmpty()) {
                 val entrypoint = labels.keys.first()
                 var blockName = entrypoint
                 var block = Block()
                 blocks.put(blockName, block)
 
+                fun nextBlock(name: String) {
+                    block = Block()
+                    blockName = name
+                    block.instructions = mutableListOf()
+                    block.targets = mutableListOf()
+                    blocks.put(blockName, block)
+                }
+
                 for ((index, instruction) in instructions.withIndex()) {
                     if (block.instructions.size != 0 && jumpLabelsLocations.containsKey(index)) {
                         block.targets.addAll(listOf(indexLabels[index]!!))
-
-                        block = Block()
-                        blockName = indexLabels[index]!!
-                        block.instructions = mutableListOf()
-                        block.targets = mutableListOf()
-                        blocks.put(blockName, block)
-
-
+                        nextBlock(indexLabels[index] ?: error("No ret instruction"))
                     }
 
                     block.instructions.add(instruction)
 
-                    if(instruction is InstructionBrTarget) {
-                        block.targets.addAll(listOf(indexLabels[index + 1]!!, instruction.target))
+                    if (instruction is InstructionBrTarget) {
+                        if(instruction.instruction == "br" || instruction.instruction == "br.s" || instruction.instruction.startsWith("leave")) {
+                            block.targets.addAll(listOf(instruction.target))
+                        }else{
+                            block.targets.addAll(listOf(indexLabels[index + 1]!!, instruction.target))
+                        }
+                        nextBlock(indexLabels[index + 1] ?: error("No ret instruction"))
+                    }
 
-
-                        block = Block()
-                        blockName = indexLabels[index + 1] ?: error("No ret instruction")
-                        block.instructions = mutableListOf()
-                        block.targets = mutableListOf()
-                        blocks.put(blockName, block)
-
+                    if (instruction.instruction == "ret") {
+                        if (index != instructions.lastIndex) {
+                            nextBlock(indexLabels[index + 1] ?: error("No ret instruction"))
+                        }
                     }
                 }
 
                 Pair(entrypoint, blocks)
-            }else{
+            } else {
                 Pair("", blocks)
             }
         }

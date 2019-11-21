@@ -1,15 +1,15 @@
 package nodes
 
 import com.oracle.truffle.api.frame.VirtualFrame
-import kotlin.system.exitProcess
+import com.oracle.truffle.api.nodes.Node
 
-class Return(): ExpressionNode() {
+class ReturnValue(@Child var expr: Node): ExpressionNode() {
     override fun execute(env: VirtualFrame): Any? {
-        exitProcess(0)
         return null
     }
 
     override fun toString(): String {
-        return "return"
+        return "return $expr"
     }
+
 }

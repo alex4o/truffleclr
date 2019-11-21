@@ -19,6 +19,7 @@ abstract class ReadStackPtr() : Node() {
 
     @Specialization(guards = ["isLong(frame)"])
     protected fun readLong(frame: VirtualFrame): Long {
+
         return FrameUtil.getLongSafe(frame, slot)
     }
 
