@@ -4,7 +4,7 @@ import com.oracle.truffle.api.frame.VirtualFrame
 import com.oracle.truffle.api.nodes.ExplodeLoop
 import com.oracle.truffle.api.nodes.Node
 
-class Block(@Children val nodes: Array<ExpressionNode>): ExpressionNode() {
+class Block(@Children var nodes: Array<ExpressionNode> = arrayOf()): ExpressionNode() {
     @ExplodeLoop
     override fun execute(env: VirtualFrame): Any? {
         for(node in nodes) {
@@ -14,6 +14,6 @@ class Block(@Children val nodes: Array<ExpressionNode>): ExpressionNode() {
     }
 
     override fun toString(): String {
-        return nodes.joinToString("\n")
+        return nodes.joinToString("\n", postfix = "\n")
     }
 }

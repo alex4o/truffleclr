@@ -1,5 +1,8 @@
 package parser.generic
 
+import com.oracle.truffle.api.frame.FrameDescriptor
+import com.oracle.truffle.api.frame.FrameSlotKind
+import nodes.Block
 import parser.generic.instruction.Instruction
 import parser.generic.instruction.InstructionBrTarget
 
@@ -11,27 +14,41 @@ class Method(var name: String, var arguments: List<String>) {
     var labels = linkedMapOf<String, Int>()
     var returnType: String = ""
 
-    val tree: Pair<String, LinkedHashMap<String, Block>>
+    var compiled = mutableMapOf<String, Block>()
+
+    val frameDescriptor = FrameDescriptor();
+    val frameSlots by lazy {
+        locals.mapIndexed { index, local ->
+            val kind = when(local) {
+                "int32" -> FrameSlotKind.Int
+                "int64" -> FrameSlotKind.Long
+                "bool" -> FrameSlotKind.Boolean
+                else -> FrameSlotKind.Illegal
+            }
+            frameDescriptor.addFrameSlot(index, kind)
+        }
+    }
+
+
+    val graph: Graph
         get() {
             val indexLabels = labels.map { Pair(it.value, it.key) }.toMap()
             val jumpLabelsLocations = jumpLabels.map { Pair(labels[it]!!, it) }.toMap()
 
-            val blocks = linkedMapOf<String, Block>()
+            val blocks = linkedMapOf<String, InstructionBlock>()
 
 
 
             return if (instructions.isNotEmpty()) {
                 val entrypoint = labels.keys.first()
-                var blockName = entrypoint
-                var block = Block()
-                blocks.put(blockName, block)
+                var block = InstructionBlock(entrypoint)
+                blocks.put(block.name, block)
 
                 fun nextBlock(name: String) {
-                    block = Block()
-                    blockName = name
+                    block = InstructionBlock(name)
                     block.instructions = mutableListOf()
-                    block.targets = mutableListOf()
-                    blocks.put(blockName, block)
+                    block.targets = mutableSetOf()
+                    blocks.put(block.name, block)
                 }
 
                 for ((index, instruction) in instructions.withIndex()) {
@@ -43,9 +60,12 @@ class Method(var name: String, var arguments: List<String>) {
                     block.instructions.add(instruction)
 
                     if (instruction is InstructionBrTarget) {
-                        if(instruction.instruction == "br" || instruction.instruction == "br.s" || instruction.instruction.startsWith("leave")) {
+                        if (instruction.instruction == "br" || instruction.instruction == "br.s" || instruction.instruction.startsWith(
+                                "leave"
+                            )
+                        ) {
                             block.targets.addAll(listOf(instruction.target))
-                        }else{
+                        } else {
                             block.targets.addAll(listOf(indexLabels[index + 1]!!, instruction.target))
                         }
                         nextBlock(indexLabels[index + 1] ?: error("No ret instruction"))
@@ -58,9 +78,9 @@ class Method(var name: String, var arguments: List<String>) {
                     }
                 }
 
-                Pair(entrypoint, blocks)
+                Graph(entrypoint, blocks, this)
             } else {
-                Pair("", blocks)
+                Graph("", blocks, this)
             }
         }
 }

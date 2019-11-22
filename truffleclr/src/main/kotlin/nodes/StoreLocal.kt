@@ -2,8 +2,14 @@ package nodes
 
 import com.oracle.truffle.api.frame.VirtualFrame
 
-class StoreLocal: ExpressionNode() {
+class StoreLocal(@Child var expressionNode: ExpressionNode, val index: Int, @Child var write: WriteLocal): ExpressionNode() {
     override fun execute(env: VirtualFrame): Any? {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        return write.execute(env, expressionNode.execute(env)!!)
     }
+
+    override fun toString(): String {
+        return "local$index = $expressionNode"
+    }
+
+
 }
