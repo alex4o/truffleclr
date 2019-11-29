@@ -7,22 +7,22 @@ import com.oracle.truffle.api.nodes.Node
 class BoolBranch(
     @Child var a: ExpressionNode,
     @CompilerDirectives.CompilationFinal val cond: Boolean,
-    @CompilerDirectives.CompilationFinal var trueCond: Int,
-    @CompilerDirectives.CompilationFinal var falseCond: Int,
+    @CompilerDirectives.CompilationFinal var same: Int,
+    @CompilerDirectives.CompilationFinal var diff: Int,
     var label: String
 ) : ControlFlowNode() {
 
     override fun executeControlFlow(env: VirtualFrame): Int {
         val adata = a.execute(env) as Boolean
         return if (adata == cond) {
-            return trueCond
+            return same
         } else {
-            return falseCond
+            return diff
         }
 
     }
 
     override fun toString(): String {
-        return "if($a == $cond) goto $label"
+        return "if($a == $cond) goto $label ($same, $diff)"
     }
 }

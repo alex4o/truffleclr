@@ -1155,7 +1155,7 @@ fun Graph.getNodes(root: Int): Block {
 
     result.controlFlowNode = res.takeLast(1).first()!! as ControlFlowNode
 
-    result.nodes = res.map { it!! }.toTypedArray()
+    result.nodes = res.dropLast(1).map { it!! }.toTypedArray()
     return result
 //        println("")
 }

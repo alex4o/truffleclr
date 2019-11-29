@@ -14,10 +14,10 @@ class Block(var id: Int, var name: String): ExpressionNode() {
         for(node in nodes) {
             node.execute(env)
         }
-        return controlFlowNode.executeControlFlow(env)
+        return null
     }
 
     override fun toString(): String {
-        return nodes.joinToString("\n", postfix = "\n")
+        return nodes.joinToString("\n", postfix = "\n") + controlFlowNode;
     }
 }

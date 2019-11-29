@@ -14,7 +14,6 @@ class DispatchNode(@Children var blocks: Array<Block>) : ExpressionNode() {
     override fun execute(env: VirtualFrame): Any? {
         CompilerAsserts.compilationConstant<Int>(blocks.size)
 
-
         var basicBlockIndex = 0
         var backEdgeCount = 0
 
@@ -24,7 +23,7 @@ class DispatchNode(@Children var blocks: Array<Block>) : ExpressionNode() {
 
             block.execute(env)
 
-            var successor = block.controlFlowNode.executeControlFlow(env)
+            val successor = block.controlFlowNode.executeControlFlow(env)
             if(successor <= basicBlockIndex) {
                 backEdgeCount += 1
             }
