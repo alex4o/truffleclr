@@ -229,20 +229,12 @@ class WordParser(val stack: Stack<Int>) {
 }
 
 
-class Repeat(private val count: Int, @Child var program: MyNode) : Node(), RepeatingNode {
+class Repeat(private var count: Int, @Child var program: MyNode) : Node(), RepeatingNode {
 
     override fun executeRepeating(frame: VirtualFrame): Boolean {
         program.execute(frame);
-//        count -= 1
-        print()
+        count -= 1
         return count > 0
-    }
-
-    @CompilerDirectives.TruffleBoundary
-    fun print() {
-        print(this)
-        print(": ")
-        println(count)
     }
 }
 

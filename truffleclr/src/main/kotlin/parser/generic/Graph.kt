@@ -9,19 +9,21 @@ import guru.nidi.graphviz.model.Factory.mutGraph
 import guru.nidi.graphviz.model.Factory.mutNode
 import guru.nidi.graphviz.model.MutableNode
 import main.getNodes
-import parser.generic.instruction.InstructionBrTarget
 import java.io.File
 import java.util.*
 import kotlin.collections.LinkedHashMap
 
-class Graph(var root: String, var nodes: LinkedHashMap<String, InstructionBlock>, var method: Method) {
+class Graph(var nodes: List<InstructionBlock>, var method: Method) {
+
+    var root = 0
 
     fun visualise() {
-        val nodes = nodes.map { Pair(it.key, mutNode(it.key)) }.toMap()
-        val visited = mutableMapOf<String, MutableNode>()
-        val stack = Stack<Pair<String, MutableNode>>()
-        stack.push(Pair(root, nodes.getValue(root)))
-        var prev = Pair<String, MutableNode>("", mutNode(""))
+
+        val nodes = nodes.mapIndexed { index, node  -> Pair(index, mutNode(node.label)) }.toMap()
+        val visited = mutableMapOf<Int, MutableNode>()
+        val stack = Stack<Pair<Int, MutableNode>>()
+        stack.push(Pair(0, nodes.getValue(0)))
+        var prev = Pair<Int, MutableNode>(0, mutNode(""))
         while (stack.isNotEmpty()) {
 
             val (target, node) = stack.pop()
@@ -33,7 +35,7 @@ class Graph(var root: String, var nodes: LinkedHashMap<String, InstructionBlock>
 //                var p = path(target);
 //                p.forEach { nodes[it]!!.attrs().add(Color.PINK) }
 //                println(Pair(target, p))
-                if(dominators(prev.first).contains(target)) {
+                if(dominators( this.nodes[prev.first].label ).contains( this.nodes[target].label ) ) {
                     visitedNode.attrs().add(Color.GREEN)
                     block.loopHeader = true
                 }
@@ -52,7 +54,7 @@ class Graph(var root: String, var nodes: LinkedHashMap<String, InstructionBlock>
                 .replace("=<", "=&lt;")
                 .replace("\n", "<br align='left'/>")
             node.attrs().add(
-                Label.html("<b>$target</b><br/>${nodesText}").justify(
+                Label.html("<b>$target: ${this.nodes[target]!!.label}</b><br/>${nodesText}").justify(
                     Label.Justification.LEFT
                 )
             )
@@ -84,8 +86,8 @@ class Graph(var root: String, var nodes: LinkedHashMap<String, InstructionBlock>
     }
 
     fun dominators(node: String): Set<String> {
-        if(node == root) {
-            return setOf(root)
+        if(node == nodes[root].label) {
+            return setOf(nodes[root].label)
         }
         return dominators.tree.filter { it.value.contains(node) }.map { setOf(it.key) + dominators(it.key) }.reduce { acc, current -> acc + current }
     }
@@ -115,7 +117,7 @@ class LengauerTarjan(val graph: Graph) {
             vertex[N] = n
             parent[n] = p
             N = N + 1
-            for (w in n.targets.map { graph.nodes.getValue(it) }) {
+            for (w in n.targets.map { graph.nodes[it] }) {
                 if (visited.contains(w)) {
                     continue
                 }
@@ -142,7 +144,7 @@ class LengauerTarjan(val graph: Graph) {
     }
 
     fun compute() {
-        for (block in graph.nodes.values) {
+        for (block in graph.nodes) {
             bucket[block] = mutableSetOf()
             dfnum[block] = 0
             semi[block] = null
@@ -151,14 +153,14 @@ class LengauerTarjan(val graph: Graph) {
             samedom[block] = null
         }
 
-        dfs(null, graph.nodes.getValue(graph.root))
+        dfs(null, graph.nodes[0 /* 0 == root */])
         for (i in N - 1 downTo 1) {
             val n = vertex[i]!!
             val p = parent[n]!!
             var s = p
 
             var ts: InstructionBlock? = null
-            for (v in graph.nodes.values.filter { it.targets.contains(n.name) }) {
+            for (v in graph.nodes.filter { it.targets.contains(n.index) }) {
                 if (dfnum[v]!! <= dfnum[n]!!) {
                     ts = v
                 } else {
@@ -189,12 +191,12 @@ class LengauerTarjan(val graph: Graph) {
         }
 
         for ((key, value) in idom) {
-            tree.put(key.name, mutableSetOf())
+            tree.put(key.label, mutableSetOf())
         }
 
         for ((key, value) in idom) {
             if (value != null) {
-                tree[value.name]!!.add(key.name)
+                tree[value.label]!!.add(key.label)
             }
         }
     }
@@ -202,10 +204,10 @@ class LengauerTarjan(val graph: Graph) {
 
     fun visualise() {
         val nodes = tree.keys.map { Pair(it, mutNode(it)) }.toMap()
-        val visited = mutableMapOf<String, MutableNode>()
-        val stack = Stack<Pair<String, MutableNode>>()
-        stack.push(Pair(graph.root, nodes.getValue(graph.root)))
-        var prev = Pair<String, MutableNode>("", mutNode(""))
+        val visited = mutableMapOf<Int, MutableNode>()
+        val stack = Stack<Pair<Int, MutableNode>>()
+        stack.push(Pair(0, nodes.getValue(graph.nodes[graph.root].label)))
+        var prev = Pair<Int, MutableNode>(0, mutNode(""))
         while (stack.isNotEmpty()) {
 
             val (target, node) = stack.pop()
@@ -218,12 +220,13 @@ class LengauerTarjan(val graph: Graph) {
 
             node.attrs().add(Shape.RECTANGLE)
             visited.put(target, node)
-            if (tree.getValue(target).size > 0) {
-                tree.getValue(target).forEach {
+            val targetLabel = graph.nodes[target].label
+            if (tree.getValue(targetLabel).size > 0) {
+                tree.getValue(targetLabel).forEach {
                     val nextNode = nodes.getValue(it)
                     node.addLink(nextNode)
-                    if (it != target) {
-                        stack.push(Pair(it, nextNode))
+                    if (it != targetLabel) {
+                        stack.push(Pair(graph.method.blockByLabel[it]!!.index, nextNode))
                     }
                 }
             }

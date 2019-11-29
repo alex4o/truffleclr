@@ -14,7 +14,7 @@ class Method(var name: String, var arguments: List<String>) {
     var labels = linkedMapOf<String, Int>()
     var returnType: String = ""
 
-    var compiled = mutableMapOf<String, Block>()
+    var compiled = mutableMapOf<Int, Block>()
 
     val frameDescriptor = FrameDescriptor();
     val frameSlots by lazy {
@@ -29,31 +29,35 @@ class Method(var name: String, var arguments: List<String>) {
         }
     }
 
+    val blockByLabel = mutableMapOf<String, InstructionBlock>()
 
     val graph: Graph
         get() {
             val indexLabels = labels.map { Pair(it.value, it.key) }.toMap()
             val jumpLabelsLocations = jumpLabels.map { Pair(labels[it]!!, it) }.toMap()
 
-            val blocks = linkedMapOf<String, InstructionBlock>()
-
+            val blocks = ArrayList<InstructionBlock>()
 
 
             return if (instructions.isNotEmpty()) {
                 val entrypoint = labels.keys.first()
-                var block = InstructionBlock(entrypoint)
-                blocks.put(block.name, block)
+
+                lateinit var block: InstructionBlock
 
                 fun nextBlock(name: String) {
-                    block = InstructionBlock(name)
+                    block = InstructionBlock(name, blocks.size)
+                    blocks.add(block)
+
                     block.instructions = mutableListOf()
                     block.targets = mutableSetOf()
-                    blocks.put(block.name, block)
+                    blockByLabel.put(block.label, block)
                 }
+
+                nextBlock(entrypoint)
 
                 for ((index, instruction) in instructions.withIndex()) {
                     if (block.instructions.size != 0 && jumpLabelsLocations.containsKey(index)) {
-                        block.targets.addAll(listOf(indexLabels[index]!!))
+                        block.targetLabels.addAll(listOf(indexLabels[index]!!))
                         nextBlock(indexLabels[index] ?: error("No ret instruction"))
                     }
 
@@ -64,9 +68,9 @@ class Method(var name: String, var arguments: List<String>) {
                                 "leave"
                             )
                         ) {
-                            block.targets.addAll(listOf(instruction.target))
+                            block.targetLabels.addAll(listOf(instruction.target))
                         } else {
-                            block.targets.addAll(listOf(indexLabels[index + 1]!!, instruction.target))
+                            block.targetLabels.addAll(listOf(indexLabels[index + 1]!!, instruction.target))
                         }
                         nextBlock(indexLabels[index + 1] ?: error("No ret instruction"))
                     }
@@ -78,9 +82,13 @@ class Method(var name: String, var arguments: List<String>) {
                     }
                 }
 
-                Graph(entrypoint, blocks, this)
+                for( block in blocks ) {
+                    block.targets = block.targetLabels.map { blockByLabel.getValue(it).index }.toHashSet()
+                }
+
+                Graph(blocks, this)
             } else {
-                Graph("", blocks, this)
+                Graph(blocks, this)
             }
         }
 }

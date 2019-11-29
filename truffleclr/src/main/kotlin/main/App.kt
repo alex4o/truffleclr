@@ -4,6 +4,7 @@ import Cil.CilLexer
 import Cil.CilParser
 import com.oracle.truffle.api.Truffle
 import com.oracle.truffle.api.frame.FrameDescriptor
+import nodes.DispatchNode
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import parser.cil.DeclVisitor
@@ -45,10 +46,6 @@ fun main() {
         decl.accept(rootVisitor)
     }
 
-
-    var stack = Stack<Long>();
-    var locals = Array<Long>(2) { 0 };
-
     val code = appDomain.entryPoint.graph
 
     println(appDomain.entryPoint.locals)
@@ -56,19 +53,30 @@ fun main() {
     code.visualise()
     code.dominators.visualise()
 
-    val startBlock = code.getNodes(code.root)
+    var dispatchNode = DispatchNode( code.nodes.map { code.getNodes(it.index) }.toTypedArray() )
 
 
-    println(startBlock)
-    // the dup instruction just creates a local variable nambed dub{N} and stores stuff inside
+    println(dispatchNode)
+    // the dup instruction just creates a local variable nambed dup{N} and stores stuff inside
 
 
-    val target = Truffle.getRuntime().createCallTarget(Method(startBlock, code.method.frameDescriptor))
+    val target = Truffle.getRuntime().createCallTarget(Method(dispatchNode, code.method.frameDescriptor))
     target.call()
 }
 
+/*
+TODO: List
+- Check if my symbolic evaluation is correct
+- Use block interpretation withc MERGE_EXPLODE as in LLVM
+- Compare CFG results with the ones obtained from ILSpy to verify my outputs
+- Implement method calling of static method as this would be strightforward
+- Implement support for structs in the begining all the structs are going to be on the heap and after I find a way to put them on the stack that is going to change. TruffleObjects will be used.
+- Implement arrays same as prev.
+- Implement objects and real methods.
 
 
+- Check the control flow optimizations that ILSpy uses to detect loops
+- Read about either the Relooper or the Stackifier algorithms so loops can be produced withouth gotos
+- Reimplement parts of mscorelib or whaterver it is called in netcore   
 
-
-
+*/

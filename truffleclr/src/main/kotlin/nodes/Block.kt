@@ -4,13 +4,17 @@ import com.oracle.truffle.api.frame.VirtualFrame
 import com.oracle.truffle.api.nodes.ExplodeLoop
 import com.oracle.truffle.api.nodes.Node
 
-class Block(@Children var nodes: Array<ExpressionNode> = arrayOf()): ExpressionNode() {
+class Block(var id: Int, var name: String): ExpressionNode() {
+
+    @Children var nodes: Array<ExpressionNode> = arrayOf()
+    lateinit var controlFlowNode: ControlFlowNode
+
     @ExplodeLoop
     override fun execute(env: VirtualFrame): Any? {
         for(node in nodes) {
             node.execute(env)
         }
-        return null
+        return controlFlowNode.executeControlFlow(env)
     }
 
     override fun toString(): String {

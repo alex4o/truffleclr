@@ -1,11 +1,12 @@
 package nodes
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal
 import com.oracle.truffle.api.frame.VirtualFrame
 import com.oracle.truffle.api.nodes.Node
 
-class Branch(@Child var a: ExpressionNode, val label: String): ExpressionNode() {
-    override fun execute(env: VirtualFrame): Any? {
-        return a.execute(env)
+class Branch(@CompilationFinal var jump: Int, val label: String): ControlFlowNode() {
+    override fun executeControlFlow(env: VirtualFrame): Int {
+        return jump
     }
 
     override fun toString(): String {

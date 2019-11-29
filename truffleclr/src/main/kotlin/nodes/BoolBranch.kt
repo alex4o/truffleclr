@@ -5,16 +5,19 @@ import com.oracle.truffle.api.frame.VirtualFrame
 import com.oracle.truffle.api.nodes.Node
 
 class BoolBranch(
-    @Child var a: ExpressionNode, @CompilerDirectives.CompilationFinal val cond: Boolean, @Child var goa: ExpressionNode, @Child var gob: ExpressionNode,
-    val label: String
-) : ExpressionNode() {
+    @Child var a: ExpressionNode,
+    @CompilerDirectives.CompilationFinal val cond: Boolean,
+    @CompilerDirectives.CompilationFinal var trueCond: Int,
+    @CompilerDirectives.CompilationFinal var falseCond: Int,
+    var label: String
+) : ControlFlowNode() {
 
-    override fun execute(env: VirtualFrame): Any? {
+    override fun executeControlFlow(env: VirtualFrame): Int {
         val adata = a.execute(env) as Boolean
         return if (adata == cond) {
-            goa.execute(env)
+            return trueCond
         } else {
-            gob.execute(env)
+            return falseCond
         }
 
     }

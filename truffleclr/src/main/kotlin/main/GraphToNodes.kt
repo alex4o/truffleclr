@@ -8,17 +8,17 @@ import java.util.*
 import kotlin.collections.LinkedHashMap
 
 
-fun Graph.getNodes(root: String): Block {
+fun Graph.getNodes(root: Int): Block {
     val stack = Stack<Pair<String, ExpressionNode?>>()
     val res = mutableListOf<ExpressionNode?>()
-    val block = nodes.getValue(root)
-    val blocks: LinkedHashMap<String, InstructionBlock> = nodes
+    val block = nodes[root]
+    val blocks: Map<Int, InstructionBlock> = nodes.mapIndexed({ index, node ->  Pair(index, node) }).toMap()
 
     if(method.compiled.contains(root)) {
         return method.compiled.getValue(root)
     }
 
-    val result = Block()
+    val result = Block(root, nodes[root].label)
     method.compiled[root] = result
 
     for (instruction in block.instructions) {
@@ -711,7 +711,7 @@ fun Graph.getNodes(root: String): Block {
         if (instruction.instruction.startsWith("stloc") && instruction is InstructionNone) {
             val s0 = stack.pop()
             val arg = instruction.instruction.split(".")[1]
-            var number = arg.toInt()
+            val number = arg.toInt()
 
 
             val node = StoreLocal(s0.second!!, number, WriteLocalNodeGen.create(method.frameSlots[number]))
@@ -841,8 +841,7 @@ fun Graph.getNodes(root: String): Block {
 //types: "br.s","br"
         if (setOf("br", "br.s").contains(instruction.instruction) && instruction is InstructionBrTarget) {
 
-            val node =
-                Branch(this.getNodes(instruction.target), instruction.target)
+            val node = Branch(method.blockByLabel.getValue(instruction.target).index, instruction.target)
             res.add(node)
         }
 //types: "brfalse.s","brfalse"
@@ -854,8 +853,8 @@ fun Graph.getNodes(root: String): Block {
 
             val nodes = block.targets.map { this.getNodes(it) }
 
-            val goa = nodes[0]
-            val gob = nodes[1]
+            val goa = nodes[0].id
+            val gob = nodes[1].id
 
             val node = BoolBranch(s0.second!!, false, goa, gob, instruction.target)
 
@@ -870,8 +869,8 @@ fun Graph.getNodes(root: String): Block {
 
             val nodes = block.targets.map { this.getNodes(it) }
 
-            val goa = nodes[0]
-            val gob = nodes[1]
+            val goa = nodes[0].id
+            val gob = nodes[1].id
 
             val node = BoolBranch(s0.second!!, true, goa, gob, instruction.target)
 
@@ -1151,8 +1150,10 @@ fun Graph.getNodes(root: String): Block {
     }
 
     if(block.instructions.last() !is InstructionBrTarget && block.targets.size == 1) {
-        res.add(Branch(this.getNodes(block.targets.first()), block.targets.first()))
+        res.add(Branch(block.targets.first(), nodes[block.targets.first()].label))
     }
+
+    result.controlFlowNode = res.takeLast(1).first()!! as ControlFlowNode
 
     result.nodes = res.map { it!! }.toTypedArray()
     return result
