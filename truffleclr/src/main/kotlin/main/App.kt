@@ -51,6 +51,8 @@ fun main() {
         println(types)
         for(type in types) {
             println(type.methods)
+//            type.methods.forEach { it.value.graph.visualise() }
+
         }
     }
 
@@ -60,6 +62,7 @@ fun main() {
 
     code.visualise()
     code.dominators.visualise()
+
 
     var dispatchNode = DispatchNode( code.nodes.map { code.getNodes(it.index) }.toTypedArray() )
 

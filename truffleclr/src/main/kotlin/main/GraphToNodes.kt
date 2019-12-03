@@ -178,7 +178,7 @@ fun Graph.getNodes(root: Int): Block {
             val s0 = stack.pop()
             val s1 = stack.pop()
 
-            val node = Reminder(s0.second!!, s1.second!!)
+            val node = Reminder(s1.second!!, s0.second!!)
             stack.push(Pair(s0.first, node))
         }
         if (instruction.instruction == "rem.un" && instruction is InstructionNone) {

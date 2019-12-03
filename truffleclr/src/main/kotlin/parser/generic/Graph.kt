@@ -75,7 +75,8 @@ class Graph(var nodes: List<InstructionBlock>, var method: Method) {
         val g = mutGraph("example1").setDirected(true)
         nodes.values.forEach { g.add(it) }
         // Basic block
-        Graphviz.fromGraph(g).render(Format.XDOT).toFile(File("demo.xdot"))
+
+        Graphviz.fromGraph(g).render(Format.XDOT).toFile(File("${method.name}.xdot"))
     }
 
 
