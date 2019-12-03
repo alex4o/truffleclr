@@ -14,13 +14,16 @@ class ClassVisitor(var appDomain: AppDomain, var namespace: String, var type: Ty
         var arguments = listOf<String>()
 
         if(ctx.methodHead().sigArgs0().sigArgs1() != null){
-            arguments = ctx.methodHead().sigArgs0().sigArgs1().sigArg().map { it.text }
+            arguments = ctx.methodHead().sigArgs0().sigArgs1().sigArg().map { it.type().text + " " + it.id().text }
         }
 
         val method = Method(
             name,
             arguments
         )
+
+        method.memberOf = type
+        method.memberOf!!.namespace = namespace
         method.returnType = ctx.methodHead().type().text
         type.methods[name] = method
 

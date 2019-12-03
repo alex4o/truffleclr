@@ -14,7 +14,10 @@ class Method(var name: String, var arguments: List<String>) {
     var labels = linkedMapOf<String, Int>()
     var returnType: String = ""
 
+    var memberOf: Type? = null
+
     var compiled = mutableMapOf<Int, Block>()
+
 
     val frameDescriptor = FrameDescriptor();
     val frameSlots by lazy {
@@ -91,4 +94,13 @@ class Method(var name: String, var arguments: List<String>) {
                 Graph(blocks, this)
             }
         }
+
+    override fun toString(): String {
+        return if(memberOf == null){
+            "$name($arguments)"
+        }else{
+            "$memberOf::$name(${arguments.joinToString(",")})"
+
+        }
+    }
 }

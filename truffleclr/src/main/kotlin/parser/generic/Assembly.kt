@@ -3,6 +3,10 @@ package parser.generic
 class Assembly(var name: String) {
     var modules: MutableList<Module> = mutableListOf()
 
+    val types: List<Type> by lazy {
+        modules.flatMap { it.types.values }
+    }
+
     fun getType(name: String): Type? {
         if(modules.count() == 1) {
             return modules[0].getType(name)
@@ -15,4 +19,6 @@ class Assembly(var name: String) {
 
         return null
     }
+
+
 }

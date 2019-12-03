@@ -3,12 +3,13 @@ package parser.cil
 import Cil.CilParser
 import parser.generic.AppDomain
 import parser.generic.Method
+import parser.generic.Type
 import parser.generic.instruction.*
 
 class MethodVisitor(var appDomain: AppDomain, var method: Method) : Cil.CilBaseVisitor<Any>() {
 
-    var instructions = mutableListOf<Pair<String ,Instruction>>()
-    var labels =  mutableMapOf<String, Int>()
+    var instructions = mutableListOf<Pair<String, Instruction>>()
+    var labels = mutableMapOf<String, Int>()
     var entryPoint: String? = null
 
     override fun visitMethod_entrypoint(ctx: CilParser.Method_entrypointContext): Any {
@@ -31,16 +32,16 @@ class MethodVisitor(var appDomain: AppDomain, var method: Method) : Cil.CilBaseV
         var labelText = ctx.id().text
         val instr = ctx.instr().getChild(0);
 
-        if(entryPoint == null) {
-            entryPoint = if(label.isEmpty) {
+        if (entryPoint == null) {
+            entryPoint = if (label.isEmpty) {
                 "ENTRY_POINT"
-            }else{
+            } else {
                 labelText
             }
             labelText = entryPoint
         }
 
-        var instruction: Instruction = when(instr) {
+        var instruction: Instruction = when (instr) {
             is CilParser.Instr_noneContext -> {
                 InstructionNone(instr.INSTR_NONE().text)
             }
@@ -48,16 +49,46 @@ class MethodVisitor(var appDomain: AppDomain, var method: Method) : Cil.CilBaseV
                 method.jumpLabels.add(instr.id().text)
                 InstructionBrTarget(instr.INSTR_BRTARGET().text, instr.id().text)
             }
+            is CilParser.Instr_iContext -> {
+                val arg: Int = if(instr.int64().text.startsWith("0x"))
+                {
+                    instr.int64().text.substring(2).toInt(16)
+                }else{
+                    instr.int64().text.toInt(10)
+                }
+                InstructionI(instr.INSTR_I().text, arg)
+            }
             is CilParser.Instr_methodContext -> {
-                val methodName = instr.methodRef().methodName().text
+                val methodRef = instr.methodRef();
+
+                val methodName = methodRef.methodName().text
+//                val callConv = methodRef.callConv().text
+
+
                 var arguments = listOf<String>()
 
-                if(instr.methodRef().sigArgs0().sigArgs1() != null){
-                    arguments = instr.methodRef().sigArgs0().sigArgs1().sigArg().map { it.text }
+                if (methodRef.sigArgs0().sigArgs1() != null) {
+                    arguments = methodRef.sigArgs0().sigArgs1().sigArg().map { it.text }
                 }
 
                 val method = Method(methodName, arguments)
-                method.returnType = instr.methodRef().type().text
+                if (!methodRef.typeSpec().isEmpty) {
+
+                    val typeSpec = methodRef.typeSpec()
+                    if (typeSpec.type().text == "object") {
+                        method.memberOf = Type("object")
+                    }
+
+                    if (typeSpec.type().K_CLASS() != null) {
+
+                        val className = typeSpec.type().className().slashedName().text.split(".")
+
+                        method.memberOf = Type(className.last())
+                        method.memberOf!!.namespace = className.dropLast(1).joinToString(".")
+                    }
+                }
+
+                method.returnType = methodRef.type().text
 
                 InstructionMethod(instr.INSTR_METHOD().text, method)
             }
@@ -72,7 +103,7 @@ class MethodVisitor(var appDomain: AppDomain, var method: Method) : Cil.CilBaseV
 
         method.instructions.add(instruction)
 
-        if(!label.isEmpty) {
+        if (!label.isEmpty) {
             method.labels[labelText] = method.instructions.lastIndex
         }
 

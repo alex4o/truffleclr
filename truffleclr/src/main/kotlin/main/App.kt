@@ -32,7 +32,7 @@ fun main() {
 
     var appDomain = AppDomain()
 
-    var reader = FileReader("./test/do_while.il");
+    var reader = FileReader("./test/func.il");
 
     var stream = CharStreams.fromReader(reader, "useless");
     var lexer = CilLexer(stream)
@@ -44,6 +44,14 @@ fun main() {
     var rootVisitor = DeclVisitor(appDomain)
     for (decl in tree.children) {
         decl.accept(rootVisitor)
+    }
+
+    for(assembly in appDomain.assemblies) {
+        val types = assembly.types
+        println(types)
+        for(type in types) {
+            println(type.methods)
+        }
     }
 
     val code = appDomain.entryPoint.graph

@@ -359,7 +359,7 @@ SQSTRING: '\'' ( . | '\\\'' )*? '\'';        /* 'Hello World\n' */
 ID: [A-Za-z_#$@`]+[?A-Za-z_0-9`#$@]*;             /* testing343 */
 DOTTEDNAME: ID (DOT ID)*;     /* System.Object */
 
-INT64: '-'? '0'..'9'+ | '0x' [0-9A-F]+;         /* 342534523534534      0x34FA434644554 */
+INT64: '-'? '0'..'9'+ | '0x' [0-9A-Fa-f]+;         /* 342534523534534      0x34FA434644554 */
 FLOAT64: ('-'? '0'..'9'+) '.' ('0'..'9'+)? | ('-'? '0'..'9'+ 'E' '-'? '0'..'9'+);          /* -334234 24E-34 */
 HEXBYTE: [A-F0-9][A-F0-9] (' ' [A-F0-9][A-F0-9])*;        /* 05 1A FA */
 // TODO: These should be fixed
@@ -1074,7 +1074,7 @@ instr_none              : INSTR_NONE
 instr_var               : INSTR_VAR (int32 | id)
                         ;
 
-instr_i                 : INSTR_I arg=int32
+instr_i                 : INSTR_I arg=int64
                         ;
 
 instr_i8                : INSTR_I8 arg=int64

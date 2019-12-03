@@ -12456,10 +12456,10 @@ public class CilParser extends Parser {
 	}
 
 	public static class Instr_iContext extends ParserRuleContext {
-		public Int32Context arg;
+		public Int64Context arg;
 		public TerminalNode INSTR_I() { return getToken(CilParser.INSTR_I, 0); }
-		public Int32Context int32() {
-			return getRuleContext(Int32Context.class,0);
+		public Int64Context int64() {
+			return getRuleContext(Int64Context.class,0);
 		}
 		public Instr_iContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -12489,7 +12489,7 @@ public class CilParser extends Parser {
 			setState(1881);
 			match(INSTR_I);
 			setState(1882);
-			((Instr_iContext)_localctx).arg = int32();
+			((Instr_iContext)_localctx).arg = int64();
 			}
 		}
 		catch (RecognitionException re) {
@@ -19974,7 +19974,7 @@ public class CilParser extends Parser {
 		"\u074f\3\2\2\2\u0752\u0753\7h\2\2\u0753\u00e1\3\2\2\2\u0754\u0755\7\u008d"+
 		"\2\2\u0755\u00e3\3\2\2\2\u0756\u0759\7\u008e\2\2\u0757\u075a\5\20\t\2"+
 		"\u0758\u075a\5\f\7\2\u0759\u0757\3\2\2\2\u0759\u0758\3\2\2\2\u075a\u00e5"+
-		"\3\2\2\2\u075b\u075c\7\u008f\2\2\u075c\u075d\5\20\t\2\u075d\u00e7\3\2"+
+		"\3\2\2\2\u075b\u075c\7\u008f\2\2\u075c\u075d\5\22\n\2\u075d\u00e7\3\2"+
 		"\2\2\u075e\u075f\7\u0090\2\2\u075f\u0760\5\22\n\2\u0760\u00e9\3\2\2\2"+
 		"\u0761\u0768\7\u0091\2\2\u0762\u0769\5\24\13\2\u0763\u0769\5\22\n\2\u0764"+
 		"\u0765\7\7\2\2\u0765\u0766\5\u00c4c\2\u0766\u0767\7\b\2\2\u0767\u0769"+

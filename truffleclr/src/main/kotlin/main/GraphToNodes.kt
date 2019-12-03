@@ -175,13 +175,10 @@ fun Graph.getNodes(root: Int): Block {
             stack.push(Pair(s0.first, node))
         }
         if (instruction.instruction == "rem" && instruction is InstructionNone) {
-            TODO("not implemented")
             val s0 = stack.pop()
-
             val s1 = stack.pop()
 
-
-            val node = null
+            val node = Reminder(s0.second!!, s1.second!!)
             stack.push(Pair(s0.first, node))
         }
         if (instruction.instruction == "rem.un" && instruction is InstructionNone) {
@@ -544,9 +541,9 @@ fun Graph.getNodes(root: Int): Block {
         }
 //types: "ldc.i4.s","ldc.i4"
         if (instruction.instruction.startsWith("ldc") && instruction is InstructionI) {
-            TODO("not implemented")
 
-            val node = null
+
+            val node = LoadConstInt(instruction.arg)
             stack.push(Pair("int32", node))
         }
 //types: "ldc.i8"

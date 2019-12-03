@@ -6,9 +6,9 @@ import parser.generic.Method
 abstract class Instruction() { abstract var instruction: String }
 data class InstructionNone(override var instruction: String) : Instruction()
 data class InstructionVar(override var instruction: String) : Instruction()
-data class InstructionI(override var instruction: String) : Instruction()
-data class InstructionI8(override var instruction: String) : Instruction()
-data class InstructionR(override var instruction: String) : Instruction()
+data class InstructionI(override var instruction: String, var arg: Int) : Instruction()
+data class InstructionI8(override var instruction: String, var arg: Long) : Instruction()
+data class InstructionR(override var instruction: String, var arg: Double) : Instruction()
 data class InstructionBrTarget(override var instruction: String, var target: String): Instruction()
 data class InstructionMethod(override var instruction: String, var method: Method): Instruction()
 data class InstructionField(override var instruction: String) : Instruction()
