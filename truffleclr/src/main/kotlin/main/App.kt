@@ -35,7 +35,7 @@ fun main() {
 
     var appDomain = AppDomain()
 
-    var reader = FileReader("./test/func.il");
+    var reader = FileReader("./test/func_fib.il");
 
     var stream = CharStreams.fromReader(reader, "useless");
     var lexer = CilLexer(stream)
@@ -75,10 +75,13 @@ fun main() {
 
 /*
 TODO: List
-- Check if my symbolic evaluation is correct
-- Use block interpretation withc MERGE_EXPLODE as in LLVM
+- Check if my symbolic evaluation is correct:
+    - Done: If, IfElse, For, While, While inside another one, DoWhile, Recursion (fac, fib)
+    - Todo: Closure, Loops with receiving.
+
+- Instead of merging blocks create new ones that will hold both the receiver and the giver. This way even support of many to many is possible.
 - Compare CFG results with the ones obtained from ILSpy to verify my outputs
-- Implement method calling of static method as this would be strightforward
+- Implement method calling of static method that are from other classes
 - Implement support for structs in the begining all the structs are going to be on the heap and after I find a way to put them on the stack that is going to change. TruffleObjects will be used.
 - Implement arrays same as prev.
 - Implement objects and real methods.
@@ -86,6 +89,6 @@ TODO: List
 
 - Check the control flow optimizations that ILSpy uses to detect loops
 - Read about either the Relooper or the Stackifier algorithms so loops can be produced withouth gotos
-- Reimplement parts of mscorelib or whaterver it is called in netcore   
+- Reimplement parts of mscorelib
 
 */
