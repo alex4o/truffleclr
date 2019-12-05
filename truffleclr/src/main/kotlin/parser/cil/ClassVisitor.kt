@@ -14,13 +14,15 @@ class ClassVisitor(var appDomain: AppDomain, var namespace: String, var type: Ty
         var arguments = listOf<String>()
 
         if(ctx.methodHead().sigArgs0().sigArgs1() != null){
-            arguments = ctx.methodHead().sigArgs0().sigArgs1().sigArg().map { it.type().text + " " + it.id().text }
+            arguments = ctx.methodHead().sigArgs0().sigArgs1().sigArg().map { it.type().text /*+ " " + it.id().text*/ }
         }
 
         val method = Method(
             name,
             arguments
         )
+
+        method.static = ctx.methodHead().methAttr().map { it.text }.toSet().contains("static")
 
         method.memberOf = type
         method.memberOf!!.namespace = namespace

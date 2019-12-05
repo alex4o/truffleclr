@@ -39,7 +39,7 @@
   .hash algorithm 0x00008004
   .ver  1:0:0:0
 }
-.module HelloWorld.dll // GUID = {3B779AA3-4AA8-4D15-AAFE-A23729614BC3}
+.module HelloWorld.dll // GUID = {20CC6F97-7F29-4231-B730-3EC2CD391110}
 
 
 .namespace HelloWorld
@@ -49,97 +49,27 @@
   {
 
     // method line 1
-    .method private static hidebysig 
-           default void Main (string[] args)  cil managed 
+    .method private static hidebysig
+           default void Main (string[] args)  cil managed
     {
         // Method begins at RVA 0x2050
 	.entrypoint
-	// Code size 57 (0x39)
-	.maxstack 2
-	.locals init (
-		int32	V_0,
-		bool	V_1)
-	IL_0000:  nop 
-	IL_0001:  ldc.i4.0 
-	IL_0002:  stloc.0 
-	IL_0003:  br.s IL_002c
-
-	IL_0005:  nop 
-	IL_0006:  ldloc.0 
-	IL_0007:  call void class [mscorlib]System.Console::Write(int32)
-	IL_000c:  nop 
-	IL_000d:  ldstr " "
-	IL_0012:  call void class [mscorlib]System.Console::Write(string)
-	IL_0017:  nop 
-	IL_0018:  ldloc.0 
-	IL_0019:  ldc.i4.s 0x0c
-	IL_001b:  rem 
-	IL_001c:  call int32 class HelloWorld.Program::f(int32)
-	IL_0021:  call void class [mscorlib]System.Console::WriteLine(int32)
-	IL_0026:  nop 
-	IL_0027:  nop 
-	IL_0028:  ldloc.0 
-	IL_0029:  ldc.i4.1 
-	IL_002a:  add 
-	IL_002b:  stloc.0 
-	IL_002c:  ldloc.0 
-	IL_002d:  ldc.i4 1100
-	IL_0032:  clt 
-	IL_0034:  stloc.1 
-	IL_0035:  ldloc.1 
-	IL_0036:  brtrue.s IL_0005
-
-	IL_0038:  ret 
+	// Code size 9 (0x9)
+	.maxstack 8
+	IL_0000:  nop
+	IL_0001:  ldc.i4.0
+  ldc.i4.5
+  clt
+	IL_0002:  call void class [mscorlib]System.Console::WriteLine(bool)
+	IL_0007:  nop
+	IL_0008:  ret
     } // end of method Program::Main
 
     // method line 2
-    .method private static hidebysig 
-           default int32 f (int32 n)  cil managed 
+    .method public hidebysig specialname rtspecialname
+           instance default void '.ctor' ()  cil managed
     {
-        // Method begins at RVA 0x2098
-	// Code size 36 (0x24)
-	.maxstack 2
-	.locals init (
-		bool	V_0,
-		int32	V_1)
-	IL_0000:  nop 
-	IL_0001:  ldarg.0 
-	IL_0002:  ldc.i4.1 
-	IL_0003:  beq.s IL_000b
-
-	IL_0005:  ldarg.0 
-	IL_0006:  ldc.i4.0 
-	IL_0007:  ceq 
-	IL_0009:  br.s IL_000c
-
-	IL_000b:  ldc.i4.1 
-	IL_000c:  stloc.0 
-	IL_000d:  ldloc.0 
-	IL_000e:  brfalse.s IL_0015
-
-	IL_0010:  nop 
-	IL_0011:  ldc.i4.1 
-	IL_0012:  stloc.1 
-	IL_0013:  br.s IL_0022
-
-	IL_0015:  ldarg.0
-	IL_0016:  ldc.i4.1 
-	IL_0017:  sub 
-	IL_0018:  call int32 class HelloWorld.Program::f(int32)
-	IL_001d:  ldarg.0 
-	IL_001e:  mul 
-	IL_001f:  stloc.1 
-	IL_0020:  br.s IL_0022
-
-	IL_0022:  ldloc.1 
-	IL_0023:  ret 
-    } // end of method Program::f
-
-    // method line 3
-    .method public hidebysig specialname rtspecialname 
-           instance default void '.ctor' ()  cil managed 
-    {
-        // Method begins at RVA 0x20c8
+        // Method begins at RVA 0x205a
 	// Code size 8 (0x8)
 	.maxstack 8
 	IL_0000:  ldarg.0 

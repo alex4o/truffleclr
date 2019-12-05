@@ -8,11 +8,14 @@ class InstructionBlock(var label: String = "", var index: Int = -1) {
         this.instructions = instructions
     }
 
+    // Instruction stealing is implemented for the situation when a block has the receiving instructions but the giving instructions are in another block.
+
+    var stolen = 0
     var instructions = mutableListOf<Instruction>()
 
     var parents = mutableSetOf<Int>()
-    var targets = mutableSetOf<Int>()
-    var targetLabels = mutableSetOf<String>()
+    var targets = linkedSetOf<Int>()
+    var targetLabels = linkedSetOf<String>()
     var loopHeader = false
 
     override fun toString(): String {

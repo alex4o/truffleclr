@@ -29,7 +29,13 @@ class MethodVisitor(var appDomain: AppDomain, var method: Method) : Cil.CilBaseV
 
     override fun visitMethod_instruction(ctx: CilParser.Method_instructionContext): Any {
         val label = ctx.id()
-        var labelText = ctx.id().text
+        var labelText = if(ctx.id() != null) {
+            ctx.id().text
+        }else{
+            ""
+        }
+
+
         val instr = ctx.instr().getChild(0);
 
         if (entryPoint == null) {
@@ -103,7 +109,7 @@ class MethodVisitor(var appDomain: AppDomain, var method: Method) : Cil.CilBaseV
 
         method.instructions.add(instruction)
 
-        if (!label.isEmpty) {
+        if (label != null) {
             method.labels[labelText] = method.instructions.lastIndex
         }
 

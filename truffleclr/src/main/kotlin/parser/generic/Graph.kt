@@ -19,15 +19,15 @@ class Graph(var nodes: List<InstructionBlock>, var method: Method) {
 
     fun visualise() {
 
-        val nodes = nodes.mapIndexed { index, node  -> Pair(index, mutNode(node.label)) }.toMap()
+        val nodes = method.compiled.map { (index, node)  -> Pair(index, mutNode(node.name)) }.toMap()
         val visited = mutableMapOf<Int, MutableNode>()
         val stack = Stack<Pair<Int, MutableNode>>()
         stack.push(Pair(0, nodes.getValue(0)))
         var prev = Pair<Int, MutableNode>(0, mutNode(""))
         while (stack.isNotEmpty()) {
 
-            val (target, node) = stack.pop()
-            val block = this.nodes[target]!!
+            var (target, node) = stack.pop()
+            val block = method.compiled[target]!!
 
             if (visited.contains(target)) {
                 val visitedNode = visited.getValue(target)
@@ -35,44 +35,59 @@ class Graph(var nodes: List<InstructionBlock>, var method: Method) {
 //                var p = path(target);
 //                p.forEach { nodes[it]!!.attrs().add(Color.PINK) }
 //                println(Pair(target, p))
-                if(dominators( this.nodes[prev.first].label ).contains( this.nodes[target].label ) ) {
+                if(dominators( method.compiled[prev.first]!!.name ).contains( method.compiled[target]!!.name ) ) {
                     visitedNode.attrs().add(Color.GREEN)
-                    block.loopHeader = true
+//                    block.loopHeader = true
                 }
-
-
 //                prev.second.attrs().add(Color.BLUE)
                 continue
             }
 
-            prev = Pair(target, node)
-
-            val nodesText = this.getNodes(target).toString()
-                .replace("<", "&lt;")
-                .replace(">", "&gt;")
-                .replace(">=", "&gt;=")
-                .replace("=<", "=&lt;")
-                .replace("\n", "<br align='left'/>")
-            node.attrs().add(
-                Label.html("<b>$target: ${this.nodes[target]!!.label}</b><br/>${nodesText}").justify(
-                    Label.Justification.LEFT
-                )
-            )
-
-            node.attrs().add(Shape.RECTANGLE)
             visited.put(target, node)
-            if (block.targets.size > 0) {
-                block.targets.forEach {
+
+//            if(this.nodes[target]!!.stolen == 1) {
+////                node = prev.second
+//            }else {
+
+                val nodesText = this.getNodes(target).toString()
+                    .replace("<", "&lt;")
+                    .replace(">", "&gt;")
+                    .replace(">=", "&gt;=")
+                    .replace("=<", "=&lt;")
+                    .replace("\n", "<br align='left'/>")
+
+//            val nodesText = this.nodes[target]!!.instructions.joinToString("<br align='left'/>")
+                node.attrs().add(
+                    Label.html("<b>$target: ${this.nodes[target]!!.label}</b><br/>${nodesText}").justify(
+                        Label.Justification.LEFT
+                    )
+                )
+
+                node.attrs().add(Shape.RECTANGLE)
+
+//            }
+
+            if (block.controlFlowNode.successors.isNotEmpty()) {
+                block.controlFlowNode.successors.forEach {
                     val nextNode = nodes.getValue(it)
+//                    if(this.nodes[target]!!.stolen != 1) {
+//                        if (this.nodes[it]!!.stolen != 1) {
                     node.addLink(nextNode)
+//                        } else {
+//                            this.nodes[it]!!.targets.map { nodes.getValue(it) }.forEach {
+//                                node.addLink(it)
+//                            }
+//                        }
+//                    }
                     if (it != target) {
                         stack.push(Pair(it, nextNode))
                     }
                 }
             }
+            prev = Pair(target, node)
         }
 
-        val g = mutGraph("example1").setDirected(true)
+        val g = mutGraph(method.name).setDirected(true)
         nodes.values.forEach { g.add(it) }
         // Basic block
 
@@ -236,7 +251,7 @@ class LengauerTarjan(val graph: Graph) {
         val g = mutGraph("dom").setDirected(true)
         nodes.values.forEach { g.add(it) }
         // Basic block
-        Graphviz.fromGraph(g).render(Format.XDOT).toFile(File("domination.xdot"))
+        Graphviz.fromGraph(g).render(Format.XDOT).toFile(File("${graph.method.name}_domination.xdot"))
     }
 
 }

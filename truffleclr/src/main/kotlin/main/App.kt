@@ -4,6 +4,7 @@ import Cil.CilLexer
 import Cil.CilParser
 import com.oracle.truffle.api.Truffle
 import com.oracle.truffle.api.frame.FrameDescriptor
+import com.oracle.truffle.api.nodes.DirectCallNode
 import nodes.DispatchNode
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
@@ -14,6 +15,8 @@ import java.util.*
 import java.io.File
 import nodes.Method
 import parser.generic.LengauerTarjan
+import kotlin.system.measureNanoTime
+import kotlin.system.measureTimeMillis
 
 fun String.runCommand() {
     ProcessBuilder(*split(" ").toTypedArray())
@@ -46,33 +49,28 @@ fun main() {
         decl.accept(rootVisitor)
     }
 
+
+
     for(assembly in appDomain.assemblies) {
         val types = assembly.types
         println(types)
         for(type in types) {
             println(type.methods)
-//            type.methods.forEach { it.value.graph.visualise() }
+            type.methods.forEach {
+                it.value.compile()
+                it.value.graph.visualise()
+                it.value.graph.dominators.visualise()
+            }
 
         }
     }
 
-    val code = appDomain.entryPoint.graph
-
     println(appDomain.entryPoint.locals)
+    val time = measureTimeMillis {
+        println(DirectCallNode.create(appDomain.entryPoint.callTarget).call(5))
+    }
 
-    code.visualise()
-    code.dominators.visualise()
-
-
-    var dispatchNode = DispatchNode( code.nodes.map { code.getNodes(it.index) }.toTypedArray() )
-
-
-    println(dispatchNode)
-    // the dup instruction just creates a local variable nambed dup{N} and stores stuff inside
-
-
-    val target = Truffle.getRuntime().createCallTarget(Method(dispatchNode, code.method.frameDescriptor))
-    target.call()
+    println("Completed in: ${time}")
 }
 
 /*

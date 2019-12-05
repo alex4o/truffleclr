@@ -1,6 +1,7 @@
 package nodes
 
 import com.oracle.truffle.api.CompilerAsserts
+import com.oracle.truffle.api.CompilerDirectives
 import com.oracle.truffle.api.frame.VirtualFrame
 import com.oracle.truffle.api.nodes.ExplodeLoop
 import com.oracle.truffle.api.nodes.ExplodeLoop.LoopExplosionKind
@@ -16,22 +17,31 @@ class DispatchNode(@Children var blocks: Array<Block>) : ExpressionNode() {
 
         var basicBlockIndex = 0
         var backEdgeCount = 0
+        var returnValue: Any? = null
 
-        while (basicBlockIndex != -1) {
+        while (basicBlockIndex >= 0) {
             CompilerAsserts.partialEvaluationConstant<Int>(basicBlockIndex)
             val block = blocks[basicBlockIndex]
+//            println("Executing basic block: $basicBlockIndex");
 
             block.execute(env)
 
             val successor = block.controlFlowNode.executeControlFlow(env)
-            if(successor <= basicBlockIndex) {
-                backEdgeCount += 1
+            if (CompilerDirectives.inInterpreter()) {
+                if (successor <= basicBlockIndex) {
+                    backEdgeCount += 1;
+                }
             }
+
+            if(successor == -2) {
+                returnValue = (block.controlFlowNode as ReturnValue).execute(env)
+            }
+
             basicBlockIndex = successor
         }
 
         LoopNode.reportLoopCount(this, backEdgeCount)
-        return null;
+        return returnValue;
 
     }
 
