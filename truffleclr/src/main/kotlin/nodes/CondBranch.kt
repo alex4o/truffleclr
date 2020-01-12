@@ -30,6 +30,6 @@ class CondBranch(
     }
 
     override fun toString(): String {
-        return "if($a $cond $b) goto $label"
+        return "(br$cond $a $b $label)"
     }
 }

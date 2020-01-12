@@ -18,6 +18,6 @@ class Call(@CompilerDirectives.CompilationFinal val name: String, var callTarget
     }
 
     override fun toString(): String {
-        return name
+        return "(call $name ${args.joinToString(" ")})";
     }
 }

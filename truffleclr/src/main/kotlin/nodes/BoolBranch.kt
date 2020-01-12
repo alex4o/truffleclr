@@ -23,6 +23,6 @@ class BoolBranch(
     }
 
     override fun toString(): String {
-        return "if($a == $cond) goto $label ($same, $diff)"
+        return "(br$cond $a $label) // (same: $same, diff: $diff)"
     }
 }

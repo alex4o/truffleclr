@@ -8,6 +8,6 @@ class LoadConstLong(val number: Long): ExpressionNode() {
     }
 
     override fun toString(): String {
-        return number.toString()
+        return "(ldc $number)"
     }
 }

@@ -19,6 +19,6 @@ class Block(var id: Int, var name: String): ExpressionNode() {
     }
 
     override fun toString(): String {
-        return nodes.joinToString("\n", postfix = "\n") + controlFlowNode;
+        return (nodes + controlFlowNode).joinToString("\n", postfix = "\n");
     }
 }

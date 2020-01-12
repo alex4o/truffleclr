@@ -10,6 +10,6 @@ class Branch(@CompilationFinal var jump: Int, val label: String): ControlFlowNod
     }
 
     override fun toString(): String {
-        return "goto $label"
+        return "(br $label)"
     }
 }

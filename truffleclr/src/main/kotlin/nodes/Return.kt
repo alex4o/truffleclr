@@ -9,6 +9,6 @@ class Return(): ControlFlowNode() {
     }
 
     override fun toString(): String {
-        return "return"
+        return "(return)"
     }
 }

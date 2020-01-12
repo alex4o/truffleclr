@@ -24,6 +24,6 @@ class ConsoleTemp(@CompilerDirectives.CompilationFinal val name: String, @Childr
     }
 
     override fun toString(): String {
-        return name
+        return "(call $name ${args.joinToString(" ")})";
     }
 }

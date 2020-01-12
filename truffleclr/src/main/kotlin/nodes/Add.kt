@@ -13,6 +13,6 @@ class Add(@Child var a: ExpressionNode, @Child var b: ExpressionNode): Expressio
     }
 
     override fun toString(): String {
-        return "$a + $b"
+        return "(add $a $b)"
     }
 }

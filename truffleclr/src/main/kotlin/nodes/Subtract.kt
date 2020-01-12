@@ -13,6 +13,6 @@ class Subtract(@Child var a: ExpressionNode, @Child var b: ExpressionNode): Expr
     }
 
     override fun toString(): String {
-        return "$a - $b"
+        return "(sub $a $b)"
     }
 }

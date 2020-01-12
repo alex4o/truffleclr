@@ -8,6 +8,6 @@ class LoadString(val string: String): ExpressionNode() {
     }
 
     override fun toString(): String {
-        return "\"$string\""
+        return "(ldstr \"$string\")"
     }
 }

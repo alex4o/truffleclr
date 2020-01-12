@@ -30,6 +30,6 @@ class Compare(@Child var a: ExpressionNode, @Child var b: ExpressionNode, val co
     }
 
     override fun toString(): String {
-        return "($a $cond $b)"
+        return "(${when(cond) { ">" -> "cgt" "<" -> "clt" ">=" -> "cge" "<=" -> "cle" else -> "ceq"}} $a  $b)"
     }
 }

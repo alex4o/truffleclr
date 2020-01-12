@@ -13,7 +13,7 @@ class ReturnValue(@Child var expr: ExpressionNode): ControlFlowNode() {
     }
 
     override fun toString(): String {
-        return "return $expr"
+        return "(return $expr)"
     }
 
 }

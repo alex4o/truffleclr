@@ -9,7 +9,7 @@ class StoreLocal(@Child var expressionNode: ExpressionNode, val index: Int, @Chi
     }
 
     override fun toString(): String {
-        return "local$index = $expressionNode"
+        return "(stloc $index $expressionNode)"
     }
 
 

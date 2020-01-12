@@ -989,7 +989,7 @@ fun Graph.getNodes(root: Int): Block {
 
 
                 if(instruction.method.name == "Write" || instruction.method.name == "WriteLine") {
-                    res.add(ConsoleTemp("${instruction.method.name}(${args.map { it.second }.joinToString(",")})",
+                    res.add(ConsoleTemp(instruction.method.name,
                         args.map { it.second!! }.toTypedArray()))
                     continue
                 }
@@ -999,7 +999,7 @@ fun Graph.getNodes(root: Int): Block {
                 } else{
                     val callee = method.memberOf!!.methods.getValue(instruction.method.name)
                     Call(
-                        "${instruction.method.name}(${args.map { it.second }.joinToString(",")})",
+                        instruction.method.name,
                         callee.callTarget,
                         args.map { it.second!! }.toTypedArray()
                     )

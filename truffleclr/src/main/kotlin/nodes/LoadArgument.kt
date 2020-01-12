@@ -10,7 +10,7 @@ class LoadArgument(@CompilationFinal val index: Int) : ExpressionNode() {
     }
 
     override fun toString(): String {
-        return "argument$index"
+        return "(ldarg $index)"
     }
 
 }

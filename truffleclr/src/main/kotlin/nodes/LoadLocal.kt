@@ -8,7 +8,7 @@ class LoadLocal(val index: Int, @Child var read: ReadLocal) : ExpressionNode() {
     }
 
     override fun toString(): String {
-        return "local$index"
+        return "(ldloc $index)"
     }
 
 }

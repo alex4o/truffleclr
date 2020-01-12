@@ -8,6 +8,6 @@ class Multiply(@Child var a: ExpressionNode, @Child var b: ExpressionNode): Expr
     }
 
     override fun toString(): String {
-        return "$a * $b"
+        return "(mul $a $b)"
     }
 }

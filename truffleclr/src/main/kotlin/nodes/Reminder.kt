@@ -13,6 +13,6 @@ class Reminder(@Child var a: ExpressionNode, @Child var b: ExpressionNode): Expr
     }
 
     override fun toString(): String {
-        return "$a % $b"
+        return "(rem $a $b)"
     }
 }

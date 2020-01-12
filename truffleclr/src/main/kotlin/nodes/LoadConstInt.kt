@@ -8,6 +8,6 @@ class LoadConstInt(val number: Int): ExpressionNode() {
     }
 
     override fun toString(): String {
-        return number.toString()
+        return "(ldc $number)"
     }
 }
