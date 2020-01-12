@@ -13,6 +13,7 @@ import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import parser.cil.DeclVisitor
 import parser.generic.AppDomain
+import parser.generic.Graph
 import java.io.FileReader
 
 @TruffleLanguage.Registration(
@@ -31,7 +32,7 @@ import java.io.FileReader
     StandardTags.ExpressionTag::class,
     DebuggerTags.AlwaysHalt::class
 )
-class Language: TruffleLanguage<AppDomain>()  {
+class Clr: TruffleLanguage<AppDomain>()  {
     override fun createContext(env: Env?): AppDomain {
         return AppDomain()
     }
@@ -41,6 +42,9 @@ class Language: TruffleLanguage<AppDomain>()  {
     }
 
     override fun parse(request: ParsingRequest): CallTarget {
+        // TODO: Should fix that and use DI :D
+        Graph.language = this
+
         val lexer = CilLexer(CharStreams.fromReader(request.source.reader))
         val tokenStream = CommonTokenStream(lexer);
 
@@ -54,11 +58,22 @@ class Language: TruffleLanguage<AppDomain>()  {
             decl.accept(rootVisitor)
         }
 
-        val code = appDomain.entryPoint.graph
+        for(assembly in appDomain.assemblies) {
+            val types = assembly.types
+            println(types)
+            for(type in types) {
+                println(type.methods)
+                type.methods.forEach {
+                    it.value.compile()
+                    it.value.graph.visualise()
+                    it.value.graph.dominators.visualise()
+                }
 
-        val startBlock = code.getNodes(code.root)
+            }
+        }
 
-        return Truffle.getRuntime().createCallTarget(Method(startBlock, code.method.frameDescriptor))
+        return appDomain.entryPoint.callTarget(this)
     }
+
 
 }

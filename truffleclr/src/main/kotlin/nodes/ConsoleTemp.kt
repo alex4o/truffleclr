@@ -2,7 +2,9 @@ package nodes
 
 import com.oracle.truffle.api.CompilerDirectives
 import com.oracle.truffle.api.frame.VirtualFrame
+import com.oracle.truffle.api.nodes.NodeInfo
 
+@NodeInfo(shortName = "print")
 class ConsoleTemp(@CompilerDirectives.CompilationFinal val name: String, @Children var args: Array<ExpressionNode>): ExpressionNode() {
     override fun execute(env: VirtualFrame): Any? {
         if(name.startsWith("WriteLine")) {
@@ -10,7 +12,7 @@ class ConsoleTemp(@CompilerDirectives.CompilationFinal val name: String, @Childr
         }else{
             this.write(args[0].execute(env))
         }
-        return null
+        return 0
     }
 
     @CompilerDirectives.TruffleBoundary

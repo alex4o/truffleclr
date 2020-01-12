@@ -1,6 +1,8 @@
 package parser.generic
 
+import com.oracle.truffle.api.RootCallTarget
 import com.oracle.truffle.api.Truffle
+import com.oracle.truffle.api.TruffleLanguage
 import com.oracle.truffle.api.frame.FrameDescriptor
 import com.oracle.truffle.api.frame.FrameSlotKind
 import main.getNodes
@@ -44,8 +46,8 @@ class Method(var name: String, var arguments: List<String>) {
 
     private val dispatchNode = DispatchNode(arrayOf())
 
-    val callTarget by lazy {
-        Truffle.getRuntime().createCallTarget(Method(dispatchNode, frameDescriptor))
+    fun callTarget(language: TruffleLanguage<*>): RootCallTarget {
+        return Truffle.getRuntime().createCallTarget(Method(dispatchNode, frameDescriptor, language))
     }
 
     val blockByLabel = mutableMapOf<String, InstructionBlock>()
@@ -123,7 +125,7 @@ class Method(var name: String, var arguments: List<String>) {
             }
 
             if (block.stolen == 0) {
-                graph.getNodes(block.index)
+                graph.getNodes(block.index, language = Graph.language!!)
             }
 
             visited.add(index)

@@ -3,8 +3,9 @@ package nodes
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal
 import com.oracle.truffle.api.frame.VirtualFrame
 import com.oracle.truffle.api.nodes.ExplodeLoop
+import com.oracle.truffle.api.nodes.NodeInfo
 
-
+@NodeInfo(shortName = "block")
 class Block(var id: Int, var name: String): ExpressionNode() {
 
     @Children var nodes: Array<ExpressionNode> = arrayOf()
@@ -15,7 +16,7 @@ class Block(var id: Int, var name: String): ExpressionNode() {
         for(node in nodes) {
             node.execute(env)
         }
-        return null
+        return 0
     }
 
     override fun toString(): String {

@@ -1,5 +1,6 @@
 package parser.generic
 
+import com.oracle.truffle.api.TruffleLanguage
 import guru.nidi.graphviz.attribute.Color
 import guru.nidi.graphviz.attribute.Label
 import guru.nidi.graphviz.attribute.Shape
@@ -14,6 +15,9 @@ import java.util.*
 import kotlin.collections.LinkedHashMap
 
 class Graph(var nodes: List<InstructionBlock>, var method: Method) {
+    companion object {
+        var language: TruffleLanguage<*>? = null
+    }
 
     var root = 0
 
@@ -49,7 +53,7 @@ class Graph(var nodes: List<InstructionBlock>, var method: Method) {
 ////                node = prev.second
 //            }else {
 
-                val nodesText = this.getNodes(target).toString()
+                val nodesText = this.getNodes(target, language!!).toString()
                     .replace("<", "&lt;")
                     .replace(">", "&gt;")
                     .replace(">=", "&gt;=")
@@ -91,7 +95,8 @@ class Graph(var nodes: List<InstructionBlock>, var method: Method) {
         nodes.values.forEach { g.add(it) }
         // Basic block
 
-        Graphviz.fromGraph(g).render(Format.XDOT).toFile(File("${method.name}.xdot"))
+
+        Graphviz.fromGraph(g).render(Format.XDOT).toFile(File("${method.memberOf!!.name}_${method.name}.xdot"))
     }
 
 

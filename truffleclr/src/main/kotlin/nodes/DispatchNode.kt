@@ -6,7 +6,9 @@ import com.oracle.truffle.api.frame.VirtualFrame
 import com.oracle.truffle.api.nodes.ExplodeLoop
 import com.oracle.truffle.api.nodes.ExplodeLoop.LoopExplosionKind
 import com.oracle.truffle.api.nodes.LoopNode
+import com.oracle.truffle.api.nodes.NodeInfo
 
+@NodeInfo(shortName = "dispatch")
 class DispatchNode(@Children var blocks: Array<Block>) : ExpressionNode() {
 
     // TODO: Exceptions
@@ -17,7 +19,7 @@ class DispatchNode(@Children var blocks: Array<Block>) : ExpressionNode() {
 
         var basicBlockIndex = 0
         var backEdgeCount = 0
-        var returnValue: Any? = null
+        var returnValue: Any? = 0
 
         while (basicBlockIndex >= 0) {
             CompilerAsserts.partialEvaluationConstant<Int>(basicBlockIndex)

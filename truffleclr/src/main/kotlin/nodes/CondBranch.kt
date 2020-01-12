@@ -3,7 +3,9 @@ package nodes
 import com.oracle.truffle.api.CompilerDirectives
 import com.oracle.truffle.api.frame.VirtualFrame
 import com.oracle.truffle.api.nodes.Node
+import com.oracle.truffle.api.nodes.NodeInfo
 
+@NodeInfo(shortName = "cndbr")
 class CondBranch(
     @Child var a: ExpressionNode, @Child var b: ExpressionNode, @CompilerDirectives.CompilationFinal val cond: String, @Child var goa: ExpressionNode, @Child var gob: ExpressionNode,
     val label: String

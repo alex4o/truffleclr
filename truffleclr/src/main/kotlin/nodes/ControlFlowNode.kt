@@ -5,8 +5,10 @@ import com.oracle.truffle.api.dsl.Specialization
 import com.oracle.truffle.api.frame.VirtualFrame
 import com.oracle.truffle.api.instrumentation.InstrumentableNode
 import com.oracle.truffle.api.instrumentation.ProbeNode
+import com.oracle.truffle.api.nodes.NodeInfo
 import jdk.nashorn.internal.objects.annotations.SpecializedFunction
 
+@NodeInfo(shortName = "cfn")
 abstract class ControlFlowNode : ExpressionNode() /*, InstrumentableNode */{
 
     @CompilerDirectives.CompilationFinal(dimensions = 1)

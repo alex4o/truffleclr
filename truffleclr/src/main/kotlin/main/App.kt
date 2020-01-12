@@ -2,20 +2,17 @@ package main
 
 import Cil.CilLexer
 import Cil.CilParser
-import com.oracle.truffle.api.Truffle
-import com.oracle.truffle.api.frame.FrameDescriptor
 import com.oracle.truffle.api.nodes.DirectCallNode
-import nodes.DispatchNode
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
+import org.graalvm.polyglot.Context
+import org.graalvm.polyglot.Engine
+import org.graalvm.polyglot.Source
 import parser.cil.DeclVisitor
 import parser.generic.AppDomain
-import java.io.FileReader
-import java.util.*
 import java.io.File
-import nodes.Method
-import parser.generic.LengauerTarjan
-import kotlin.system.measureNanoTime
+import java.io.FileReader
+import kotlin.system.exitProcess
 import kotlin.system.measureTimeMillis
 
 fun String.runCommand() {
@@ -32,42 +29,23 @@ fun String.runCommand() {
 */
 
 fun main() {
+    ClrProvider()
 
     var appDomain = AppDomain()
 
-    var reader = FileReader("./test/break_continue.il");
-
-    var stream = CharStreams.fromReader(reader, "useless");
-    var lexer = CilLexer(stream)
-
-    val tstream = CommonTokenStream(lexer);
-
-    var parser = CilParser(tstream)
-    var tree = parser.decls()
-    var rootVisitor = DeclVisitor(appDomain)
-    for (decl in tree.children) {
-        decl.accept(rootVisitor)
-    }
+    val context = Context.newBuilder("trufflecrl").out(System.out).build()
 
 
-
-    for(assembly in appDomain.assemblies) {
-        val types = assembly.types
-        println(types)
-        for(type in types) {
-            println(type.methods)
-            type.methods.forEach {
-                it.value.compile()
-                it.value.graph.visualise()
-                it.value.graph.dominators.visualise()
-            }
-
-        }
-    }
-
-    println(appDomain.entryPoint.locals)
     val time = measureTimeMillis {
-        println(DirectCallNode.create(appDomain.entryPoint.callTarget).call(5))
+        println(
+            context.eval(
+                Source.newBuilder(
+                    "trufflecrl",
+                    FileReader("./test/func_fib.il"),
+                    "test.il"
+                ).build()
+            )
+        )
     }
 
     println("Completed in: ${time}")

@@ -1,5 +1,6 @@
 package main
 
+import com.oracle.truffle.api.TruffleLanguage
 import nodes.*
 import parser.generic.InstructionBlock
 import parser.generic.Graph
@@ -9,7 +10,7 @@ import java.util.*
 import kotlin.collections.LinkedHashMap
 
 
-fun Graph.getNodes(root: Int): Block {
+fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
     val stack = Stack<Pair<String, ExpressionNode?>>()
     val res = mutableListOf<ExpressionNode?>()
     var block = nodes[root]
@@ -861,7 +862,7 @@ fun Graph.getNodes(root: Int): Block {
                     error("")
                 }
 
-                val nodes = block.targets.map { this.getNodes(it) }
+                val nodes = block.targets.map { this.getNodes(it, language) }
 
                 val goa = nodes[0].id
                 val gob = nodes[1].id
@@ -879,7 +880,7 @@ fun Graph.getNodes(root: Int): Block {
                     error("")
                 }
 
-                val nodes = block.targets.map { this.getNodes(it) }
+                val nodes = block.targets.map { this.getNodes(it, language) }
 
                 val goa = nodes[0].id
                 val gob = nodes[1].id
@@ -898,7 +899,7 @@ fun Graph.getNodes(root: Int): Block {
 
                 val s1 = stack.pop()
 
-                val nodes = block.targets.map { this.getNodes(it) }
+                val nodes = block.targets.map { this.getNodes(it, language) }
 
                 val goa = nodes[0].id
                 val gob = nodes[1].id
@@ -913,7 +914,7 @@ fun Graph.getNodes(root: Int): Block {
                 val s0 = stack.pop()
                 val s1 = stack.pop()
 
-                val nodes = block.targets.map { this.getNodes(it) }
+                val nodes = block.targets.map { this.getNodes(it, language) }
 
                 val goa = nodes[0].id
                 val gob = nodes[1].id
@@ -999,7 +1000,7 @@ fun Graph.getNodes(root: Int): Block {
                     val callee = method.memberOf!!.methods.getValue(instruction.method.name)
                     Call(
                         instruction.method.name,
-                        callee.callTarget,
+                        callee.callTarget(language = language),
                         args.map { it.second!! }.toTypedArray()
                     )
                 }

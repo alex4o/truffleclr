@@ -2,7 +2,9 @@ package nodes
 
 import com.oracle.truffle.api.frame.VirtualFrame
 import com.oracle.truffle.api.nodes.Node
+import com.oracle.truffle.api.nodes.NodeInfo
 
+@NodeInfo(shortName = "cmp")
 class Compare(@Child var a: ExpressionNode, @Child var b: ExpressionNode, val cond: String): ExpressionNode() {
     override fun execute(env: VirtualFrame): Any? {
         val adata = a.execute(env) as Int
