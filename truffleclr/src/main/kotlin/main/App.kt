@@ -35,7 +35,7 @@ fun main() {
 
     var appDomain = AppDomain()
 
-    var reader = FileReader("./test/func_fib.il");
+    var reader = FileReader("./test/break_continue.il");
 
     var stream = CharStreams.fromReader(reader, "useless");
     var lexer = CilLexer(stream)

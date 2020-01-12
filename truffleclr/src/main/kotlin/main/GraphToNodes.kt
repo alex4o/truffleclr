@@ -842,9 +842,8 @@ fun Graph.getNodes(root: Int): Block {
             }
 //types: "break"
             if (instruction.instruction.startsWith("break") && instruction is InstructionNone) {
-                TODO("not implemented")
 
-                val node = null
+                val node = BreakPoint()
 
                 res.add(node)
             }

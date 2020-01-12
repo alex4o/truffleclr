@@ -11,21 +11,21 @@ namespace HelloWorld
             {
                 Console.Write(i);
                 Console.Write(" ");
-                Console.WriteLine(fib(i % 30));
+                Console.WriteLine(fac(i % 13));
             }
         }
 
-        static int fib(int n)
+        static int fac(int n)
         {
-            if (n == 0)
+            if (n == 1)
             {
-                return 0;
+                return 1;
             }
             if (n == 1)
             {
                 return 1;
             }
-            return fib(n - 1) + fib(n - 2);
+            return n * fac(n - 1);
         }
     }
 }
