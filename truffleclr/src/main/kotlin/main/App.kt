@@ -41,7 +41,7 @@ fun main() {
             context.eval(
                 Source.newBuilder(
                     "trufflecrl",
-                    FileReader("./test/func_fib.il"),
+                    FileReader("./test/func.il"),
                     "test.il"
                 ).build()
             )

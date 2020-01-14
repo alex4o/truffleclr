@@ -11,7 +11,7 @@ class Block(var id: Int, var name: String): ExpressionNode() {
     @Children var nodes: Array<ExpressionNode> = arrayOf()
     lateinit var controlFlowNode: ControlFlowNode
 
-    @ExplodeLoop
+    @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.FULL_EXPLODE_UNTIL_RETURN)
     override fun execute(env: VirtualFrame): Any? {
         for(node in nodes) {
             node.execute(env)

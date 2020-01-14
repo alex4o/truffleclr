@@ -17,9 +17,9 @@ class BoolBranch(
     override fun executeControlFlow(env: VirtualFrame): Int {
         val adata = a.execute(env) as Boolean
         return if (adata == cond) {
-            return same
+            same
         } else {
-            return diff
+            diff
         }
 
     }
