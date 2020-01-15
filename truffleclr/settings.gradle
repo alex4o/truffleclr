@@ -1,2 +1,4 @@
 rootProject.name = 'truffleclr'
+include 'launcher'
+include 'language'
 

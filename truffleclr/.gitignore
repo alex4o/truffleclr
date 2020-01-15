@@ -1,3 +1,7 @@
 *.xdot
 *.png
 .attach*
+build
+.gradle
+graal_dumps
+gradle
