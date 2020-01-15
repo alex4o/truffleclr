@@ -1,10 +1,11 @@
-package nodes
+package nodes.expressions
 
 import com.oracle.truffle.api.dsl.UnsupportedSpecializationException
 import com.oracle.truffle.api.frame.FrameSlot
 import com.oracle.truffle.api.frame.FrameSlotKind
 import com.oracle.truffle.api.frame.VirtualFrame
 import com.oracle.truffle.api.nodes.NodeInfo
+import nodes.ExpressionNode
 
 @NodeInfo(shortName = "ldloc")
 class LoadLocal(val index: Int, var slot: FrameSlot) : ExpressionNode() {

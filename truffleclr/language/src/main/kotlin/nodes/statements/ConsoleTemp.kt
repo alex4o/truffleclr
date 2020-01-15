@@ -1,9 +1,10 @@
-package nodes
+package nodes.statements
 
 import com.oracle.truffle.api.CompilerAsserts
 import com.oracle.truffle.api.CompilerDirectives
 import com.oracle.truffle.api.frame.VirtualFrame
 import com.oracle.truffle.api.nodes.NodeInfo
+import nodes.ExpressionNode
 
 @NodeInfo(shortName = "print")
 class ConsoleTemp(@CompilerDirectives.CompilationFinal val name: String, @Children var args: Array<ExpressionNode>): ExpressionNode() {

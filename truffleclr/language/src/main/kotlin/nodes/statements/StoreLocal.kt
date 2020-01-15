@@ -1,7 +1,9 @@
-package nodes
+package nodes.statements
 
 import com.oracle.truffle.api.frame.VirtualFrame
 import com.oracle.truffle.api.nodes.NodeInfo
+import nodes.ExpressionNode
+import nodes.WriteLocal
 
 @NodeInfo(shortName = "stloc")
 class StoreLocal(@Child var expressionNode: ExpressionNode, val index: Int, @Child var write: WriteLocal): ExpressionNode() {

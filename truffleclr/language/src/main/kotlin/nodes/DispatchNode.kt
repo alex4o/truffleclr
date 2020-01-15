@@ -7,6 +7,10 @@ import com.oracle.truffle.api.nodes.ExplodeLoop
 import com.oracle.truffle.api.nodes.ExplodeLoop.LoopExplosionKind
 import com.oracle.truffle.api.nodes.LoopNode
 import com.oracle.truffle.api.nodes.NodeInfo
+import nodes.controlflow.BoolBranch
+import nodes.controlflow.Branch
+import nodes.controlflow.Return
+import nodes.controlflow.ReturnValue
 
 @NodeInfo(shortName = "dispatch")
 class DispatchNode(@Children var blocks: Array<Block>) : ExpressionNode() {

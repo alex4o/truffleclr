@@ -1,7 +1,9 @@
-package nodes
+package nodes.controlflow
 
 import com.oracle.truffle.api.frame.VirtualFrame
 import com.oracle.truffle.api.nodes.NodeInfo
+import nodes.ControlFlowNode
+import nodes.ExpressionNode
 
 @NodeInfo(shortName = "retval")
 class ReturnValue(@Child var expr: ExpressionNode): ControlFlowNode() {

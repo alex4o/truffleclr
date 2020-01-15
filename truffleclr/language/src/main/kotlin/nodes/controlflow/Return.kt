@@ -1,7 +1,8 @@
-package nodes
+package nodes.controlflow
 
 import com.oracle.truffle.api.frame.VirtualFrame
 import com.oracle.truffle.api.nodes.NodeInfo
+import nodes.ControlFlowNode
 
 @NodeInfo(shortName = "ret")
 class Return(): ControlFlowNode() {

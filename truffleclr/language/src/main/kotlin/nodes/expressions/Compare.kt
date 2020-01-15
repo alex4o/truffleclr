@@ -1,7 +1,8 @@
-package nodes
+package nodes.expressions
 
 import com.oracle.truffle.api.frame.VirtualFrame
 import com.oracle.truffle.api.nodes.NodeInfo
+import nodes.ExpressionNode
 
 @NodeInfo(shortName = "cmp")
 class Compare(@Child var a: ExpressionNode, @Child var b: ExpressionNode, val cond: String): ExpressionNode() {

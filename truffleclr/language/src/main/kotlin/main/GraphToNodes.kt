@@ -2,6 +2,13 @@ package main
 
 import com.oracle.truffle.api.TruffleLanguage
 import nodes.*
+import nodes.controlflow.BoolBranch
+import nodes.controlflow.Branch
+import nodes.controlflow.Return
+import nodes.controlflow.ReturnValue
+import nodes.expressions.*
+import nodes.statements.ConsoleTemp
+import nodes.statements.StoreLocal
 import parser.generic.Graph
 import parser.generic.InstructionBlock
 import parser.generic.instruction.*
@@ -484,7 +491,10 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
 
 
                 if(method.static) {
-                    val node = LoadArgument(number, ReadLocalNodeGen.create(method.argumentsSlots[number]))
+                    val node = LoadArgument(
+                        number,
+                        ReadLocalNodeGen.create(method.argumentsSlots[number])
+                    )
 
                     stack.push(Pair(method.arguments[number], node))
                 } else {
@@ -593,7 +603,12 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
             }
 //types: "ldstr"
             if (instruction.instruction.startsWith("ldstr") && instruction is InstructionString) {
-                val node = LoadString(instruction.content.substring(1, instruction.content.length - 1))
+                val node = LoadString(
+                    instruction.content.substring(
+                        1,
+                        instruction.content.length - 1
+                    )
+                )
                 stack.push(Pair("Ref", node))
             }
 //types: "ldfld"
@@ -721,9 +736,17 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
                 val number = arg.toInt()
 
                 val node = if (s0.first == method.locals[number]) {
-                    StoreLocal(s0.second!!, number, WriteLocalNodeGen.create(method.frameSlots[number]))
+                    StoreLocal(
+                        s0.second!!,
+                        number,
+                        WriteLocalNodeGen.create(method.frameSlots[number])
+                    )
                 } else {
-                    StoreLocal(Convert(s0.second!!), number, WriteLocalNodeGen.create(method.frameSlots[number]))
+                    StoreLocal(
+                        Convert(s0.second!!),
+                        number,
+                        WriteLocalNodeGen.create(method.frameSlots[number])
+                    )
                 }
 
                 res.add(node)
@@ -850,7 +873,10 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
 //types: "br.s","br"
             if (setOf("br", "br.s").contains(instruction.instruction) && instruction is InstructionBrTarget) {
 
-                val node = Branch(method.blockByLabel.getValue(instruction.target).index, instruction.target)
+                val node = Branch(
+                    method.blockByLabel.getValue(instruction.target).index,
+                    instruction.target
+                )
                 node.successors = intArrayOf(method.blockByLabel.getValue(instruction.target).index)
                 res.add(node)
             }
@@ -867,7 +893,8 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
                 val gob = nodes[1].id
 
 
-                val node = BoolBranch(s0.second!!, false, goa, gob, instruction.target)
+                val node =
+                    BoolBranch(s0.second!!, false, goa, gob, instruction.target)
                 node.successors = intArrayOf(goa, gob)
 
                 res.add(node)
@@ -886,7 +913,8 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
 
                 println(method.blockByLabel.getValue(instruction.target).index)
 
-                val node = BoolBranch(s0.second!!, true, goa, gob, instruction.target)
+                val node =
+                    BoolBranch(s0.second!!, true, goa, gob, instruction.target)
                 node.successors = intArrayOf(goa, gob)
 
                 res.add(node)
@@ -903,7 +931,13 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
                 val goa = nodes[0].id
                 val gob = nodes[1].id
 
-                val node = BoolBranch(Compare(s1.second!!, s0.second!!, "=="), true, goa, gob, instruction.target)
+                val node = BoolBranch(
+                    Compare(s1.second!!, s0.second!!, "=="),
+                    true,
+                    goa,
+                    gob,
+                    instruction.target
+                )
                 node.successors = intArrayOf(goa, gob)
 
                 res.add(node)
@@ -919,7 +953,13 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
                 val gob = nodes[1].id
 
 //                val node = CondBranch(s1.second!!, s0.second!!, "ge", goa, gob, instruction.target)
-                val node = BoolBranch(Compare(s1.second!!, s0.second!!, ">="), true, goa, gob, instruction.target)
+                val node = BoolBranch(
+                    Compare(s1.second!!, s0.second!!, ">="),
+                    true,
+                    goa,
+                    gob,
+                    instruction.target
+                )
                 node.successors = intArrayOf(goa, gob)
 
                 res.add(node)
@@ -988,8 +1028,11 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
 
 
                 if(instruction.method.name == "Write" || instruction.method.name == "WriteLine") {
-                    res.add(ConsoleTemp(instruction.method.name,
-                        args.map { it.second!! }.toTypedArray()))
+                    res.add(
+                        ConsoleTemp(instruction.method.name,
+                        args.map { it.second!! }.toTypedArray()
+                    )
+                    )
                     continue
                 }
 
@@ -1151,7 +1194,8 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
 
 
     if (block.instructions.last() !is InstructionBrTarget && block.targets.size == 1) {
-        val node = Branch(block.targets.first(), nodes[block.targets.first()].label)
+        val node =
+            Branch(block.targets.first(), nodes[block.targets.first()].label)
         node.successors = intArrayOf(block.targets.first())
         res.add(node)
     }

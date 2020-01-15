@@ -1,4 +1,4 @@
-package nodes
+package nodes.expressions
 
 import com.oracle.truffle.api.CompilerDirectives
 import com.oracle.truffle.api.RootCallTarget
@@ -7,6 +7,7 @@ import com.oracle.truffle.api.frame.VirtualFrame
 import com.oracle.truffle.api.nodes.ExplodeLoop
 import com.oracle.truffle.api.nodes.IndirectCallNode
 import com.oracle.truffle.api.nodes.NodeInfo
+import nodes.ExpressionNode
 
 @NodeInfo(shortName = "call")
 class Call(@CompilerDirectives.CompilationFinal val name: String, var callTarget: RootCallTarget, @Children var args: Array<ExpressionNode>): ExpressionNode() {

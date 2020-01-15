@@ -1,7 +1,8 @@
-package nodes
+package nodes.expressions
 
 import com.oracle.truffle.api.frame.VirtualFrame
 import com.oracle.truffle.api.nodes.NodeInfo
+import nodes.ExpressionNode
 
 @NodeInfo(shortName = "mul")
 class Multiply(@Child var a: ExpressionNode, @Child var b: ExpressionNode): ExpressionNode() {

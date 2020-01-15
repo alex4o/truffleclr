@@ -1,8 +1,9 @@
-package nodes
+package nodes.controlflow
 
 import com.oracle.truffle.api.CompilerDirectives
 import com.oracle.truffle.api.frame.VirtualFrame
 import com.oracle.truffle.api.nodes.NodeInfo
+import nodes.ExpressionNode
 
 @NodeInfo(shortName = "cndbr")
 class CondBranch(
