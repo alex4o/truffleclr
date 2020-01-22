@@ -121,8 +121,8 @@ K_NEWSLOT: 'newslot';
 K_RTSPECIALNAME: 'rtspecialname';
 K_PINVOKEIMPL: 'pinvokeimpl';
 
-D_CTOR: '.ctor';
-D_CCTOR: '.cctor';
+D_CTOR: '.ctor' | '\'.ctor\'';
+D_CCTOR: '.cctor' | '\'.cctor\'';
 K_LITERAL: 'literal';
 K_NOTSERIALIZED: 'notserialized';
 K_INITONLY: 'initonly';
@@ -1307,9 +1307,7 @@ type                    : K_CLASS className
                         | '!' dottedName
                         | K_TYPEDREF
                         | K_VOID
-                        | K_NATIVE K_INT
-                        | K_NATIVE K_UNSIGNED K_INT
-                        | K_NATIVE K_UINT
+                        | K_NATIVE  (K_UINT | K_UNSIGNED? K_INT)?
                         | simpleType
                         | ELIPSIS type
                         | '!(null)'

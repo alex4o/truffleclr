@@ -91,7 +91,7 @@ class Graph(var nodes: List<InstructionBlock>, var compileNode: CompileMethod) {
         // Basic block
 
 
-        Graphviz.fromGraph(g).render(Format.XDOT).toFile(File("$compileNode.xdot"))
+        Graphviz.fromGraph(g).render(Format.XDOT).toFile(File("${compileNode.method}.xdot"))
     }
 
 

@@ -15,8 +15,8 @@ import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import parser.cil.DeclVisitor
 import parser.generic.IlAppDomain
+import runtime.ClrContext
 import runtime.Methods
-import java.io.File
 
 @TruffleLanguage.Registration(
     id = "trufflecrl",
@@ -34,10 +34,10 @@ import java.io.File
     StandardTags.ExpressionTag::class,
     DebuggerTags.AlwaysHalt::class
 )
-class Clr : TruffleLanguage<IlAppDomain>() {
+class Clr : TruffleLanguage<ClrContext>() {
 
-    override fun createContext(env: Env?): IlAppDomain {
-        return IlAppDomain()
+    override fun createContext(env: Env): ClrContext {
+        return ClrContext(env)
     }
 
     override fun isObjectOfLanguage(`object`: Any?): Boolean {
@@ -57,15 +57,14 @@ class Clr : TruffleLanguage<IlAppDomain>() {
         }
     }
 
-    var methods = Methods()
     override fun parse(request: ParsingRequest): CallTarget {
         val appDomain = IlAppDomain()
 
-        parseFile(
-            appDomain, CharStreams.fromPath(
-                File("./language/src/main/resources/System.Private.CoreLib.il").toPath()
-            )
-        )
+//        parseFile(
+//            appDomain, CharStreams.fromPath(
+//                File("./language/src/main/resources/System.Private.CoreLib.il").toPath()
+//            )
+//        )
 
 
         parseFile(appDomain, CharStreams.fromReader(request.source.reader))
@@ -75,13 +74,18 @@ class Clr : TruffleLanguage<IlAppDomain>() {
 
         val frameDescriptor = FrameDescriptor()
         return Truffle.getRuntime().createCallTarget(
-            Initialize(appDomain, methods, frameDescriptor, this)
+            Initialize(appDomain, scopes, frameDescriptor, this)
         )
     }
 
-
-    override fun findTopScopes(context: IlAppDomain?): MutableIterable<Scope> {
-        return mutableListOf(Scope.newBuilder("HelloWorld", methods).build())
+    var scopes = mutableListOf<Scope>()
+    override fun findTopScopes(context: ClrContext): MutableIterable<Scope> {
+        return scopes
     }
+
+
+
+    val methods: Methods
+        get() = scopes[0].variables as Methods
 
 }

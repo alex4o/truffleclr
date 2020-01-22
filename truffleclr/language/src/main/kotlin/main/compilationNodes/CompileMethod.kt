@@ -1,5 +1,6 @@
 package main.compilationNodes
 
+import com.oracle.truffle.api.CompilerDirectives
 import com.oracle.truffle.api.RootCallTarget
 import com.oracle.truffle.api.Truffle
 import com.oracle.truffle.api.TruffleLanguage
@@ -13,10 +14,11 @@ import parser.generic.Graph
 import parser.generic.IlMethod
 import parser.generic.InstructionBlock
 import parser.generic.instruction.InstructionBrTarget
+import runtime.Methods
 import java.lang.Exception
 import java.util.*
 
-class CompileMethod(val method: IlMethod, val language: TruffleLanguage<*>) : ExpressionNodeGeneric<MethodBody>() {
+class CompileMethod(val method: IlMethod, val language: TruffleLanguage<*>, val methods: Methods) : ExpressionNodeGeneric<MethodBody>() {
     val frameDescriptor = FrameDescriptor();
 
     var compiled = sortedMapOf<Int, Block>()
@@ -50,6 +52,7 @@ class CompileMethod(val method: IlMethod, val language: TruffleLanguage<*>) : Ex
 //        return Truffle.getRuntime()
 //            .createCallTarget(body())
 //    }
+    val runtime = Truffle.getRuntime()
 
     @ExplodeLoop
     override fun execute(env: VirtualFrame): MethodBody {
@@ -70,7 +73,6 @@ class CompileMethod(val method: IlMethod, val language: TruffleLanguage<*>) : Ex
 
                 visited.add(index)
                 queue.addAll(block.targets)
-
             }
 
             var blocks = arrayOfNulls<Block>(compiled.lastKey() + 1);
@@ -79,7 +81,10 @@ class CompileMethod(val method: IlMethod, val language: TruffleLanguage<*>) : Ex
             }
 
             val dispatchNode = DispatchNode(blocks as Array<Block>)
-            return body(dispatchNode)
+
+            val methodBody = body(dispatchNode)
+            methods.functions[method.toString()]!!.callTarget = runtime.createCallTarget(methodBody)
+            return methodBody
 
         } catch (e: Exception) {
             println("Compilation failed for method: $method")
@@ -88,7 +93,8 @@ class CompileMethod(val method: IlMethod, val language: TruffleLanguage<*>) : Ex
         }
     }
 
-    val graph: Graph by lazy() {
+    val graph: Graph by lazy() @CompilerDirectives.TruffleBoundary
+    {
         val indexLabels = method.labels.map { Pair(it.value, it.key) }.toMap()
         val jumpLabelsLocations = method.jumpLabels.map { Pair(method.labels[it]!!, it) }.toMap()
 

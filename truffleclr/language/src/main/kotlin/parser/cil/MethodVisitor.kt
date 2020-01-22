@@ -29,9 +29,9 @@ class MethodVisitor(var appDomain: IlAppDomain, var method: IlMethod) : Cil.CilB
 
     override fun visitMethod_instruction(ctx: CilParser.Method_instructionContext): Any {
         val label = ctx.id()
-        var labelText = if(ctx.id() != null) {
+        var labelText = if (ctx.id() != null) {
             ctx.id().text
-        }else{
+        } else {
             ""
         }
 
@@ -47,78 +47,113 @@ class MethodVisitor(var appDomain: IlAppDomain, var method: IlMethod) : Cil.CilB
             labelText = entryPoint
         }
 
-        var instruction: Instruction = when (instr) {
-            is CilParser.Instr_noneContext -> {
-                InstructionNone(instr.INSTR_NONE().text)
-            }
-            is CilParser.Instr_brtargetContext -> {
-                method.jumpLabels.add(instr.id().text)
-                InstructionBrTarget(instr.INSTR_BRTARGET().text, instr.id().text)
-            }
-            is CilParser.Instr_iContext -> {
-                val arg: Int = if(instr.int64().text.startsWith("0x"))
-                {
-                    instr.int64().text.substring(2).toInt(16)
-                }else{
-                    instr.int64().text.toInt(10)
+        var instruction: Instruction = instr.run {
+            when (this) {
+                is CilParser.Instr_noneContext -> {
+                    InstructionNone(INSTR_NONE().text)
                 }
-                InstructionI(instr.INSTR_I().text, arg)
-            }
-            is CilParser.Instr_methodContext -> {
-                val methodRef = instr.methodRef();
-
-                val methodName = methodRef.methodName().text
-//                val callConv = methodRef.callConv().text
-
-
-                var arguments = listOf<String>()
-
-                if (methodRef.sigArgs0().sigArgs1() != null) {
-                    arguments = methodRef.sigArgs0().sigArgs1().sigArg().map { it.text }
+                is CilParser.Instr_brtargetContext -> {
+                    method.jumpLabels.add(id().text)
+                    InstructionBrTarget(INSTR_BRTARGET().text, id().text)
                 }
+                is CilParser.Instr_iContext -> {
+                    val arg: Int = if (int64().text.startsWith("0x")) {
+                        int64().text.substring(2).toInt(16)
+                    } else {
+                        int64().text.toInt(10)
+                    }
+                    InstructionI(INSTR_I().text, arg)
+                }
+                is CilParser.Instr_methodContext -> {
+                    val methodRef = methodRef();
 
-                val method = IlMethod(methodName, arguments)
-                if (!methodRef.typeSpec().isEmpty) {
-
-                    val typeSpec = methodRef.typeSpec()
-                    if(typeSpec.type() == null) {
-                        println("$methodName ${typeSpec.text}")
-                    }else{
-                        if (typeSpec.type().text == "object") {
-                            method.memberOf = IlType("object")
-                        }
-
-                        if (typeSpec.type().K_CLASS() != null) {
-
-                            val className = typeSpec.type().className().slashedName().text.split(".")
-
-                            method.memberOf = IlType(className.joinToString("."))
-//                            method.memberOf!!.namespace = className.dropLast(1).joinToString(".")
+                    val methodName = methodRef.methodName().run {
+                        when {
+                            dottedName() != null -> dottedName().text.let {
+                                if (it.matches("'.*?'".toRegex())) {
+                                    it.subSequence(1, it.lastIndex).toString()
+                                } else {
+                                    it
+                                }
+                            }
+                            D_CCTOR() != null -> D_CCTOR().text
+                            D_CTOR() != null -> D_CTOR().text
+                            else -> error("Impossible")
                         }
                     }
 
+                    var arguments = listOf<String>()
 
+
+                    if (methodRef.sigArgs0().sigArgs1() != null) {
+                        arguments = methodRef.sigArgs0().sigArgs1().sigArg().map { it.text }
+                    }
+
+                    val method = IlMethod(methodName, arguments)
+
+                    // TODO: fix with metaprogramming
+                    val className = methodRef.typeSpec().run {
+                        when {
+                            type() != null -> {
+                                type().run {
+                                    when {
+                                        K_CLASS() != null -> {
+                                            className().slashedName().text
+                                        }
+                                        K_OBJECT() != null -> {
+                                            "object"
+                                        }
+                                        else -> {
+                                            error("Unable to determine method typeSpec type: ${methodRef.start.line}")
+                                        }
+                                    }
+                                }
+                            }
+                            className() != null -> {
+                                className().slashedName().text
+                            }
+                            else -> {
+                                error("Unable to determine method typeSpec: ${methodRef.start.line}")
+                            }
+                        }
+                    }
+
+                    method.memberOf = IlType(className)
+
+                    if (methodRef.callConv().K_INSTANCE().isNotEmpty()) {
+
+                    } else {
+                        if (methodRef.typeSpec().type() != null) {
+                            val typeSpec = methodRef.typeSpec()
+
+                            if (typeSpec.type().text == "object") {
+                                method.memberOf = IlType("object")
+                            }
+                        }
+
+                    }
+
+
+                    method.returnType = methodRef.type().text
+
+                    InstructionMethod(INSTR_METHOD().text, method)
                 }
+                is CilParser.Instr_stringContext -> {
 
-                method.returnType = methodRef.type().text
-
-                InstructionMethod(instr.INSTR_METHOD().text, method)
-            }
-            is CilParser.Instr_stringContext -> {
-
-                InstructionString(instr.INSTR_STRING().toString(), instr.compQstring().text)
-            }
-            is CilParser.Instr_typeContext -> {
-                InstructionType(instruction = instr.INSTR_TYPE().text)
-            }
-            is CilParser.Instr_fieldContext -> {
-                InstructionField(instruction = instr.INSTR_FIELD().text)
-            }
-            is CilParser.Instr_varContext -> {
-                InstructionVar(instruction = instr.INSTR_VAR().text)
-            }
-            else -> {
-                throw Exception("Unknown instruction detected: ${instr.text}")
+                    InstructionString(INSTR_STRING().toString(), compQstring().text)
+                }
+                is CilParser.Instr_typeContext -> {
+                    InstructionType(INSTR_TYPE().text)
+                }
+                is CilParser.Instr_fieldContext -> {
+                    InstructionField(INSTR_FIELD().text)
+                }
+                is CilParser.Instr_varContext -> {
+                    InstructionVar(INSTR_VAR().text)
+                }
+                else -> {
+                    throw Exception("Unknown instruction detected: ${instr.text}")
+                }
             }
         }
 

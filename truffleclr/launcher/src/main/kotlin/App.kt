@@ -1,6 +1,8 @@
 import org.graalvm.polyglot.Context
 import org.graalvm.polyglot.Source
+import java.io.ByteArrayOutputStream
 import java.io.File
+import java.io.FileOutputStream
 import kotlin.system.measureTimeMillis
 
 fun String.runCommand() {
@@ -17,8 +19,9 @@ fun String.runCommand() {
 */
 
 fun main() {
+    val out = ByteArrayOutputStream()
 
-    val context = Context.newBuilder().allowAllAccess(true).out(System.out).build()
+    val context = Context.newBuilder().allowAllAccess(true).out(out).build()
 
 
 //    val cpart = context.eval(
@@ -31,7 +34,6 @@ fun main() {
 //    println(cpart.getMember("fac").execute(10));
 //    exitProcess(0)
 
-    val time = measureTimeMillis {
         var execution = context.eval(
             Source.newBuilder(
                 "trufflecrl",
@@ -45,13 +47,24 @@ fun main() {
         println(
             execution
         )
-    }
+
     val bindings = context.getBindings("trufflecrl")
     val members = bindings.memberKeys
     println(members)
-    println(bindings.getMember("HelloWorld.Program::fib(int32)").execute(12))
 
+    val main = bindings.getMember("HelloWorld.Program::Main(string[])")
 
+    for(i in 0..2) {
+        main.execute()
+        out.reset()
+        print("$i ")
+    }
+    println()
+
+    val time = measureTimeMillis {
+        main.execute()
+        println(out.toString("utf-8"))
+    }
 
     println("Completed in: ${time}")
 }

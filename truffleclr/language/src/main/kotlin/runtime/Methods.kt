@@ -11,7 +11,7 @@ import runtime.util.Keys
 
 @ExportLibrary(InteropLibrary::class)
 class Methods : TruffleObject {
-    val functions: MutableMap<String, Method> = mutableMapOf<String, Method>()
+    val functions: MutableMap<String, Method> = mutableMapOf()
 
     @ExportMessage
     fun hasMembers(): Boolean {
@@ -20,13 +20,13 @@ class Methods : TruffleObject {
 
     @ExportMessage
     @TruffleBoundary
-    fun readMember(member: String?): Any? {
-        return functions.get(member)
+    fun readMember(member: String): Method {
+        return functions.getValue(member)
     }
 
     @ExportMessage
     @TruffleBoundary
-    fun isMemberReadable(member: String?): Boolean {
+    fun isMemberReadable(member: String): Boolean {
         return functions.containsKey(member)
     }
 

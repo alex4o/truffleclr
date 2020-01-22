@@ -66,6 +66,6 @@ class DispatchNode(@Children var blocks: Array<Block>) : ExpressionNode() {
     }
 
     override fun toString(): String {
-        return blocks.map { it.toString() }.joinToString("\n")
+        return blocks.map { it.toString() }.joinToString("\n", postfix = "\n")
     }
 }

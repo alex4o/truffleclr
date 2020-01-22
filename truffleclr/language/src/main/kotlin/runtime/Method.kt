@@ -14,8 +14,6 @@ import com.oracle.truffle.api.nodes.IndirectCallNode
 @ExportLibrary(InteropLibrary::class)
 class Method(val name: String, @CompilerDirectives.CompilationFinal var callTarget: RootCallTarget?): TruffleObject {
 
-
-
     @ExportMessage
     fun isExecutable(): Boolean {
         return true
@@ -25,15 +23,17 @@ class Method(val name: String, @CompilerDirectives.CompilationFinal var callTarg
     abstract class Execute {
         companion object {
             @Specialization(
-                limit = "0",
+                limit = "1",
                 guards = ["method.getCallTarget() == cachedTarget"]
             )
             @JvmStatic
             fun doDirect(
                 method: Method, arguments: Array<Any?>,
                 @Cached("method.getCallTarget()") cachedTarget: RootCallTarget?,
+//                @Cached callNode: IndirectCallNode
                 @Cached("create(cachedTarget)") callNode: DirectCallNode
             ): Any { /* Inline cache hit, we are safe to execute the cached call target. */
+//                return callNode.call(method.callTarget, *arguments)
                 return callNode.call(*arguments)
             }
 

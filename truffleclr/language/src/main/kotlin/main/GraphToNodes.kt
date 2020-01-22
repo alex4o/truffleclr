@@ -1,5 +1,6 @@
 package main
 
+import com.oracle.truffle.api.CompilerDirectives
 import com.oracle.truffle.api.TruffleLanguage
 import main.compilationNodes.CompileMethod
 import nodes.*
@@ -16,6 +17,7 @@ import parser.generic.instruction.*
 import java.util.*
 
 @Suppress("UNREACHABLE_CODE")
+@CompilerDirectives.TruffleBoundary
 fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
     val stack = Stack<Pair<String, ExpressionNode?>>()
     val res = mutableListOf<ExpressionNode?>()
@@ -1038,7 +1040,7 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
                     continue
                 }
 
-                if(instruction.method.name == "'.ctor'"){
+                if(instruction.method.name == ".ctor"){
                     continue
                 }
 
