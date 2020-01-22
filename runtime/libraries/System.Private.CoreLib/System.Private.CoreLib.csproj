@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <!-- <TargetFramework>netcoreapp3.0</TargetFramework> -->
+    <LangVersion>latest</LangVersion>
+
+    <!-- Prevent .NET Core 3+ from generating exe -->
+    <UseAppHost>false</UseAppHost>
+
+    <!--Disable .NET Core SDK libs-->
+    <NoStdLib>true</NoStdLib>
+    <DisableImplicitFrameworkReferences>true</DisableImplicitFrameworkReferences>
+    
+  </PropertyGroup>
+
+</Project>
