@@ -23,11 +23,13 @@ class CompileMethod(val method: IlMethod, val language: TruffleLanguage<*>, val 
 
     var compiled = sortedMapOf<Int, Block>()
 
+    // TODO: Type parser
     val frameSlots = method.locals.mapIndexed { index, local ->
         val kind = when (local) {
             "int32" -> FrameSlotKind.Int
             "int64" -> FrameSlotKind.Long
             "bool" -> FrameSlotKind.Boolean
+            "int32[]" -> FrameSlotKind.Object
             else -> FrameSlotKind.Illegal
         }
         frameDescriptor.addFrameSlot("local$index", kind)
@@ -38,6 +40,7 @@ class CompileMethod(val method: IlMethod, val language: TruffleLanguage<*>, val 
             "int32" -> FrameSlotKind.Int
             "int64" -> FrameSlotKind.Long
             "bool" -> FrameSlotKind.Boolean
+            "int32[]" -> FrameSlotKind.Object
             else -> FrameSlotKind.Illegal
         }
         frameDescriptor.addFrameSlot("argument$index", kind)

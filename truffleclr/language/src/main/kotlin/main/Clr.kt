@@ -13,6 +13,7 @@ import main.compilationNodes.*
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
+import parser.cil.ClassVisitor
 import parser.cil.DeclVisitor
 import parser.generic.IlAppDomain
 import runtime.ClrContext
@@ -55,6 +56,9 @@ class Clr : TruffleLanguage<ClrContext>() {
         for (decl in tree.children) {
             decl.accept(rootVisitor)
         }
+
+        DeclVisitor.layerVisit()
+        ClassVisitor.layerVisit()
     }
 
     override fun parse(request: ParsingRequest): CallTarget {

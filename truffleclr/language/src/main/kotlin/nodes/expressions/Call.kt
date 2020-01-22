@@ -25,6 +25,9 @@ class Call(var method: Method, @Children var args: Array<ExpressionNode>): Expre
         for(i in 0 until args.size) {
             arguments[i] = args[i].execute(env)
         }
+        if(CompilerDirectives.inInterpreter()) {
+            println("${method.name} (${arguments.joinToString(",")})")
+        }
         return interopLib.execute(method, *arguments)
 //        println("Res: $res")
 //        return callNode.call(*arguments)

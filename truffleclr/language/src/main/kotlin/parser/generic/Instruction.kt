@@ -5,7 +5,8 @@ import parser.generic.IlMethod
 
 abstract class Instruction() { abstract var instruction: String }
 data class InstructionNone(override var instruction: String) : Instruction()
-data class InstructionVar(override var instruction: String) : Instruction()
+data class InstructionVar(override var instruction: String, var value: Int) : Instruction()
+data class InstructionVarS(override var instruction: String, var id: String) : Instruction()
 data class InstructionI(override var instruction: String, var arg: Int) : Instruction()
 data class InstructionI8(override var instruction: String, var arg: Long) : Instruction()
 data class InstructionR(override var instruction: String, var arg: Double) : Instruction()

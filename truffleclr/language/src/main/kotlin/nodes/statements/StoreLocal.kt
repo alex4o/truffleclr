@@ -39,6 +39,13 @@ abstract class StoreLocal(@Child var expressionNode: ExpressionNode, val index: 
         return value;
     }
 
+    @Specialization(guards = ["isObject(env)"])
+    protected fun writeObject(env: VirtualFrame): Any? {
+        val value = expressionNode.execute(env)
+        env.setObject(slot, value);
+        return value;
+    }
+
     protected fun isLong(env: VirtualFrame): Boolean {
         val kind = env.frameDescriptor.getFrameSlotKind(slot)
         return kind == FrameSlotKind.Long
@@ -54,8 +61,13 @@ abstract class StoreLocal(@Child var expressionNode: ExpressionNode, val index: 
         return kind == FrameSlotKind.Boolean
     }
 
+    protected fun isObject(env: VirtualFrame): Boolean {
+        val kind = env.frameDescriptor.getFrameSlotKind(slot)
+        return kind == FrameSlotKind.Object
+    }
+
     override fun toString(): String {
-        return "(stloc $index $expressionNode)"
+        return "\t\t(stloc $index $expressionNode)"
     }
 
 }

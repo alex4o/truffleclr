@@ -101,7 +101,7 @@
              bool V_2)
     IL_0000:  nop
     IL_0001:  ldarg.0
-    IL_0002:  ldc.i4.1
+    IL_0002:  ldc.i4.0
     IL_0003:  ceq
     IL_0005:  stloc.0
     IL_0006:  ldloc.0

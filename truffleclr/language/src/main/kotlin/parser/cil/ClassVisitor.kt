@@ -1,12 +1,25 @@
 package parser.cil
 
+import Cil.CilBaseVisitor
 import Cil.CilParser
+import org.antlr.v4.runtime.ParserRuleContext
 import parser.generic.IlAppDomain
 import parser.generic.IlField
 import parser.generic.IlMethod
 import parser.generic.IlType
+import java.util.*
 
 class ClassVisitor(var appDomain: IlAppDomain, var type: IlType) : Cil.CilBaseVisitor<Any>() {
+
+    companion object {
+        val class_children = LinkedList<Pair<CilBaseVisitor<*>, ParserRuleContext>>()
+
+        fun layerVisit() {
+            for((visitor, tree) in class_children) {
+                tree.accept(visitor)
+            }
+        }
+    }
 
     override fun visitClass_method(ctx: CilParser.Class_methodContext): Any {
         val name = ctx.methodHead().methodName().text
@@ -26,9 +39,10 @@ class ClassVisitor(var appDomain: IlAppDomain, var type: IlType) : Cil.CilBaseVi
 
         method.memberOf = type
         method.returnType = ctx.methodHead().type().text
-        type.methods["$name(${arguments.joinToString(",")})"] = method
+        type.methods[method.toString()] = method
 
-        ctx.methodDecls().accept(MethodVisitor(appDomain, method))
+        class_children.add(Pair(MethodVisitor(appDomain, method), ctx.methodDecls()))
+
         return method
     }
 

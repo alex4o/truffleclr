@@ -38,7 +38,7 @@ fun main() {
             Source.newBuilder(
                 "trufflecrl",
 //                    File("./test/func.il")
-                File("./test/func_fib.il")
+                File("./test/array.il")
             ).build()
         )
 
@@ -52,7 +52,8 @@ fun main() {
     val members = bindings.memberKeys
     println(members)
 
-    val main = bindings.getMember("HelloWorld.Program::Main(string[])")
+//    val main = bindings.getMember("HelloWorld.Program::Main(string[])")
+    val main = bindings.getMember("HelloWorld.Program::Main()")
 
     for(i in 0..2) {
         main.execute()

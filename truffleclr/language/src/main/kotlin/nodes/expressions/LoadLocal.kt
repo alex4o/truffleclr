@@ -25,12 +25,21 @@ abstract class LoadLocal(val index: Int) : ExpressionNode() {
         return env.getBoolean(slot)
     }
 
+    @Specialization(guards = ["isObject(env)"], replaces = ["executeInt", "executeBool"])
+    fun executeObject(env: VirtualFrame): Any? {
+        return env.getObject(slot)
+    }
+
     fun isInt(env: VirtualFrame): Boolean {
         return env.frameDescriptor.getFrameSlotKind(slot) == FrameSlotKind.Int
     }
 
     fun isBoolean(env: VirtualFrame): Boolean {
         return env.frameDescriptor.getFrameSlotKind(slot) == FrameSlotKind.Boolean
+    }
+
+    fun isObject(env: VirtualFrame): Boolean {
+        return env.frameDescriptor.getFrameSlotKind(slot) == FrameSlotKind.Object
     }
 
     override fun toString(): String {

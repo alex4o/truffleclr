@@ -7,5 +7,7 @@ import parser.generic.IlAppDomain
 fun main() {
     val clr = Clr()
     val appDomain = IlAppDomain()
-    clr.parseFile(appDomain, CharStreams.fromFileName("./test/func.il"))
+    clr.parseFile(appDomain, CharStreams.fromFileName("./test/array.il"))
+
+
 }

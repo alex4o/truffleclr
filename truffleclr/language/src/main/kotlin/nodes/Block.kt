@@ -8,14 +8,14 @@ import com.oracle.truffle.api.nodes.NodeInfo
 
 @NodeInfo(shortName = "block")
 class Block(var id: Int,var name: String) : StatementNode() {
-    @Children lateinit var nodes: Array<ExpressionNode>
+    @Children lateinit var nodes: Array<StatementNode>
     @Child lateinit var controlFlowNode: ControlFlowNode
 
     @ExplodeLoop
     override fun executeVoid(env: VirtualFrame) {
         CompilerAsserts.compilationConstant<Any>(nodes.size)
         for (node in nodes) {
-            node.execute(env)
+            node.executeVoid(env)
         }
     }
 

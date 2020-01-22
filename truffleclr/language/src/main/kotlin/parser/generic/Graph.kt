@@ -48,12 +48,12 @@ class Graph(var nodes: List<InstructionBlock>, var compileNode: CompileMethod) {
 ////                node = prev.second
 //            }else {
 
-                val nodesText = this.getNodes(target, language!!).toString()
+                val nodesText = "${this.getNodes(target, language!!).toString()
                     .replace("<", "&lt;")
                     .replace(">", "&gt;")
                     .replace(">=", "&gt;=")
                     .replace("=<", "=&lt;")
-                    .replace("\n", "<br align='left'/>")
+                    .replace("\n", "<br align='left'/>")}<br align='left'/>"
 
 //            val nodesText = this.nodes[target]!!.instructions.joinToString("<br align='left'/>")
                 node.attrs().add(
@@ -63,7 +63,6 @@ class Graph(var nodes: List<InstructionBlock>, var compileNode: CompileMethod) {
                 )
 
                 node.attrs().add(Shape.RECTANGLE)
-
 //            }
 
             if (block.controlFlowNode.successors.isNotEmpty()) {

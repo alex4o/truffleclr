@@ -1,6 +1,7 @@
 package parser.cil
 
 import Cil.CilParser
+import org.antlr.v4.runtime.ParserRuleContext
 import parser.generic.IlAppDomain
 import parser.generic.IlMethod
 import parser.generic.IlType
@@ -67,79 +68,10 @@ class MethodVisitor(var appDomain: IlAppDomain, var method: IlMethod) : Cil.CilB
                 is CilParser.Instr_methodContext -> {
                     val methodRef = methodRef();
 
-                    val methodName = methodRef.methodName().run {
-                        when {
-                            dottedName() != null -> dottedName().text.let {
-                                if (it.matches("'.*?'".toRegex())) {
-                                    it.subSequence(1, it.lastIndex).toString()
-                                } else {
-                                    it
-                                }
-                            }
-                            D_CCTOR() != null -> D_CCTOR().text
-                            D_CTOR() != null -> D_CTOR().text
-                            else -> error("Impossible")
-                        }
-                    }
-
-                    var arguments = listOf<String>()
-
-
-                    if (methodRef.sigArgs0().sigArgs1() != null) {
-                        arguments = methodRef.sigArgs0().sigArgs1().sigArg().map { it.text }
-                    }
-
-                    val method = IlMethod(methodName, arguments)
-
-                    // TODO: fix with metaprogramming
-                    val className = methodRef.typeSpec().run {
-                        when {
-                            type() != null -> {
-                                type().run {
-                                    when {
-                                        K_CLASS() != null -> {
-                                            className().slashedName().text
-                                        }
-                                        K_OBJECT() != null -> {
-                                            "object"
-                                        }
-                                        else -> {
-                                            error("Unable to determine method typeSpec type: ${methodRef.start.line}")
-                                        }
-                                    }
-                                }
-                            }
-                            className() != null -> {
-                                className().slashedName().text
-                            }
-                            else -> {
-                                error("Unable to determine method typeSpec: ${methodRef.start.line}")
-                            }
-                        }
-                    }
-
-                    method.memberOf = IlType(className)
-
-                    if (methodRef.callConv().K_INSTANCE().isNotEmpty()) {
-
-                    } else {
-                        if (methodRef.typeSpec().type() != null) {
-                            val typeSpec = methodRef.typeSpec()
-
-                            if (typeSpec.type().text == "object") {
-                                method.memberOf = IlType("object")
-                            }
-                        }
-
-                    }
-
-
-                    method.returnType = methodRef.type().text
-
+                    val method = extractFromMethodRef(methodRef)
                     InstructionMethod(INSTR_METHOD().text, method)
                 }
                 is CilParser.Instr_stringContext -> {
-
                     InstructionString(INSTR_STRING().toString(), compQstring().text)
                 }
                 is CilParser.Instr_typeContext -> {
@@ -149,7 +81,11 @@ class MethodVisitor(var appDomain: IlAppDomain, var method: IlMethod) : Cil.CilB
                     InstructionField(INSTR_FIELD().text)
                 }
                 is CilParser.Instr_varContext -> {
-                    InstructionVar(INSTR_VAR().text)
+                    if(INSTR_VAR().text.endsWith(".s")) {
+                        InstructionVarS(INSTR_VAR().text, id().text)
+                    }else{
+                        InstructionVar(INSTR_VAR().text, int32().text.toInt())
+                    }
                 }
                 else -> {
                     throw Exception("Unknown instruction detected: ${instr.text}")
@@ -166,5 +102,7 @@ class MethodVisitor(var appDomain: IlAppDomain, var method: IlMethod) : Cil.CilB
 
         return instruction
     }
+
+
 
 }

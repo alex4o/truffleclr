@@ -2,6 +2,7 @@ package nodes
 
 import com.oracle.truffle.api.CompilerAsserts
 import com.oracle.truffle.api.CompilerDirectives
+import com.oracle.truffle.api.Truffle
 import com.oracle.truffle.api.frame.VirtualFrame
 import com.oracle.truffle.api.nodes.ExplodeLoop
 import com.oracle.truffle.api.nodes.ExplodeLoop.LoopExplosionKind
@@ -57,6 +58,9 @@ class DispatchNode(@Children var blocks: Array<Block>) : ExpressionNode() {
                 returnValue = block.controlFlowNode.execute(env)
                 basicBlockIndex = -1
                 continue
+            } else {
+                Truffle.getRuntime().notifyTransferToInterpreter()
+                error("Encountered unknown control flow node")
             }
         }
 
