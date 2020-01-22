@@ -3,6 +3,7 @@ package nodes.controlflow
 import com.oracle.truffle.api.frame.VirtualFrame
 import com.oracle.truffle.api.nodes.NodeInfo
 import nodes.ControlFlowNode
+import types.CTSNull
 
 @NodeInfo(shortName = "ret")
 class Return(): ControlFlowNode() {
@@ -11,7 +12,7 @@ class Return(): ControlFlowNode() {
     }
 
     override fun execute(env: VirtualFrame): Any? {
-        return 0;
+        return CTSNull;
     }
 
     override fun toString(): String {

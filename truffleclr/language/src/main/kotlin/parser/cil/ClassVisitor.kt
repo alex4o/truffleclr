@@ -1,12 +1,12 @@
 package parser.cil
 
 import Cil.CilParser
-import parser.generic.AppDomain
-import parser.generic.Field
-import parser.generic.Method
-import parser.generic.Type
+import parser.generic.IlAppDomain
+import parser.generic.IlField
+import parser.generic.IlMethod
+import parser.generic.IlType
 
-class ClassVisitor(var appDomain: AppDomain, var namespace: String, var type: Type) : Cil.CilBaseVisitor<Any>() {
+class ClassVisitor(var appDomain: IlAppDomain, var type: IlType) : Cil.CilBaseVisitor<Any>() {
 
     override fun visitClass_method(ctx: CilParser.Class_methodContext): Any {
         val name = ctx.methodHead().methodName().text
@@ -17,7 +17,7 @@ class ClassVisitor(var appDomain: AppDomain, var namespace: String, var type: Ty
             arguments = ctx.methodHead().sigArgs0().sigArgs1().sigArg().map { it.type().text /*+ " " + it.id().text*/ }
         }
 
-        val method = Method(
+        val method = IlMethod(
             name,
             arguments
         )
@@ -25,9 +25,8 @@ class ClassVisitor(var appDomain: AppDomain, var namespace: String, var type: Ty
         method.static = ctx.methodHead().methAttr().map { it.text }.toSet().contains("static")
 
         method.memberOf = type
-        method.memberOf!!.namespace = namespace
         method.returnType = ctx.methodHead().type().text
-        type.methods[name] = method
+        type.methods["$name(${arguments.joinToString(",")})"] = method
 
         ctx.methodDecls().accept(MethodVisitor(appDomain, method))
         return method
@@ -35,7 +34,7 @@ class ClassVisitor(var appDomain: AppDomain, var namespace: String, var type: Ty
 
     override fun visitClass_field(ctx: CilParser.Class_fieldContext): Any {
         var name = ctx.fieldDecl().dottedName().text
-        type.fields[name] = Field(name)
+        type.fields[name] = IlField(name)
         return type
     }
 

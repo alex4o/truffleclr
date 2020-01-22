@@ -2,49 +2,48 @@ package parser.cil
 
 import Cil.CilParser
 import org.antlr.v4.runtime.tree.ParseTree
-import parser.generic.AppDomain
-import parser.generic.Assembly
-import parser.generic.Module
-import parser.generic.Type
+import parser.generic.IlAppDomain
+import parser.generic.IlAssembly
+import parser.generic.IlModule
+import parser.generic.IlType
+import java.util.*
 
 
-class DeclVisitor(var appDomain: AppDomain, var namespace: String = "global") : Cil.CilBaseVisitor<Any>() {
-    companion object {
-        lateinit var module: Module
-        lateinit var assembly: Assembly
-    }
+class DeclVisitor(var appDomain: IlAppDomain) : Cil.CilBaseVisitor<Any>() {
+    lateinit var module: IlModule
+    lateinit var assembly: IlAssembly
+    private val namespaces = Stack<String>()
 
     override fun visitAssembly(ctx: CilParser.AssemblyContext): Any {
         val assembly = ctx.assemblyHead().dottedName().text
-        DeclVisitor.assembly = Assembly(assembly)
-        appDomain.assemblies.add(DeclVisitor.assembly)
+        this.assembly = IlAssembly(assembly)
+        appDomain.assemblies.add(this.assembly)
         return assembly
     }
 
     override fun visitModule(ctx: CilParser.ModuleContext): Any {
         val module = ctx.moduleHead().dottedName().text
-        DeclVisitor.module = Module(module)
-        assembly.modules.add(DeclVisitor.module)
+        this.module = IlModule(module)
+        assembly.modules.add(this.module)
         return module
     }
 
     override fun visitNamespace(ctx: CilParser.NamespaceContext): Any {
-
-        for(decl in ctx.decls().decl()){
-            (decl as ParseTree).accept(DeclVisitor(appDomain, ctx.nameSpaceHead().dottedName.text))
+        namespaces.push(ctx.nameSpaceHead().dottedName.text)
+        for (decl in ctx.decls().decl()) {
+            (decl as ParseTree).accept(this)
         }
-
-        return 0
+        return namespaces.pop()
     }
 
-    override fun visitClass(ctx: CilParser.ClassContext): Any {
-        val name = ctx.classHead().classHeadBegin().dottedName().text
-        val type = Type(name)
-        type.attribtes = ctx.classHead().classHeadBegin().classAttr().map {it.text }.toSet()
-        type.namespace = namespace
+    override fun visitClass(ctx: CilParser.ClassContext): Any? {
+        val name = if(namespaces.isNotEmpty()) { "${namespaces.peek()}." } else { "" } + ctx.classHead().classHeadBegin().dottedName().text
+        val type = IlType(name)
 
-        module.types.put(name, type)
-        return (ctx.classDecls() as ParseTree).accept(ClassVisitor(appDomain, namespace, type))
+        type.attribtes = ctx.classHead().classHeadBegin().classAttr().map { it.text }.toSet()
+
+        assembly.types.put(name, type)
+        return (ctx.classDecls() as ParseTree).accept(ClassVisitor(appDomain, type))
     }
 
     override fun visitMethod(ctx: CilParser.MethodContext): Any {

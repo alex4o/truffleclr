@@ -32,16 +32,26 @@ fun main() {
 //    exitProcess(0)
 
     val time = measureTimeMillis {
-        println(
-            context.eval(
-                Source.newBuilder(
-                    "trufflecrl",
+        var execution = context.eval(
+            Source.newBuilder(
+                "trufflecrl",
 //                    File("./test/func.il")
-                            File("./test/func_fib.il")
-                ).build()
-            )
+                File("./test/func_fib.il")
+            ).build()
+        )
+
+//        execution.getMember("main");
+
+        println(
+            execution
         )
     }
+    val bindings = context.getBindings("trufflecrl")
+    val members = bindings.memberKeys
+    println(members)
+    println(bindings.getMember("HelloWorld.Program::fib(int32)").execute(12))
+
+
 
     println("Completed in: ${time}")
 }
@@ -51,6 +61,12 @@ TODO: List
 - Check if my symbolic evaluation is correct:
     - Done: If, IfElse, For, While, While inside another one, DoWhile, Recursion (fac, fib)
     - Todo: Closure, Loops with receiving.
+
+- Organize things in a better manner where
+    This way I can expose an API that both works from Polyglot and Looks like the standard C# Reflection API.
+    Namespace -> Scope
+    Type -> Type ( TruffleObject inside Scope )
+    Method -> Method ( TruffleObject inside Type )
 
 - Instead of merging blocks create new ones that will hold both the receiver and the giver. This way even support of many to many is possible.
 - Compare CFG results with the ones obtained from ILSpy to verify my outputs

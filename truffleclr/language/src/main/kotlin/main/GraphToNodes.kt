@@ -1,20 +1,21 @@
 package main
 
 import com.oracle.truffle.api.TruffleLanguage
+import main.compilationNodes.CompileMethod
 import nodes.*
 import nodes.controlflow.BoolBranch
 import nodes.controlflow.Branch
 import nodes.controlflow.Return
 import nodes.controlflow.ReturnValue
 import nodes.expressions.*
-import nodes.statements.ConsoleTemp
-import nodes.statements.StoreLocal
+import nodes.statements.*
 import parser.generic.Graph
+import parser.generic.IlMethod
 import parser.generic.InstructionBlock
 import parser.generic.instruction.*
 import java.util.*
 
-
+@Suppress("UNREACHABLE_CODE")
 fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
     val stack = Stack<Pair<String, ExpressionNode?>>()
     val res = mutableListOf<ExpressionNode?>()
@@ -23,12 +24,12 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
 
 
 
-    if (method.compiled.contains(root)) {
-        return method.compiled.getValue(root)
+    if (compileNode.compiled.contains(root)) {
+        return compileNode.compiled.getValue(root)
     }
 
     val result = Block(root, nodes[root].label)
-    method.compiled[root] = result
+    compileNode.compiled[root] = result
 
     if(block.stolen == 1) {
         return result
@@ -58,7 +59,7 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
                 res.add(node)
             }
             if (instruction.instruction == "ret" && instruction is InstructionNone) {
-                val node = if (method.returnType == "void") {
+                val node = if (compileNode.method.returnType == "void") {
                     Return()
                 } else {
                     val s0 = stack.pop()
@@ -85,7 +86,7 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
                 val s1 = stack.pop()
 
 
-                val node = Add(s1.second!!, s0.second!!)
+                val node = Add((s1.second)!!, (s0.second)!!)
                 stack.push(Pair(s0.first, node))
             }
             if (instruction.instruction == "add.ovf" && instruction is InstructionNone) {
@@ -490,13 +491,13 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
                 val number = arg.toInt()
 
 
-                if(method.static) {
-                    val node = LoadArgument(
+                if(compileNode.method.static) {
+                    val node = LoadArgumentNodeGen.create(
                         number,
-                        ReadLocalNodeGen.create(method.argumentsSlots[number])
+                        compileNode.argumentsSlots[number]
                     )
 
-                    stack.push(Pair(method.arguments[number], node))
+                    stack.push(Pair(compileNode.method.arguments[number], node))
                 } else {
                     // this pointer
 //                    stack.push(Pair("object", node))
@@ -513,9 +514,9 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
 //types: "ldloc.0","ldloc.1","ldloc.2","ldloc.3"
             if (instruction.instruction.startsWith("ldloc") && instruction is InstructionNone) {
                 val arg = instruction.instruction.split(".")[1]
-                var number = arg.toInt()
-                val node = LoadLocal(number, method.frameSlots[number])
-                stack.push(Pair(method.locals[number], node))
+                val number = arg.toInt()
+                val node = LoadLocalNodeGen.create(number, compileNode.frameSlots[number])
+                stack.push(Pair(compileNode.method.locals[number], node))
             }
 //types: "ldloc.s","ldloc"
             if (instruction.instruction.startsWith("ldloc") && instruction is InstructionVar) {
@@ -735,17 +736,17 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
                 val arg = instruction.instruction.split(".")[1]
                 val number = arg.toInt()
 
-                val node = if (s0.first == method.locals[number]) {
-                    StoreLocal(
+                val node = if (s0.first == compileNode.method.locals[number]) {
+                    StoreLocalNodeGen.create(
                         s0.second!!,
                         number,
-                        WriteLocalNodeGen.create(method.frameSlots[number])
+                        compileNode.frameSlots[number]
                     )
                 } else {
-                    StoreLocal(
+                    StoreLocalNodeGen.create(
                         Convert(s0.second!!),
                         number,
-                        WriteLocalNodeGen.create(method.frameSlots[number])
+                        compileNode.frameSlots[number]
                     )
                 }
 
@@ -874,10 +875,10 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
             if (setOf("br", "br.s").contains(instruction.instruction) && instruction is InstructionBrTarget) {
 
                 val node = Branch(
-                    method.blockByLabel.getValue(instruction.target).index,
+                    compileNode.method.blockByLabel.getValue(instruction.target).index,
                     instruction.target
                 )
-                node.successors = intArrayOf(method.blockByLabel.getValue(instruction.target).index)
+                node.successors = intArrayOf(compileNode.method.blockByLabel.getValue(instruction.target).index)
                 res.add(node)
             }
 //types: "brfalse.s","brfalse"
@@ -894,6 +895,7 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
 
 
                 val node =
+//                    BoolBranch(s0.second!!, false, goa, gob, instruction.target)
                     BoolBranch(s0.second!!, false, goa, gob, instruction.target)
                 node.successors = intArrayOf(goa, gob)
 
@@ -911,7 +913,7 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
                 val goa = nodes[0].id
                 val gob = nodes[1].id
 
-                println(method.blockByLabel.getValue(instruction.target).index)
+                println(compileNode.method.blockByLabel.getValue(instruction.target).index)
 
                 val node =
                     BoolBranch(s0.second!!, true, goa, gob, instruction.target)
@@ -932,7 +934,7 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
                 val gob = nodes[1].id
 
                 val node = BoolBranch(
-                    Compare(s1.second!!, s0.second!!, "=="),
+                    CompareNodeGen.create(CompareCondition.EQ, s1.second!!, s0.second!!),
                     true,
                     goa,
                     gob,
@@ -954,7 +956,7 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
 
 //                val node = CondBranch(s1.second!!, s0.second!!, "ge", goa, gob, instruction.target)
                 val node = BoolBranch(
-                    Compare(s1.second!!, s0.second!!, ">="),
+                    CompareNodeGen.create(CompareCondition.GE, s1.second!!, s0.second!!),
                     true,
                     goa,
                     gob,
@@ -1036,13 +1038,18 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
                     continue
                 }
 
-                val node = if (method.memberOf == null) {
-                    error("Expression 'method.memberOf' must not be null")
+                if(instruction.method.name == "'.ctor'"){
+                    continue
+                }
+
+                val node = if (compileNode.method.memberOf == null) {
+                    error("Expression 'compileNode.method.memberOf' must not be null")
                 } else{
-                    val callee = method.memberOf!!.methods.getValue(instruction.method.name)
+//                    val callee = compileNode.method.memberOf!!.compileNode.methods.getValue("${instruction.method.name}(${instruction.method.arguments.joinToString(",")})")
+                    val clr = language as Clr
+                    val method = clr.methods.functions.getValue(instruction.method.toString())
                     Call(
-                        instruction.method.name,
-                        callee.callTarget(language = language),
+                        method,
                         args.map { it.second!! }.toTypedArray()
                     )
                 }
@@ -1120,7 +1127,7 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
 
                 val s1 = stack.pop()
 
-                val node = Compare(s1.second!!, s0.second!!, "==")
+                val node = CompareNodeGen.create(CompareCondition.EQ, s1.second!!, s0.second!!)
                 stack.push(Pair("bool", node))
             }
 //types: "cgt","cgt.un"
@@ -1130,7 +1137,7 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
                 val s1 = stack.pop()
 
 
-                val node = Compare(s1.second!!, s0.second!!, ">")
+                val node = CompareNodeGen.create(CompareCondition.GT, s1.second!!, s0.second!!)
                 stack.push(Pair("bool", node))
             }
 //types: "clt","clt.un"
@@ -1140,7 +1147,7 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
                 val s1 = stack.pop()
 
 
-                val node = Compare(s1.second!!, s0.second!!, "<")
+                val node = CompareNodeGen.create(CompareCondition.LT, s1.second!!, s0.second!!)
                 stack.push(Pair("bool", node))
             }
 //types: "constrained."

@@ -9,20 +9,16 @@ import guru.nidi.graphviz.engine.Graphviz
 import guru.nidi.graphviz.model.Factory.mutGraph
 import guru.nidi.graphviz.model.Factory.mutNode
 import guru.nidi.graphviz.model.MutableNode
+import main.compilationNodes.CompileMethod
 import main.getNodes
 import java.io.File
 import java.util.*
 
-class Graph(var nodes: List<InstructionBlock>, var method: Method) {
-    companion object {
-        var language: TruffleLanguage<*>? = null
-    }
-
+class Graph(var nodes: List<InstructionBlock>, var compileNode: CompileMethod) {
     var root = 0
 
-    fun visualise() {
-
-        val nodes = method.compiled.map { (index, node)  -> Pair(index, mutNode(node.name)) }.toMap()
+    fun visualise(language: TruffleLanguage<*>) {
+        val nodes = compileNode.compiled.map { (index, node)  -> Pair(index, mutNode(node.name)) }.toMap()
         val visited = mutableMapOf<Int, MutableNode>()
         val stack = Stack<Pair<Int, MutableNode>>()
         stack.push(Pair(0, nodes.getValue(0)))
@@ -30,7 +26,7 @@ class Graph(var nodes: List<InstructionBlock>, var method: Method) {
         while (stack.isNotEmpty()) {
 
             var (target, node) = stack.pop()
-            val block = method.compiled[target]!!
+            val block = compileNode.compiled[target]!!
 
             if (visited.contains(target)) {
                 val visitedNode = visited.getValue(target)
@@ -38,7 +34,7 @@ class Graph(var nodes: List<InstructionBlock>, var method: Method) {
 //                var p = path(target);
 //                p.forEach { nodes[it]!!.attrs().add(Color.PINK) }
 //                println(Pair(target, p))
-                if(dominators( method.compiled[prev.first]!!.name ).contains( method.compiled[target]!!.name ) ) {
+                if(dominators( compileNode.compiled[prev.first]!!.name ).contains( compileNode.compiled[target]!!.name ) ) {
                     visitedNode.attrs().add(Color.GREEN)
 //                    block.loopHeader = true
                 }
@@ -90,12 +86,12 @@ class Graph(var nodes: List<InstructionBlock>, var method: Method) {
             prev = Pair(target, node)
         }
 
-        val g = mutGraph(method.name).setDirected(true)
+        val g = mutGraph(compileNode.method.name).setDirected(true)
         nodes.values.forEach { g.add(it) }
         // Basic block
 
 
-        Graphviz.fromGraph(g).render(Format.XDOT).toFile(File("${method.memberOf!!.name}_${method.name}.xdot"))
+        Graphviz.fromGraph(g).render(Format.XDOT).toFile(File("$compileNode.xdot"))
     }
 
 
@@ -246,7 +242,7 @@ class LengauerTarjan(val graph: Graph) {
                     val nextNode = nodes.getValue(it)
                     node.addLink(nextNode)
                     if (it != targetLabel) {
-                        stack.push(Pair(graph.method.blockByLabel[it]!!.index, nextNode))
+                        stack.push(Pair(graph.compileNode.method.blockByLabel[it]!!.index, nextNode))
                     }
                 }
             }
@@ -255,7 +251,7 @@ class LengauerTarjan(val graph: Graph) {
         val g = mutGraph("dom").setDirected(true)
         nodes.values.forEach { g.add(it) }
         // Basic block
-        Graphviz.fromGraph(g).render(Format.XDOT).toFile(File("${graph.method.name}_domination.xdot"))
+        Graphviz.fromGraph(g).render(Format.XDOT).toFile(File("${graph.compileNode.method.name}_domination.xdot"))
     }
 
 }

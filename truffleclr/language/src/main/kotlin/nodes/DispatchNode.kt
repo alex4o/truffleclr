@@ -25,35 +25,15 @@ class DispatchNode(@Children var blocks: Array<Block>) : ExpressionNode() {
         var backEdgeCount = 0
         var returnValue: Any? = 0
 
-//        loop@ while (basicBlockIndex >= 0) {
-////            CompilerAsserts.partialEvaluationConstant<Int>(basicBlockIndex)
-//            val block = blocks[basicBlockIndex]
-////            println("Executing basic block: $basicBlockIndex");
-//
-//            block.executeStatements(env)
-//
-//            val successor = block.controlFlowNode.executeControlFlow(env)
-//            if (CompilerDirectives.inInterpreter() && successor <= basicBlockIndex) {
-//                backEdgeCount += 1;
-//            }
-//
-//            if(successor == -2) {
-//                returnValue = (block.controlFlowNode as ReturnValue).execute(env)
-//            }
-//
-//            basicBlockIndex = successor
-//            continue@loop
-//        }
-
         while (basicBlockIndex != -1) {
             CompilerAsserts.partialEvaluationConstant<Any>(basicBlockIndex)
             val block = blocks[basicBlockIndex]
-            block.executeStatements(env)
+            block.executeVoid(env)
             //            final int successor = 0;
             if (block.controlFlowNode is BoolBranch) {
                 val br = block.controlFlowNode as BoolBranch
                 if (br.executeControlFlow(env) == 0) {
-                    val successor = block.controlFlowNode.successors[0]
+                    var successor = block.controlFlowNode.successors[0]
                     if (CompilerDirectives.inInterpreter() && successor <= basicBlockIndex) {
                         backEdgeCount += 1
                     }

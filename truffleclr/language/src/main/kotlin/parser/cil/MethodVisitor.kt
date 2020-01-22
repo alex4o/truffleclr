@@ -1,12 +1,12 @@
 package parser.cil
 
 import Cil.CilParser
-import parser.generic.AppDomain
-import parser.generic.Method
-import parser.generic.Type
+import parser.generic.IlAppDomain
+import parser.generic.IlMethod
+import parser.generic.IlType
 import parser.generic.instruction.*
 
-class MethodVisitor(var appDomain: AppDomain, var method: Method) : Cil.CilBaseVisitor<Any>() {
+class MethodVisitor(var appDomain: IlAppDomain, var method: IlMethod) : Cil.CilBaseVisitor<Any>() {
 
     var instructions = mutableListOf<Pair<String, Instruction>>()
     var labels = mutableMapOf<String, Int>()
@@ -77,21 +77,27 @@ class MethodVisitor(var appDomain: AppDomain, var method: Method) : Cil.CilBaseV
                     arguments = methodRef.sigArgs0().sigArgs1().sigArg().map { it.text }
                 }
 
-                val method = Method(methodName, arguments)
+                val method = IlMethod(methodName, arguments)
                 if (!methodRef.typeSpec().isEmpty) {
 
                     val typeSpec = methodRef.typeSpec()
-                    if (typeSpec.type().text == "object") {
-                        method.memberOf = Type("object")
+                    if(typeSpec.type() == null) {
+                        println("$methodName ${typeSpec.text}")
+                    }else{
+                        if (typeSpec.type().text == "object") {
+                            method.memberOf = IlType("object")
+                        }
+
+                        if (typeSpec.type().K_CLASS() != null) {
+
+                            val className = typeSpec.type().className().slashedName().text.split(".")
+
+                            method.memberOf = IlType(className.joinToString("."))
+//                            method.memberOf!!.namespace = className.dropLast(1).joinToString(".")
+                        }
                     }
 
-                    if (typeSpec.type().K_CLASS() != null) {
 
-                        val className = typeSpec.type().className().slashedName().text.split(".")
-
-                        method.memberOf = Type(className.last())
-                        method.memberOf!!.namespace = className.dropLast(1).joinToString(".")
-                    }
                 }
 
                 method.returnType = methodRef.type().text
@@ -101,6 +107,15 @@ class MethodVisitor(var appDomain: AppDomain, var method: Method) : Cil.CilBaseV
             is CilParser.Instr_stringContext -> {
 
                 InstructionString(instr.INSTR_STRING().toString(), instr.compQstring().text)
+            }
+            is CilParser.Instr_typeContext -> {
+                InstructionType(instruction = instr.INSTR_TYPE().text)
+            }
+            is CilParser.Instr_fieldContext -> {
+                InstructionField(instruction = instr.INSTR_FIELD().text)
+            }
+            is CilParser.Instr_varContext -> {
+                InstructionVar(instruction = instr.INSTR_VAR().text)
             }
             else -> {
                 throw Exception("Unknown instruction detected: ${instr.text}")

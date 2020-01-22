@@ -678,12 +678,6 @@ public interface CilVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitPropDecl(CilParser.PropDeclContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link CilParser#methodHeadPart1}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitMethodHeadPart1(CilParser.MethodHeadPart1Context ctx);
-	/**
 	 * Visit a parse tree produced by {@link CilParser#marshalClause}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -1007,12 +1001,6 @@ public interface CilVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitBytes(CilParser.BytesContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link CilParser#hexbytes}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitHexbytes(CilParser.HexbytesContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link CilParser#fieldInit}.
 	 * @param ctx the parse tree

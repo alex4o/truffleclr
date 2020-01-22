@@ -73,7 +73,7 @@ K_FORWARDER: 'forwarder';
 K_STATIC: 'static';
 K_PUBLIC: 'public';
 K_PRIVATE: 'private';
-K_FAMILY: 'faimly';
+K_FAMILY: 'family';
 K_FINAL: 'final';
 K_SYNCHRONIZED: 'synchronized';
 K_INTERFACE: 'interface';
@@ -92,9 +92,9 @@ K_ENUM: 'enum';
 
 K_VIRTUAL: 'virtual';
 K_NOINLINING: 'noinlining';
-K_AGGRESSIVEINLINING: 'aggressiveinlining';
+K_AGGRESSIVEINLINING: 'agressive-inlining';
 K_NOOPTIMIZATION: 'nooptimization';
-K_AGGRESSIVEOPTIMIZATION: 'aggressiveoptimization';
+K_AGGRESSIVEOPTIMIZATION: 'agressiveoptimization';
 K_UNMANAGEDEXP: 'unmanagedexp';
 K_BEFOREFIELDINIT: 'beforefieldinit';
 
@@ -153,7 +153,7 @@ K_CHARMAPERROR: 'charmaperror';
 //%token <opcode> INSTRNONE INSTRVAR INSTRI INSTRI8 INSTRR INSTRBRTARGET INSTRMETHOD INSTRFIELD
 //%token <opcode> INSTRTYPE INSTRSTRING INSTRSIG INSTRTOK
 //%token <opcode> INSTRSWITCH
-INSTR_NONE: 'nop' | 'break' | 'ldarg.0' | 'ldarg.1' | 'ldarg.2' | 'ldarg.3' | 'ldloc.0' | 'ldloc.1' | 'ldloc.2' | 'ldloc.3' | 'stloc.0' | 'stloc.1' | 'stloc.2' | 'stloc.3' | 'ldnull' | 'ldc.i4.m1' | 'ldc.i4.0' | 'ldc.i4.1' | 'ldc.i4.2' | 'ldc.i4.3' | 'ldc.i4.4' | 'ldc.i4.5' | 'ldc.i4.6' | 'ldc.i4.7' | 'ldc.i4.8' | 'unused' | 'dup' | 'pop' | 'ret' | 'ldind.i1' | 'ldind.u1' | 'ldind.i2' | 'ldind.u2' | 'ldind.i4' | 'ldind.u4' | 'ldind.i8' | 'ldind.i' | 'ldind.r4' | 'ldind.r8' | 'ldind.ref' | 'stind.ref' | 'stind.i1' | 'stind.i2' | 'stind.i4' | 'stind.i8' | 'stind.r4' | 'stind.r8' | 'add' | 'sub' | 'mul' | 'div' | 'div.un' | 'rem' | 'rem.un' | 'and' | 'or' | 'xor' | 'shl' | 'shr' | 'shr.un' | 'neg' | 'not' | 'conv.i1' | 'conv.i2' | 'conv.i4' | 'conv.i8' | 'conv.r4' | 'conv.r8' | 'conv.u4' | 'conv.u8' | 'conv.r.un' | 'throw' | 'conv.ovf.i1.un' | 'conv.ovf.i2.un' | 'conv.ovf.i4.un' | 'conv.ovf.i8.un' | 'conv.ovf.u1.un' | 'conv.ovf.u2.un' | 'conv.ovf.u4.un' | 'conv.ovf.u8.un' | 'conv.ovf.i.un' | 'conv.ovf.u.un' | 'ldlen' | 'ldelem.i1' | 'ldelem.u1' | 'ldelem.i2' | 'ldelem.u2' | 'ldelem.i4' | 'ldelem.u4' | 'ldelem.i8' | 'ldelem.i' | 'ldelem.r4' | 'ldelem.r8' | 'ldelem.ref' | 'stelem.i' | 'stelem.i1' | 'stelem.i2' | 'stelem.i4' | 'stelem.i8' | 'stelem.r4' | 'stelem.r8' | 'stelem.ref' | 'conv.ovf.i1' | 'conv.ovf.u1' | 'conv.ovf.i2' | 'conv.ovf.u2' | 'conv.ovf.i4' | 'conv.ovf.u4' | 'conv.ovf.i8' | 'conv.ovf.u8' | 'ckfinite' | 'conv.u2' | 'conv.u1' | 'conv.i' | 'conv.ovf.i' | 'conv.ovf.u' | 'add.ovf' | 'add.ovf.un' | 'mul.ovf' | 'mul.ovf.un' | 'sub.ovf' | 'sub.ovf.un' | 'endfinally' | 'stind.i' | 'conv.u' | 'prefix7' | 'prefix6' | 'prefix5' | 'prefix4' | 'prefix3' | 'prefix2' | 'prefix1' | 'prefixref' | 'arglist' | 'ceq' | 'cgt' | 'cgt.un' | 'clt' | 'clt.un' | 'localloc' | 'endfilter' | 'volatile.' | 'tail.' | 'cpblk' | 'initblk' | 'rethrow' | 'refanytype' | 'readonly.' | 'illegal' | 'endmac' | 'codelabel';
+INSTR_NONE: 'nop' | 'break' | 'ldarg.0' | 'ldarg.1' | 'ldarg.2' | 'ldarg.3' | 'ldloc.0' | 'ldloc.1' | 'ldloc.2' | 'ldloc.3' | 'stloc.0' | 'stloc.1' | 'stloc.2' | 'stloc.3' | 'ldnull' | 'ldc.i4.m1' | 'ldc.i4.0' | 'ldc.i4.1' | 'ldc.i4.2' | 'ldc.i4.3' | 'ldc.i4.4' | 'ldc.i4.5' | 'ldc.i4.6' | 'ldc.i4.7' | 'ldc.i4.8' | 'unused' | 'dup' | 'pop' | 'ret' | 'ldind.i1' | 'ldind.u1' | 'ldind.i2' | 'ldind.u2' | 'ldind.i4' | 'ldind.u4' | 'ldind.i8' | 'ldind.i' | 'ldind.r4' | 'ldind.r8' | 'ldind.ref' | 'stind.ref' | 'stind.i1' | 'stind.i2' | 'stind.i4' | 'stind.i8' | 'stind.r4' | 'stind.r8' | 'add' | 'sub' | 'mul' | 'div' | 'div.un' | 'rem' | 'rem.un' | 'and' | 'or' | 'xor' | 'shl' | 'shr' | 'shr.un' | 'neg' | 'not' | 'conv.i1' | 'conv.i2' | 'conv.i4' | 'conv.i8' | 'conv.r4' | 'conv.r8' | 'conv.u4' | 'conv.u8' | 'conv.r.un' | 'throw' | 'conv.ovf.i1.un' | 'conv.ovf.i2.un' | 'conv.ovf.i4.un' | 'conv.ovf.i8.un' | 'conv.ovf.u1.un' | 'conv.ovf.u2.un' | 'conv.ovf.u4.un' | 'conv.ovf.u8.un' | 'conv.ovf.i.un' | 'conv.ovf.u.un' | 'ldlen' | 'ldelem.i1' | 'ldelem.u1' | 'ldelem.i2' | 'ldelem.u2' | 'ldelem.i4' | 'ldelem.u4' | 'ldelem.i8' | 'ldelem.i' | 'ldelem.r4' | 'ldelem.r8' | 'ldelem.ref' | 'stelem.i' | 'stelem.i1' | 'stelem.i2' | 'stelem.i4' | 'stelem.i8' | 'stelem.r4' | 'stelem.r8' | 'stelem.ref' | 'conv.ovf.i1' | 'conv.ovf.u1' | 'conv.ovf.i2' | 'conv.ovf.u2' | 'conv.ovf.i4' | 'conv.ovf.u4' | 'conv.ovf.i8' | 'conv.ovf.u8' | 'ckfinite' | 'conv.u2' | 'conv.u1' | 'conv.i' | 'conv.ovf.i' | 'conv.ovf.u' | 'add.ovf' | 'add.ovf.un' | 'mul.ovf' | 'mul.ovf.un' | 'sub.ovf' | 'sub.ovf.un' | 'endfinally' | 'stind.i' | 'conv.u' | 'prefix7' | 'prefix6' | 'prefix5' | 'prefix4' | 'prefix3' | 'prefix2' | 'prefix1' | 'prefixref' | 'arglist' | 'ceq' | 'cgt' | 'cgt.un' | 'clt' | 'clt.un' | 'localloc' | 'endfilter' | 'volatile.' | 'tail.' | 'cpblk' | 'initblk' | 'rethrow' | 'refanytype' | 'readonly.' | 'illegal' | 'endmac' | 'codelabel' | 'endfault';
 INSTR_VAR: 'ldarg.s' | 'ldarga.s' | 'starg.s' | 'ldloc.s' | 'ldloca.s' | 'stloc.s' | 'ldarg' | 'ldarga' | 'starg' | 'ldloc' | 'ldloca' | 'stloc';
 INSTR_I: 'ldc.i4.s' | 'ldc.i4' | 'unaligned.';
 INSTR_I8: 'ldc.i8';
@@ -324,13 +324,15 @@ D_SUBSYSTEM: '.subsystem';
 D_CORFLAGS: '.corflags';
 K_ALIGNMENT: 'alignment';
 D_IMAGEBASE: '.imagebase';
-D_STACKRESERVE: '.stackreseve';
+D_STACKRESERVE: '.stackreserve';
 
 /* syntactic sugar */
 D_TYPEDEF: '.typedef';
 D_TEMPLATE: '.template';
 D_TYPELIST: '.typelist';
-D_MSCORLIB: '.mscorelib';
+D_MSCORLIB: '.mscorlib';
+
+
 
 /* compilation control directives */
 P_DEFINE: 'define';
@@ -353,15 +355,19 @@ DOT: '.';
 K_ERROR: 'error';
                          /* bad strings,    */
 
-QSTRING: '"' ( . | '\\"' )*? '"';        /* "Hello World\n" */
-SQSTRING: '\'' ( . | '\\\'' )*? '\'';        /* 'Hello World\n' */
+QSTRING: '"' ( '\\\\' | '\\"' | . )*? '"';        /* "Hello World\n" */
+SQSTRING: '\'' ( '\\\\' | '\\\'' | . )*? '\'';        /* 'Hello World\n' */
 
 ID: [A-Za-z_#$@`]+[?A-Za-z_0-9`#$@]*;             /* testing343 */
 DOTTEDNAME: ID (DOT ID)*;     /* System.Object */
 
 INT64: '-'? '0'..'9'+ | '0x' [0-9A-Fa-f]+;         /* 342534523534534      0x34FA434644554 */
-FLOAT64: ('-'? '0'..'9'+) '.' ('0'..'9'+)? | ('-'? '0'..'9'+ 'E' '-'? '0'..'9'+);          /* -334234 24E-34 */
-HEXBYTE: [A-F0-9][A-F0-9] (' ' [A-F0-9][A-F0-9])*;        /* 05 1A FA */
+FLOAT64: ('-'? '0'..'9'+) '.'? ('0'..'9'+)? (('E' | 'e') ('-' | '+') '0'..'9'+)?;          /* -334234 24E-34 */
+
+fragment BYTE: [A-Fa-f0-9][A-Fa-f0-9];
+
+HEXBYTE: BYTE (((WS | LINE_COMMENT)*) BYTE)*;        /* 05 1A FA */
+
 // TODO: These should be fixed
 TYPEDEFT: 'TypeDef' | 'TypeRef';
 //TYPEDEFM: '';
@@ -420,7 +426,7 @@ id                      : ID
                         | SQSTRING
                         ;
 
-dottedName              : id | DOTTEDNAME;
+dottedName              : id | DOTTEDNAME | HEXBYTE;
 
 int32                   : INT64;
 
@@ -672,7 +678,7 @@ repeatOpt               : /* EMPTY */
                                                 ;
 
 /*  Method referencing  */
-methodRef               : callConv type (typeSpec DCOLON)? methodName ( tyArgs0  | genArityNotEmpty ) '(' sigArgs0 ')'
+methodRef               : callConv type (typeSpec DCOLON)? methodName ( tyArgs0  | genArityNotEmpty )? '(' sigArgs0 ')'
 //                        | TYPEDEF_M
 //                        | TYPEDEF_MR
                         ;
@@ -746,21 +752,18 @@ propDecl                : D_SET methodRef
                         ;
 
 /*  Method declaration  */
-methodHeadPart1         : D_METHOD
-                        ;
-
 marshalClause           : /* EMPTY */
                         | K_MARSHAL '(' marshalBlob ')'
                         ;
 
 marshalBlob             : nativeType
-                        | marshalBlobHead hexbytes '}'
+                        | marshalBlobHead HEXBYTE '}'
                         ;
 
 marshalBlobHead         : '{'
                         ;
 
-methodHead              : methodHeadPart1 methAttr*? callConv paramAttr*? type marshalClause methodName typarsClause'(' sigArgs0 ')' implAttr*?
+methodHead              : D_METHOD methAttr*? callConv paramAttr*? type marshalClause methodName typarsClause'(' sigArgs0 ')' implAttr*?
                         ;
 
 methAttr                : K_STATIC
@@ -777,6 +780,7 @@ methAttr                : K_STATIC
                         | K_FAMORASSEM
                         | K_PRIVATESCOPE
                         | K_HIDEBYSIG
+                        | 'requiresecobj'
                         | K_NEWSLOT
                         | K_RTSPECIALNAME /*  */
                         | K_UNMANAGEDEXP
@@ -904,8 +908,7 @@ faultClause             : K_FAULT
                         ;
 
 handlerBlock            : scopeBlock
-                        | K_HANDLER id K_TO id
-                        | K_HANDLER int32 K_TO int32
+                        | K_HANDLER (id | int32) K_TO (id | int32)
                         ;
 
 /*  Data declaration  */
@@ -975,13 +978,7 @@ fieldSerInit            : K_FLOAT32 '(' float64 ')'
 bytearrayhead           : K_BYTEARRAY '('
                         ;
 
-bytes                   : /* EMPTY */
-                        | hexbytes
-                        ;
-
-hexbytes                : HEXBYTE
-                        | hexbytes HEXBYTE
-                        ;
+bytes                   : HEXBYTE;
 
 /*  Field/parameter initialization  */
 fieldInit               : fieldSerInit
@@ -1134,16 +1131,14 @@ labels                  : /* empty */
                         ;
 
 /*  Signatures  */
-tyArgs0                 : /* EMPTY */
-                        | '<' tyArgs1 '>'
+tyArgs0                 : '<' tyArgs1 '>'
                         ;
 
 tyArgs1                 : /* EMPTY */
                         | tyArgs2
                         ;
 
-tyArgs2                 : type
-                        | tyArgs2 ',' type
+tyArgs2                 : type (',' type)*?
                         ;
 
 
@@ -1153,8 +1148,7 @@ sigArgs1                : sigArg (',' sigArg)*?
                         ;
 
 sigArg                  : ELIPSIS
-                        |  type marshalClause
-                        |  type marshalClause id
+                        | paramAttr*? type marshalClause id?
                         ;
 
 /*  Class referencing  */
@@ -1318,6 +1312,7 @@ type                    : K_CLASS className
                         | K_NATIVE K_UINT
                         | simpleType
                         | ELIPSIS type
+                        | '!(null)'
                         ;
 
 simpleType              : K_CHAR

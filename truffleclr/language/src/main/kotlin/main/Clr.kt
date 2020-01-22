@@ -2,16 +2,21 @@ package main
 
 import Cil.CilLexer
 import Cil.CilParser
-import com.oracle.truffle.api.CallTarget
-import com.oracle.truffle.api.TruffleLanguage
+import com.oracle.truffle.api.*
 import com.oracle.truffle.api.debug.DebuggerTags
+import com.oracle.truffle.api.frame.FrameDescriptor
 import com.oracle.truffle.api.instrumentation.ProvidedTags
 import com.oracle.truffle.api.instrumentation.StandardTags
+import com.oracle.truffle.api.interop.InteropLibrary
+import com.oracle.truffle.api.library.LibraryFactory
+import main.compilationNodes.*
+import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import parser.cil.DeclVisitor
-import parser.generic.AppDomain
-import parser.generic.Graph
+import parser.generic.IlAppDomain
+import runtime.Methods
+import java.io.File
 
 @TruffleLanguage.Registration(
     id = "trufflecrl",
@@ -19,7 +24,7 @@ import parser.generic.Graph
     defaultMimeType = "application/il",
     characterMimeTypes = ["application/il"],
     contextPolicy = TruffleLanguage.ContextPolicy.SHARED,
-    fileTypeDetectors = [ IlFileDetector::class ]
+    fileTypeDetectors = [IlFileDetector::class]
 )
 @ProvidedTags(
     StandardTags.CallTag::class,
@@ -29,24 +34,20 @@ import parser.generic.Graph
     StandardTags.ExpressionTag::class,
     DebuggerTags.AlwaysHalt::class
 )
-class Clr: TruffleLanguage<AppDomain>()  {
-    override fun createContext(env: Env?): AppDomain {
-        return AppDomain()
+class Clr : TruffleLanguage<IlAppDomain>() {
+
+    override fun createContext(env: Env?): IlAppDomain {
+        return IlAppDomain()
     }
 
     override fun isObjectOfLanguage(`object`: Any?): Boolean {
         return false; // We don's support objects yet.
     }
 
-    override fun parse(request: ParsingRequest): CallTarget {
-        // TODO: Should fix that and use DI :D
-        Graph.language = this
-
-        val lexer = CilLexer(CharStreams.fromReader(request.source.reader))
+    fun parseFile(appDomain: IlAppDomain, stream: CharStream) {
+        val lexer = CilLexer(stream)
         val tokenStream = CommonTokenStream(lexer);
 
-
-        val appDomain = this.contextReference.get();
 
         val parser = CilParser(tokenStream)
         val tree = parser.decls()
@@ -54,23 +55,33 @@ class Clr: TruffleLanguage<AppDomain>()  {
         for (decl in tree.children) {
             decl.accept(rootVisitor)
         }
-
-        for(assembly in appDomain.assemblies) {
-            val types = assembly.types
-            println(types)
-            for(type in types) {
-                println(type.methods)
-                type.methods.forEach {
-                    it.value.compile()
-                    it.value.graph.visualise()
-//                    it.value.graph.dominators.visualise()
-                }
-
-            }
-        }
-
-        return appDomain.entryPoint.callTarget(this)
     }
 
+    var methods = Methods()
+    override fun parse(request: ParsingRequest): CallTarget {
+        val appDomain = IlAppDomain()
+
+        parseFile(
+            appDomain, CharStreams.fromPath(
+                File("./language/src/main/resources/System.Private.CoreLib.il").toPath()
+            )
+        )
+
+
+        parseFile(appDomain, CharStreams.fromReader(request.source.reader))
+
+
+        LibraryFactory.resolve(InteropLibrary::class.java)
+
+        val frameDescriptor = FrameDescriptor()
+        return Truffle.getRuntime().createCallTarget(
+            Initialize(appDomain, methods, frameDescriptor, this)
+        )
+    }
+
+
+    override fun findTopScopes(context: IlAppDomain?): MutableIterable<Scope> {
+        return mutableListOf(Scope.newBuilder("HelloWorld", methods).build())
+    }
 
 }

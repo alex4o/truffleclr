@@ -1134,16 +1134,6 @@ public interface CilListener extends ParseTreeListener {
 	 */
 	void exitPropDecl(CilParser.PropDeclContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link CilParser#methodHeadPart1}.
-	 * @param ctx the parse tree
-	 */
-	void enterMethodHeadPart1(CilParser.MethodHeadPart1Context ctx);
-	/**
-	 * Exit a parse tree produced by {@link CilParser#methodHeadPart1}.
-	 * @param ctx the parse tree
-	 */
-	void exitMethodHeadPart1(CilParser.MethodHeadPart1Context ctx);
-	/**
 	 * Enter a parse tree produced by {@link CilParser#marshalClause}.
 	 * @param ctx the parse tree
 	 */
@@ -1689,16 +1679,6 @@ public interface CilListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitBytes(CilParser.BytesContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link CilParser#hexbytes}.
-	 * @param ctx the parse tree
-	 */
-	void enterHexbytes(CilParser.HexbytesContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link CilParser#hexbytes}.
-	 * @param ctx the parse tree
-	 */
-	void exitHexbytes(CilParser.HexbytesContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link CilParser#fieldInit}.
 	 * @param ctx the parse tree

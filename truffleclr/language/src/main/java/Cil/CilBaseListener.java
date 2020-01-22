@@ -1264,18 +1264,6 @@ public class CilBaseListener implements CilListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterMethodHeadPart1(CilParser.MethodHeadPart1Context ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitMethodHeadPart1(CilParser.MethodHeadPart1Context ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
 	@Override public void enterMarshalClause(CilParser.MarshalClauseContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -1883,18 +1871,6 @@ public class CilBaseListener implements CilListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitBytes(CilParser.BytesContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterHexbytes(CilParser.HexbytesContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitHexbytes(CilParser.HexbytesContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

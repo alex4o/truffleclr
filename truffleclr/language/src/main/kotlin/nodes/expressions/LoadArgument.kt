@@ -1,28 +1,41 @@
 package nodes.expressions
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal
+import com.oracle.truffle.api.dsl.NodeField
+import com.oracle.truffle.api.dsl.Specialization
+import com.oracle.truffle.api.frame.FrameSlot
+import com.oracle.truffle.api.frame.FrameSlotKind
 import com.oracle.truffle.api.frame.VirtualFrame
 import com.oracle.truffle.api.nodes.NodeInfo
 import nodes.ExpressionNode
-import nodes.ReadLocal
 
 @NodeInfo(shortName = "ldarg")
-class LoadArgument(@CompilationFinal val index: Int, @Child var reader: ReadLocal) : ExpressionNode() {
+@NodeField(name = "slot", type = FrameSlot::class)
+abstract class LoadArgument(@CompilationFinal val index: Int) : ExpressionNode() {
+    abstract val slot: FrameSlot?
 
-    override fun execute(env: VirtualFrame): Any? {
-        return reader.execute(env)
-    }
+    abstract override fun execute(env: VirtualFrame): Any?
 
+    @Specialization(guards = ["isInt(env)"])
     override fun executeInt(env: VirtualFrame): Int {
-        return reader.readInt(env)
+        return env.getInt(slot)
+    }
+    @Specialization(guards = ["isBoolean(env)"])
+    override fun executeBool(env: VirtualFrame): Boolean {
+        return env.getBoolean(slot)
     }
 
-    override fun executeBool(env: VirtualFrame): Boolean {
-        return reader.readBoolean(env)
+    fun isInt(env: VirtualFrame): Boolean {
+        return env.frameDescriptor.getFrameSlotKind(slot) == FrameSlotKind.Int
+    }
+
+    fun isBoolean(env: VirtualFrame): Boolean {
+        return env.frameDescriptor.getFrameSlotKind(slot) == FrameSlotKind.Boolean
     }
 
     override fun toString(): String {
         return "(ldarg $index)"
     }
 
+    val label = this.toString()
 }

@@ -17,4 +17,6 @@ class LoadConstInt(val number: Int): ExpressionNode() {
     override fun toString(): String {
         return "(ldc $number)"
     }
+
+    val label = this.toString()
 }

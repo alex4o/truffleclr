@@ -5,6 +5,7 @@ import com.oracle.truffle.api.CompilerDirectives
 import com.oracle.truffle.api.frame.VirtualFrame
 import com.oracle.truffle.api.nodes.NodeInfo
 import nodes.ExpressionNode
+import types.CTSNull
 
 @NodeInfo(shortName = "print")
 class ConsoleTemp(@CompilerDirectives.CompilationFinal val name: String, @Children var args: Array<ExpressionNode>): ExpressionNode() {
@@ -15,7 +16,7 @@ class ConsoleTemp(@CompilerDirectives.CompilationFinal val name: String, @Childr
         }else{
             this.write(args[0].execute(env))
         }
-        return 0
+        return CTSNull
     }
 
     @CompilerDirectives.TruffleBoundary

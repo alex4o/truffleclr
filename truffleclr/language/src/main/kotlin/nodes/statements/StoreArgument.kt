@@ -1,5 +1,6 @@
 package nodes.statements
 
+import com.oracle.truffle.api.CompilerDirectives
 import com.oracle.truffle.api.dsl.NodeField
 import com.oracle.truffle.api.dsl.Specialization
 import com.oracle.truffle.api.frame.FrameSlot
@@ -7,9 +8,10 @@ import com.oracle.truffle.api.frame.FrameSlotKind
 import com.oracle.truffle.api.frame.VirtualFrame
 import com.oracle.truffle.api.nodes.Node
 import nodes.ExpressionNode
+import types.TypeSystemGen
 
 @NodeField(name = "slot", type = FrameSlot::class)
-abstract class StoreLocal(@Child var expressionNode: ExpressionNode, val index: Int): ExpressionNode() {
+abstract class StoreArgument(val index: Int): ExpressionNode() {
 
     protected abstract val slot: FrameSlot?
 
@@ -17,24 +19,25 @@ abstract class StoreLocal(@Child var expressionNode: ExpressionNode, val index: 
 
     @Specialization(guards = ["isLong(env)"])
     protected fun writeLong(env: VirtualFrame): Long {
-//        frame.frameDescriptor.setFrameSlotKind(slot, FrameSlotKind.Long);
-        val value = expressionNode.execute(env) as Long
+//        env.frameDescriptor.setFrameSlotKind(slot, FrameSlotKind.Long);
+
+        val value = env.arguments[index] as Long
         env.setLong(slot, value);
         return value;
     }
 
     @Specialization(guards = ["isBoolean(env)"])
     protected fun writeBoolean(env: VirtualFrame): Boolean {
-//        frame.frameDescriptor.setFrameSlotKind(slot, FrameSlotKind.Long);
-        val value = expressionNode.executeBool(env)
+//        env.frameDescriptor.setFrameSlotKind(slot, FrameSlotKind.Long);
+        val value =  TypeSystemGen.expectBoolean(env.arguments[index])
         env.setBoolean(slot, value);
         return value;
     }
 
     @Specialization(guards = ["isInt(env)"])
     protected fun writeInt(env: VirtualFrame): Int {
-//        frame.frameDescriptor.setFrameSlotKind(slot, FrameSlotKind.Long);
-        val value = expressionNode.executeInt(env)
+//        env.frameDescriptor.setFrameSlotKind(slot, FrameSlotKind.Long);
+        val value = TypeSystemGen.expectInteger(env.arguments[index])
         env.setInt(slot, value);
         return value;
     }
@@ -55,7 +58,6 @@ abstract class StoreLocal(@Child var expressionNode: ExpressionNode, val index: 
     }
 
     override fun toString(): String {
-        return "(stloc $index $expressionNode)"
+        return "(starg $index)"
     }
-
 }
