@@ -19,6 +19,10 @@ class Method(val name: String, @CompilerDirectives.CompilationFinal var callTarg
         return true
     }
 
+    fun isInstance(obj: TruffleObject?): Boolean {
+        return obj is Method
+    }
+
     @ExportMessage
     abstract class Execute {
         companion object {

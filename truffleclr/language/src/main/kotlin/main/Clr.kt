@@ -17,7 +17,7 @@ import parser.cil.ClassVisitor
 import parser.cil.DeclVisitor
 import parser.generic.IlAppDomain
 import runtime.ClrContext
-import runtime.Methods
+import java.io.File
 
 @TruffleLanguage.Registration(
     id = "trufflecrl",
@@ -36,9 +36,13 @@ import runtime.Methods
     DebuggerTags.AlwaysHalt::class
 )
 class Clr : TruffleLanguage<ClrContext>() {
+    // TODO: Remove without breaking debug
+    lateinit var tmp: ClrContext
 
     override fun createContext(env: Env): ClrContext {
-        return ClrContext(env)
+        val context = ClrContext()
+        context.env = env
+        return context
     }
 
     override fun isObjectOfLanguage(`object`: Any?): Boolean {
@@ -64,32 +68,29 @@ class Clr : TruffleLanguage<ClrContext>() {
     override fun parse(request: ParsingRequest): CallTarget {
         val appDomain = IlAppDomain()
 
-//        parseFile(
-//            appDomain, CharStreams.fromPath(
-//                File("./language/src/main/resources/System.Private.CoreLib.il").toPath()
-//            )
-//        )
+
+        parseFile(
+            appDomain, CharStreams.fromPath(
+                File("./language/src/main/resources/System.Private.CoreLib.il").toPath()
+            )
+        )
 
 
         parseFile(appDomain, CharStreams.fromReader(request.source.reader))
+        val context = getCurrentContext(Clr::class.java)
+        tmp = context
 
-
-        LibraryFactory.resolve(InteropLibrary::class.java)
+        val lib = LibraryFactory.resolve(InteropLibrary::class.java)
 
         val frameDescriptor = FrameDescriptor()
         return Truffle.getRuntime().createCallTarget(
-            Initialize(appDomain, scopes, frameDescriptor, this)
+            Initialize(appDomain, context, frameDescriptor, this)
         )
+
+
     }
 
-    var scopes = mutableListOf<Scope>()
     override fun findTopScopes(context: ClrContext): MutableIterable<Scope> {
-        return scopes
+        return context.scopes
     }
-
-
-
-    val methods: Methods
-        get() = scopes[0].variables as Methods
-
 }

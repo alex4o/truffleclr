@@ -1,4 +1,4 @@
-// Generated from /home/alex4o/Projects/truffleclr/truffleclr/Cil.g4 by ANTLR 4.7.2
+// Generated from /home/alex4o/Projects/truffleclr/truffleclr/Cil.g4 by ANTLR 4.8
 package Cil;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
@@ -1242,11 +1242,145 @@ public interface CilVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitVariantType(CilParser.VariantTypeContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link CilParser#type}.
+	 * Visit a parse tree produced by the {@code typeObject}
+	 * labeled alternative in {@link CilParser#type}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitType(CilParser.TypeContext ctx);
+	T visitTypeObject(CilParser.TypeObjectContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code typeManageRef}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTypeManageRef(CilParser.TypeManageRefContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code typeDeRef}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTypeDeRef(CilParser.TypeDeRefContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code typeGeneric}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTypeGeneric(CilParser.TypeGenericContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code typeNative}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTypeNative(CilParser.TypeNativeContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code typeMod}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTypeMod(CilParser.TypeModContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code typePinnded}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTypePinnded(CilParser.TypePinndedContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code elipsis}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitElipsis(CilParser.ElipsisContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code typeArray}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTypeArray(CilParser.TypeArrayContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code typeU4}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTypeU4(CilParser.TypeU4Context ctx);
+	/**
+	 * Visit a parse tree produced by the {@code typeU3}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTypeU3(CilParser.TypeU3Context ctx);
+	/**
+	 * Visit a parse tree produced by the {@code typeClass}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTypeClass(CilParser.TypeClassContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code typeMethod}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTypeMethod(CilParser.TypeMethodContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code typeU2}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTypeU2(CilParser.TypeU2Context ctx);
+	/**
+	 * Visit a parse tree produced by the {@code typeU1}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTypeU1(CilParser.TypeU1Context ctx);
+	/**
+	 * Visit a parse tree produced by the {@code typeValueType}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTypeValueType(CilParser.TypeValueTypeContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code notTun}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitNotTun(CilParser.NotTunContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code typeUnmanagedRef}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTypeUnmanagedRef(CilParser.TypeUnmanagedRefContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code typePrimitive}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTypePrimitive(CilParser.TypePrimitiveContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code typeVoid}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTypeVoid(CilParser.TypeVoidContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link CilParser#simpleType}.
 	 * @param ctx the parse tree

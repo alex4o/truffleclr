@@ -1288,29 +1288,26 @@ variantType             : /* EMPTY */
                         ;
 
 /*  Managed types for signatures  */
-type                    : K_CLASS className
-                        | K_OBJECT
-                        | K_VALUE K_CLASS className
-                        | K_VALUETYPE className
-                        | type '[' ']'
-                        | type '[' bounds1 ']'
-                        | type '&'
-                        | type '*'
-                        | type K_PINNED
-                        | type K_MODREQ '(' typeSpec ')'
-                        | type K_MODOPT '(' typeSpec ')'
-                        | methodSpec callConv type '*' '(' sigArgs0 ')'
-                        | type '<' tyArgs1 '>'
-                        | '!' '!' int32
-                        | '!' int32
-                        | '!' '!' dottedName
-                        | '!' dottedName
-                        | K_TYPEDREF
-                        | K_VOID
-                        | K_NATIVE  (K_UINT | K_UNSIGNED? K_INT)?
-                        | simpleType
-                        | ELIPSIS type
-                        | '!(null)'
+type                    : K_VALUE? K_CLASS className  #typeClass
+                        | K_OBJECT                    #typeObject
+                        | K_VALUETYPE className       #typeValueType
+                        | type '[' bounds1? ']'       #typeArray
+                        | type '&'                    #typeManageRef
+                        | type '*'                    #typeUnmanagedRef
+                        | type K_PINNED                                 #typePinnded
+                        | type (K_MODREQ | K_MODOPT) '(' typeSpec ')'   #typeMod
+                        | methodSpec callConv type '*' '(' sigArgs0 ')' #typeMethod
+                        | type '<' tyArgs1 '>'                      #typeGeneric
+                        | '!' '!' int32                             #typeU1
+                        | '!' int32                                 #typeU2
+                        | '!' '!' dottedName                        #typeU3
+                        | '!' dottedName                            #typeU4
+                        | K_TYPEDREF                                #typeDeRef
+                        | K_VOID                                    #typeVoid
+                        | K_NATIVE  (K_UINT | K_UNSIGNED? K_INT)?   #typeNative
+                        | simpleType                                #typePrimitive
+                        | ELIPSIS type                              #elipsis
+                        | '!(null)'                                 #notTun
                         ;
 
 simpleType              : K_CHAR

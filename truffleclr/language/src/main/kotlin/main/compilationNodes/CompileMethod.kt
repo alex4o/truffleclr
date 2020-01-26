@@ -5,20 +5,25 @@ import com.oracle.truffle.api.RootCallTarget
 import com.oracle.truffle.api.Truffle
 import com.oracle.truffle.api.TruffleLanguage
 import com.oracle.truffle.api.frame.FrameDescriptor
+import com.oracle.truffle.api.frame.FrameSlot
 import com.oracle.truffle.api.frame.FrameSlotKind
 import com.oracle.truffle.api.frame.VirtualFrame
 import com.oracle.truffle.api.nodes.ExplodeLoop
 import main.getNodes
 import nodes.*
+import nodes.expressions.LoadArgument
+import nodes.expressions.LoadArgumentNodeGen
+import nodes.internal.InternalMethod
+import nodes.internal.InternalTable.staticMethods
 import parser.generic.Graph
 import parser.generic.IlMethod
 import parser.generic.InstructionBlock
 import parser.generic.instruction.InstructionBrTarget
-import runtime.Methods
-import java.lang.Exception
+import runtime.Type
 import java.util.*
 
-class CompileMethod(val method: IlMethod, val language: TruffleLanguage<*>, val methods: Methods) : ExpressionNodeGeneric<MethodBody>() {
+class CompileMethod(val method: IlMethod, val language: TruffleLanguage<*>, val type: Type) :
+    StatementNode() {
     val frameDescriptor = FrameDescriptor();
 
     var compiled = sortedMapOf<Int, Block>()
@@ -29,71 +34,108 @@ class CompileMethod(val method: IlMethod, val language: TruffleLanguage<*>, val 
             "int32" -> FrameSlotKind.Int
             "int64" -> FrameSlotKind.Long
             "bool" -> FrameSlotKind.Boolean
-            "int32[]" -> FrameSlotKind.Object
-            else -> FrameSlotKind.Illegal
+            "string" -> FrameSlotKind.Object
+            "object" -> FrameSlotKind.Object
+            else -> FrameSlotKind.Object
         }
         frameDescriptor.addFrameSlot("local$index", kind)
     }
 
-    val argumentsSlots = method.arguments.mapIndexed { index, local ->
+    val argumentsSlots = if (method.static) {
+        method.arguments
+    } else {
+        listOf("object") + method.arguments
+    }.mapIndexed { index, local ->
         val kind = when (local) {
             "int32" -> FrameSlotKind.Int
             "int64" -> FrameSlotKind.Long
             "bool" -> FrameSlotKind.Boolean
-            "int32[]" -> FrameSlotKind.Object
-            else -> FrameSlotKind.Illegal
+            "string" -> FrameSlotKind.Object
+            "object" -> FrameSlotKind.Object
+            else -> FrameSlotKind.Object
         }
         frameDescriptor.addFrameSlot("argument$index", kind)
     }.filter { it.kind != FrameSlotKind.Illegal }
 
+    var dupCount = 0
+    fun genDupSlot(): FrameSlot {
+//        return frameDescriptor.findOrAddFrameSlot("dup$dupCount", FrameSlotKind.Object)
+        return frameDescriptor.findOrAddFrameSlot("dup$dupCount")
+    }
 
     private fun body(dispatchNode: DispatchNode): MethodBody {
         return MethodBody(method.name, dispatchNode, argumentsSlots.toTypedArray(), frameDescriptor, language)
     }
 
-//    private fun callTarget(): RootCallTarget {
+    //    private fun callTarget(): RootCallTarget {
 //        return Truffle.getRuntime()
 //            .createCallTarget(body())
 //    }
     val runtime = Truffle.getRuntime()
 
-    @ExplodeLoop
-    override fun execute(env: VirtualFrame): MethodBody {
+    @CompilerDirectives.TruffleBoundary
+    fun log() {
+        println("Compiling: ${method.toString()}")
+    }
+
+
+    fun compileInternal() {
+        println("Internal: ${method.toString()}")
+        val methodBody = InternalMethod(staticMethods[method.toString()]!!, frameDescriptor, language)
+        type.members[method.toString()]!!.callTarget = runtime.createCallTarget(methodBody)
+    }
+
+    fun compileDefault() {
         val queue = ArrayDeque<Int>()
         val visited = mutableSetOf<Int>()
-        try {
-            queue.add(graph.root)
-            while (queue.isNotEmpty()) {
-                val index = queue.pop();
-                val block = graph.nodes[index]
-                if (visited.contains(index)) {
-                    continue
-                }
+        log()
 
-                if (block.stolen == 0) {
-                    graph.getNodes(block.index, language)
-                }
-
-                visited.add(index)
-                queue.addAll(block.targets)
+        queue.add(graph.root)
+        while (queue.isNotEmpty()) {
+            val index = queue.pop();
+            val block = graph.nodes[index]
+            if (visited.contains(index)) {
+                continue
             }
 
-            var blocks = arrayOfNulls<Block>(compiled.lastKey() + 1);
-            compiled.forEach {
-                blocks[it.key] = it.value
+            if (block.stolen == 0) {
+                graph.getNodes(block.index, language)
             }
 
-            val dispatchNode = DispatchNode(blocks as Array<Block>)
-
-            val methodBody = body(dispatchNode)
-            methods.functions[method.toString()]!!.callTarget = runtime.createCallTarget(methodBody)
-            return methodBody
-
-        } catch (e: Exception) {
-            println("Compilation failed for method: $method")
-            e.printStackTrace()
-            throw e
+            visited.add(index)
+            queue.addAll(block.targets)
         }
+
+        var blocks = arrayOfNulls<Block>(compiled.lastKey() + 1);
+        compiled.forEach {
+            blocks[it.key] = it.value
+        }
+
+        val dispatchNode = DispatchNode(blocks as Array<Block>)
+
+        val methodBody = body(dispatchNode)
+        type.members[method.toString()]!!.callTarget = runtime.createCallTarget(methodBody)
+
+        if(CompilerDirectives.inInterpreter()) {
+//            graph.visualise(language)
+        }
+    }
+
+    val compile = if (method.internal) {
+        this::compileInternal
+    } else {
+        this::compileDefault
+    }
+
+    @ExplodeLoop
+    override fun executeVoid(env: VirtualFrame) {
+//        try {
+        compile()
+//        } catch (e: Exception) {
+//            println("Compilation failed for method: $method")
+//            e.printStackTrace()
+//            throw e
+//        }
     }
 
     val graph: Graph by lazy() @CompilerDirectives.TruffleBoundary
@@ -155,5 +197,9 @@ class CompileMethod(val method: IlMethod, val language: TruffleLanguage<*>, val 
         } else {
             Graph(blocks, this)
         }
+    }
+
+    override fun toString(): String {
+        return "Compile: ${method.toString()}"
     }
 }

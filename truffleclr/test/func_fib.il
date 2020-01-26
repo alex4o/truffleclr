@@ -66,16 +66,16 @@
 
 	IL_0005:  nop 
 	IL_0006:  ldloc.0 
-	IL_0007:  call void class [mscorlib]System.Console::Write(int32)
+	IL_0007:  call void class System.Console::Write(int32)
 	IL_000c:  nop 
 	IL_000d:  ldstr " "
-	IL_0012:  call void class [mscorlib]System.Console::Write(string)
+	IL_0012:  call void class System.Console::Write(string)
 	IL_0017:  nop 
 	IL_0018:  ldloc.0 
 	IL_0019:  ldc.i4.s 0x1e
 	IL_001b:  rem 
 	IL_001c:  call int32 class HelloWorld.Program::fib(int32)
-	IL_0021:  call void class [mscorlib]System.Console::WriteLine(int32)
+	IL_0021:  call void class System.Console::WriteLine(int32)
 	IL_0026:  nop 
 	IL_0027:  nop 
 	IL_0028:  ldloc.0 
@@ -152,7 +152,7 @@
 	// Code size 8 (0x8)
 	.maxstack 8
 	IL_0000:  ldarg.0 
-	IL_0001:  call instance void object::'.ctor'()
+	IL_0001:  call instance void object::.ctor()
 	IL_0006:  nop 
 	IL_0007:  ret 
     } // end of method Program::.ctor

@@ -17,7 +17,7 @@ import nodes.statements.StoreLocal
 import nodes.statements.StoreLocalNodeGen
 
 @NodeInfo(shortName = "method")
-class MethodBody(private val id: String, @Child var startBlock: ExpressionNode, @CompilerDirectives.CompilationFinal(dimensions = 1) val arguments: Array<FrameSlot>, frameDescriptor: FrameDescriptor, language: TruffleLanguage<*>): RootNode(language, frameDescriptor) {
+class MethodBody(private val id: String, @Child var startBlock: ExpressionNode, @CompilerDirectives.CompilationFinal(dimensions = 1) val arguments: Array<FrameSlot>, frameDescriptor: FrameDescriptor, language: TruffleLanguage<*>): RootNode(null, frameDescriptor) {
 
     @Children val argumentWriters: Array<StoreArgument> = arguments.mapIndexed { index, it -> StoreArgumentNodeGen.create(index, it) }.toTypedArray()
 

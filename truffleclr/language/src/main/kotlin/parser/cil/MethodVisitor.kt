@@ -68,7 +68,7 @@ class MethodVisitor(var appDomain: IlAppDomain, var method: IlMethod) : Cil.CilB
                 is CilParser.Instr_methodContext -> {
                     val methodRef = methodRef();
 
-                    val method = extractFromMethodRef(methodRef)
+                    val method = extractFromMethodRefTest(methodRef)
                     InstructionMethod(INSTR_METHOD().text, method)
                 }
                 is CilParser.Instr_stringContext -> {
@@ -78,7 +78,7 @@ class MethodVisitor(var appDomain: IlAppDomain, var method: IlMethod) : Cil.CilB
                     InstructionType(INSTR_TYPE().text)
                 }
                 is CilParser.Instr_fieldContext -> {
-                    InstructionField(INSTR_FIELD().text)
+                    InstructionField(INSTR_FIELD().text, type().text, typeSpec().text, dottedName().text)
                 }
                 is CilParser.Instr_varContext -> {
                     if(INSTR_VAR().text.endsWith(".s")) {

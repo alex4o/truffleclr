@@ -42,6 +42,14 @@ abstract class StoreArgument(val index: Int): ExpressionNode() {
         return value;
     }
 
+    @Specialization(guards = ["isObject(env)"])
+    protected fun writeObject(env: VirtualFrame): Int {
+//        env.frameDescriptor.setFrameSlotKind(slot, FrameSlotKind.Long);
+        val value = TypeSystemGen.expectInteger(env.arguments[index])
+        env.setObject(slot, value);
+        return value;
+    }
+
     protected fun isLong(env: VirtualFrame): Boolean {
         val kind = env.frameDescriptor.getFrameSlotKind(slot)
         return kind == FrameSlotKind.Long
@@ -55,6 +63,11 @@ abstract class StoreArgument(val index: Int): ExpressionNode() {
     protected fun isBoolean(env: VirtualFrame): Boolean {
         val kind = env.frameDescriptor.getFrameSlotKind(slot)
         return kind == FrameSlotKind.Boolean
+    }
+
+    protected fun isObject(env: VirtualFrame): Boolean {
+        val kind = env.frameDescriptor.getFrameSlotKind(slot)
+        return kind == FrameSlotKind.Object
     }
 
     override fun toString(): String {

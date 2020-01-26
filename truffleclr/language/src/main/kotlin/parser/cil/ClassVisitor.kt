@@ -12,21 +12,28 @@ import java.util.*
 class ClassVisitor(var appDomain: IlAppDomain, var type: IlType) : Cil.CilBaseVisitor<Any>() {
 
     companion object {
-        val class_children = LinkedList<Pair<CilBaseVisitor<*>, ParserRuleContext>>()
+        val class_children: Queue<Pair<CilBaseVisitor<*>, ParserRuleContext>> = LinkedList()
 
         fun layerVisit() {
-            for((visitor, tree) in class_children) {
+            while (!class_children.isEmpty()) {
+                val (visitor, tree) = class_children.remove()
                 tree.accept(visitor)
             }
         }
     }
 
     override fun visitClass_method(ctx: CilParser.Class_methodContext): Any {
-        val name = ctx.methodHead().methodName().text
+        val name: String = match(ctx.methodHead().methodName()) {
+            case(this.dottedName()) {
+                Regex("'(.*?)'").replace(text, "$1")
+            }
+            case(this.D_CCTOR()) { ".cctor" }
+            case(this.D_CTOR()) { ".ctor" }
+        }
 
         var arguments = listOf<String>()
 
-        if(ctx.methodHead().sigArgs0().sigArgs1() != null){
+        if (ctx.methodHead().sigArgs0().sigArgs1() != null) {
             arguments = ctx.methodHead().sigArgs0().sigArgs1().sigArg().map { it.type().text /*+ " " + it.id().text*/ }
         }
 
@@ -36,7 +43,7 @@ class ClassVisitor(var appDomain: IlAppDomain, var type: IlType) : Cil.CilBaseVi
         )
 
         method.static = ctx.methodHead().methAttr().map { it.text }.toSet().contains("static")
-
+        method.internal = ctx.methodHead().implAttr().map { it.text }.toSet().contains("internalcall")
         method.memberOf = type
         method.returnType = ctx.methodHead().type().text
         type.methods[method.toString()] = method

@@ -18,12 +18,13 @@ import nodes.expressions.LoadLocalNodeGen
 import nodes.expressions.Subtract
 import nodes.statements.StoreLocalNodeGen
 import parser.generic.IlAppDomain
+import runtime.ClrContext
 import runtime.Method
-import runtime.Methods
+import runtime.Type
 
 class Initialize(
     appDomain: IlAppDomain,
-    var scopes: MutableList<Scope>,
+    var context: ClrContext,
     frameDescriptor: FrameDescriptor,
     val language: TruffleLanguage<*>
 ) :
@@ -31,28 +32,36 @@ class Initialize(
 
     val counter = frameDescriptor.findOrAddFrameSlot("counter", FrameSlotKind.Int)
     val compileChildren = appDomain.assemblies.flatMap {
-        val methods = Methods()
-        val scope = Scope.newBuilder(it.name, methods).build()
-        scopes.add(scope)
-        it.types.values.filter { it.name.contains("Program") }.flatMap {
-            it.methods.values.map {
-                methods.functions[it.toString()] = Method(it.toString(), null)
-                CompileMethod(it, language, methods)
+
+        it.types.values
+//            .filter { it.name.contains("Program") }
+            .flatMap {
+                val type = Type()
+                type.name = it.fullName
+                context.types.put(type.name, type)
+                it.methods.values
+                    .map {
+                        type.members[it.toString()] = Method(it.toString(), null)
+                        CompileMethod(it, language, type)
+                    }
             }
-        }
     }
 
     var runtime = Truffle.getRuntime()
 
-    @Child
-    var writeCounter: ExpressionNode = StoreLocalNodeGen.create(LoadConstInt(compileChildren.lastIndex), 0, counter)
+//    @Child
+//    var writeCounter: ExpressionNode = StoreLocalNodeGen.create(LoadConstInt(compileChildren.lastIndex), 0, counter)
 
-    @Child
-    var compileNodes = runtime.createLoopNode(IterateFunctions(compileChildren.toTypedArray(), language, counter))
+//    @Child
+//    var compileNodes = runtime.createLoopNode(IterateFunctions(compileChildren.toTypedArray(), language, counter))
 
     override fun execute(env: VirtualFrame): Any? {
-        writeCounter.execute(env)
-        compileNodes.execute(env)
+//        writeCounter.execute(env)
+//        compileNodes.execute(env)
+
+        for(compileNode in compileChildren) {
+            compileNode.executeVoid(env)
+        }
 
         return 0
     }
@@ -63,7 +72,10 @@ class Initialize(
         return name
     }
 
-    public class IterateFunctions(@Children var list: Array<CompileMethod>, val language: TruffleLanguage<*>, counterSlot: FrameSlot) :
+    public class IterateFunctions(
+        @Children var list: Array<CompileMethod>, val language: TruffleLanguage<*>,
+        counterSlot: FrameSlot
+    ) :
         RepeatingNode, Node() {
 
         val runtime = Truffle.getRuntime()
@@ -72,13 +84,14 @@ class Initialize(
 
         @Child
         var counterWrite: ExpressionNode = StoreLocalNodeGen.create(Subtract(counter, LoadConstInt(1)), 0, counterSlot)
+
         override fun executeRepeating(env: VirtualFrame): Boolean {
             val index = counter.executeInt(env)
             return if (index >= 0) {
 
                 val node = list[index]
-                val method = node.execute(env)
-                finish(node, method)
+                val method = node.executeVoid(env)
+                finish(node)
 
                 counterWrite.execute(env)
                 true;
@@ -88,7 +101,7 @@ class Initialize(
         }
 
         @CompilerDirectives.TruffleBoundary
-        fun finish(node: CompileMethod, method: MethodBody) {
+        fun finish(node: CompileMethod) {
             node.graph.visualise(language)
         }
 

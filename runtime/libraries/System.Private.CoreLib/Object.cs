@@ -45,28 +45,28 @@ namespace System
         // replace Equals with EqualsValue for value types).
         public virtual bool Equals(object? obj)
         {
-            return Equals(this, obj);
+            return false;
             // return RuntimeHelpers.Equals(this, obj);
         }
 
-        public static bool Equals(object? objA, object? objB)
-        {
-            if (objA == objB)
-            {
-                return true;
-            }
-            if (objA == null || objB == null)
-            {
-                return false;
-            }
-            return objA.Equals(objB);
-        }
+        // public static bool Equals(object? objA, object? objB)
+        // {
+        //     if (objA == objB)
+        //     {
+        //         return true;
+        //     }
+        //     if (objA == null || objB == null)
+        //     {
+        //         return false;
+        //     }
+        //     return objA.Equals(objB);
+        // }
 
         // [NonVersionable]
-        public static bool ReferenceEquals(object? objA, object? objB)
-        {
-            return objA == objB;
-        }
+        // public static bool ReferenceEquals(object? objA, object? objB)
+        // {
+        //     return objA == objB;
+        // }
 
         // GetHashCode is intended to serve as a hash function for this object.
         // Based on the contents of the object, the hash function will return a suitable

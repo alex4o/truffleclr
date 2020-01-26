@@ -1,4 +1,4 @@
-package nodes.expressions
+package nodes.expressions.array
 
 import com.oracle.truffle.api.frame.VirtualFrame
 import nodes.ExpressionNode

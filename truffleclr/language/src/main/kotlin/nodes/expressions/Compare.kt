@@ -50,14 +50,54 @@ enum class CompareCondition {
 }
 
 @NodeInfo(shortName = "cmp")
-abstract class Compare(@CompilerDirectives.CompilationFinal private var condition: CompareCondition) : BinaryNode() {
+abstract class Compare(
+    @CompilerDirectives.CompilationFinal @JvmField private val condition: CompareCondition,
+    @CompilerDirectives.CompilationFinal @JvmField val unsigned: Boolean = false) :
+    BinaryNode() {
 
-    val compare: (Int, Int) -> Boolean = genCompare()
+    val compare: (Comparable<Number>, Number) -> Boolean = genCompare()
 
     @Specialization
-    protected open fun op(left: Int, right: Int): Boolean = compare(left, right)
+    protected open fun op(left: Int, right: Int): Boolean {
+        val a = if (unsigned) {
+            left xor Int.MIN_VALUE
+        } else {
+            left
+        } as Comparable<Number>
+        val b = if (unsigned) {
+            right xor Int.MIN_VALUE
+        } else {
+            right
+        } as Number
+        return compare(a, b)
+    }
 
-    private inline fun <reified T: Comparable<T>> genCompare(): (T, T) -> Boolean = when (condition) {
+    @Specialization
+    protected open fun op(left: Long, right: Long): Boolean {
+        val a = if (unsigned) {
+            left xor Long.MIN_VALUE
+        } else {
+            left
+        } as Comparable<Number>
+        val b = if (unsigned) {
+            right xor Long.MIN_VALUE
+        } else {
+            right
+        } as Number
+        return compare(a, b)
+    }
+
+    @Specialization
+    protected open fun op(left: Float, right: Float): Boolean {
+        return compare(left as Comparable<Number>, right as Number)
+    }
+
+    @Specialization
+    protected open fun op(left: Double, right: Double): Boolean {
+        return compare(left as Comparable<Number>, right as Number)
+    }
+
+    private inline fun genCompare(): (Comparable<Number>, Number) -> Boolean = when (condition) {
         EQ -> {
             { a, b -> a == b }
         }

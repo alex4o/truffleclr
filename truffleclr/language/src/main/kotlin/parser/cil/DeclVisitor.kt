@@ -17,7 +17,7 @@ class DeclVisitor(var appDomain: IlAppDomain) : Cil.CilBaseVisitor<Unit>() {
     private val namespaces = Stack<String>()
 
     companion object {
-        val decl_children = LinkedList<Pair<CilBaseVisitor<*>, ParserRuleContext>>()
+        val decl_children: Queue<Pair<CilBaseVisitor<*>, ParserRuleContext>> = LinkedList()
 
         fun layerVisit() {
             for((visitor, tree) in decl_children) {

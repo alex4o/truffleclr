@@ -1,4 +1,4 @@
-// Generated from /home/alex4o/Projects/truffleclr/truffleclr/Cil.g4 by ANTLR 4.7.2
+// Generated from /home/alex4o/Projects/truffleclr/truffleclr/Cil.g4 by ANTLR 4.8
 package Cil;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 
@@ -2080,15 +2080,245 @@ public interface CilListener extends ParseTreeListener {
 	 */
 	void exitVariantType(CilParser.VariantTypeContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link CilParser#type}.
+	 * Enter a parse tree produced by the {@code typeObject}
+	 * labeled alternative in {@link CilParser#type}.
 	 * @param ctx the parse tree
 	 */
-	void enterType(CilParser.TypeContext ctx);
+	void enterTypeObject(CilParser.TypeObjectContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link CilParser#type}.
+	 * Exit a parse tree produced by the {@code typeObject}
+	 * labeled alternative in {@link CilParser#type}.
 	 * @param ctx the parse tree
 	 */
-	void exitType(CilParser.TypeContext ctx);
+	void exitTypeObject(CilParser.TypeObjectContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code typeManageRef}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 */
+	void enterTypeManageRef(CilParser.TypeManageRefContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code typeManageRef}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 */
+	void exitTypeManageRef(CilParser.TypeManageRefContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code typeDeRef}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 */
+	void enterTypeDeRef(CilParser.TypeDeRefContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code typeDeRef}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 */
+	void exitTypeDeRef(CilParser.TypeDeRefContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code typeGeneric}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 */
+	void enterTypeGeneric(CilParser.TypeGenericContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code typeGeneric}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 */
+	void exitTypeGeneric(CilParser.TypeGenericContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code typeNative}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 */
+	void enterTypeNative(CilParser.TypeNativeContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code typeNative}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 */
+	void exitTypeNative(CilParser.TypeNativeContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code typeMod}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 */
+	void enterTypeMod(CilParser.TypeModContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code typeMod}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 */
+	void exitTypeMod(CilParser.TypeModContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code typePinnded}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 */
+	void enterTypePinnded(CilParser.TypePinndedContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code typePinnded}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 */
+	void exitTypePinnded(CilParser.TypePinndedContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code elipsis}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 */
+	void enterElipsis(CilParser.ElipsisContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code elipsis}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 */
+	void exitElipsis(CilParser.ElipsisContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code typeArray}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 */
+	void enterTypeArray(CilParser.TypeArrayContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code typeArray}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 */
+	void exitTypeArray(CilParser.TypeArrayContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code typeU4}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 */
+	void enterTypeU4(CilParser.TypeU4Context ctx);
+	/**
+	 * Exit a parse tree produced by the {@code typeU4}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 */
+	void exitTypeU4(CilParser.TypeU4Context ctx);
+	/**
+	 * Enter a parse tree produced by the {@code typeU3}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 */
+	void enterTypeU3(CilParser.TypeU3Context ctx);
+	/**
+	 * Exit a parse tree produced by the {@code typeU3}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 */
+	void exitTypeU3(CilParser.TypeU3Context ctx);
+	/**
+	 * Enter a parse tree produced by the {@code typeClass}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 */
+	void enterTypeClass(CilParser.TypeClassContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code typeClass}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 */
+	void exitTypeClass(CilParser.TypeClassContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code typeMethod}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 */
+	void enterTypeMethod(CilParser.TypeMethodContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code typeMethod}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 */
+	void exitTypeMethod(CilParser.TypeMethodContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code typeU2}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 */
+	void enterTypeU2(CilParser.TypeU2Context ctx);
+	/**
+	 * Exit a parse tree produced by the {@code typeU2}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 */
+	void exitTypeU2(CilParser.TypeU2Context ctx);
+	/**
+	 * Enter a parse tree produced by the {@code typeU1}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 */
+	void enterTypeU1(CilParser.TypeU1Context ctx);
+	/**
+	 * Exit a parse tree produced by the {@code typeU1}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 */
+	void exitTypeU1(CilParser.TypeU1Context ctx);
+	/**
+	 * Enter a parse tree produced by the {@code typeValueType}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 */
+	void enterTypeValueType(CilParser.TypeValueTypeContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code typeValueType}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 */
+	void exitTypeValueType(CilParser.TypeValueTypeContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code notTun}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 */
+	void enterNotTun(CilParser.NotTunContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code notTun}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 */
+	void exitNotTun(CilParser.NotTunContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code typeUnmanagedRef}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 */
+	void enterTypeUnmanagedRef(CilParser.TypeUnmanagedRefContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code typeUnmanagedRef}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 */
+	void exitTypeUnmanagedRef(CilParser.TypeUnmanagedRefContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code typePrimitive}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 */
+	void enterTypePrimitive(CilParser.TypePrimitiveContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code typePrimitive}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 */
+	void exitTypePrimitive(CilParser.TypePrimitiveContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code typeVoid}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 */
+	void enterTypeVoid(CilParser.TypeVoidContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code typeVoid}
+	 * labeled alternative in {@link CilParser#type}.
+	 * @param ctx the parse tree
+	 */
+	void exitTypeVoid(CilParser.TypeVoidContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link CilParser#simpleType}.
 	 * @param ctx the parse tree

@@ -27,13 +27,13 @@
   .ver 1:0:0:0
 }
 .module System.Private.CoreLib.dll
-// MVID: {e522e08c-3a6e-42d2-aa02-799a3979c937}
+// MVID: {e084ea34-1737-41b3-a991-990094a234bc}
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x00007F0FAD824000
+// Image base: 0x00007FF1D91CE000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -623,6 +623,46 @@
 
 } // end of class System.Int32
 
+.class private auto ansi beforefieldinit System.Console
+       extends System.Object
+{
+  .method public hidebysig static void  Write(int32 i) cil managed internalcall
+  {
+  } // end of method Console::Write
+
+  .method public hidebysig static void  Write(string s) cil managed internalcall
+  {
+  } // end of method Console::Write
+
+  .method public hidebysig static void  Write(object o) cil managed internalcall
+  {
+  } // end of method Console::Write
+
+  .method public hidebysig static void  WriteLine(int32 i) cil managed internalcall
+  {
+  } // end of method Console::WriteLine
+
+  .method public hidebysig static void  WriteLine(string s) cil managed internalcall
+  {
+  } // end of method Console::WriteLine
+
+  .method public hidebysig static void  WriteLine(object o) cil managed internalcall
+  {
+  } // end of method Console::WriteLine
+
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor() cil managed
+  {
+    // Code size       8 (0x8)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  call       instance void System.Object::.ctor()
+    IL_0006:  nop
+    IL_0007:  ret
+  } // end of method Console::.ctor
+
+} // end of class System.Console
+
 .class public auto ansi beforefieldinit System.Object
 {
   .custom instance void System.Runtime.CompilerServices.NullableContextAttribute::.ctor(uint8)
@@ -663,86 +703,17 @@
   .method public hidebysig newslot virtual 
           instance bool  Equals(object obj) cil managed
   {
-    // Code size       13 (0xd)
-    .maxstack  2
+    // Code size       7 (0x7)
+    .maxstack  1
     .locals init (bool V_0)
     IL_0000:  nop
-    IL_0001:  ldarg.0
-    IL_0002:  ldarg.1
-    IL_0003:  call       bool System.Object::Equals(object,
-                                                    object)
-    IL_0008:  stloc.0
-    IL_0009:  br.s       IL_000b
+    IL_0001:  ldc.i4.0
+    IL_0002:  stloc.0
+    IL_0003:  br.s       IL_0005
 
-    IL_000b:  ldloc.0
-    IL_000c:  ret
+    IL_0005:  ldloc.0
+    IL_0006:  ret
   } // end of method Object::Equals
-
-  .method public hidebysig static bool  Equals(object objA,
-                                               object objB) cil managed
-  {
-    // Code size       45 (0x2d)
-    .maxstack  2
-    .locals init (bool V_0,
-             bool V_1,
-             bool V_2)
-    IL_0000:  nop
-    IL_0001:  ldarg.0
-    IL_0002:  ldarg.1
-    IL_0003:  ceq
-    IL_0005:  stloc.0
-    IL_0006:  ldloc.0
-    IL_0007:  brfalse.s  IL_000e
-
-    IL_0009:  nop
-    IL_000a:  ldc.i4.1
-    IL_000b:  stloc.1
-    IL_000c:  br.s       IL_002b
-
-    IL_000e:  ldarg.0
-    IL_000f:  brfalse.s  IL_0017
-
-    IL_0011:  ldarg.1
-    IL_0012:  ldnull
-    IL_0013:  ceq
-    IL_0015:  br.s       IL_0018
-
-    IL_0017:  ldc.i4.1
-    IL_0018:  stloc.2
-    IL_0019:  ldloc.2
-    IL_001a:  brfalse.s  IL_0021
-
-    IL_001c:  nop
-    IL_001d:  ldc.i4.0
-    IL_001e:  stloc.1
-    IL_001f:  br.s       IL_002b
-
-    IL_0021:  ldarg.0
-    IL_0022:  ldarg.1
-    IL_0023:  callvirt   instance bool System.Object::Equals(object)
-    IL_0028:  stloc.1
-    IL_0029:  br.s       IL_002b
-
-    IL_002b:  ldloc.1
-    IL_002c:  ret
-  } // end of method Object::Equals
-
-  .method public hidebysig static bool  ReferenceEquals(object objA,
-                                                        object objB) cil managed
-  {
-    // Code size       10 (0xa)
-    .maxstack  2
-    .locals init (bool V_0)
-    IL_0000:  nop
-    IL_0001:  ldarg.0
-    IL_0002:  ldarg.1
-    IL_0003:  ceq
-    IL_0005:  stloc.0
-    IL_0006:  br.s       IL_0008
-
-    IL_0008:  ldloc.0
-    IL_0009:  ret
-  } // end of method Object::ReferenceEquals
 
   .method public hidebysig newslot virtual 
           instance int32  GetHashCode() cil managed

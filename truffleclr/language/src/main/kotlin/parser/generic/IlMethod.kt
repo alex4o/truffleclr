@@ -21,14 +21,16 @@ class IlMethod(var name: String, var arguments: List<String>) {
     var memberOf: IlType? = null
 
     var static = false
+    var internal = false
 
     val blockByLabel = mutableMapOf<String, InstructionBlock>()
 
     override fun toString(): String {
-        return if (memberOf == null) {
-            "$name($arguments)"
-        } else {
-            "$memberOf::$name(${arguments.joinToString(",")})"
-        }
+//        return
+//        if (memberOf == null) {
+          return "$returnType $name(${arguments.joinToString(",")})"
+//        } else {
+//            "$memberOf::$name(${arguments.joinToString(",")})"
+//        }
     }
 }

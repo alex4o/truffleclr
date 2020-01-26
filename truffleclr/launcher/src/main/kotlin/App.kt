@@ -1,8 +1,10 @@
 import org.graalvm.polyglot.Context
 import org.graalvm.polyglot.Source
+import org.graalvm.polyglot.Value
+import org.graalvm.polyglot.impl.AbstractPolyglotImpl.AbstractContextImpl
 import java.io.ByteArrayOutputStream
 import java.io.File
-import java.io.FileOutputStream
+import kotlin.reflect.KCallable
 import kotlin.system.measureTimeMillis
 
 fun String.runCommand() {
@@ -18,11 +20,66 @@ fun String.runCommand() {
  Tell what does not work
 */
 
+//
+//fun PolyglotContextImpl.myeval(languageId: String?, sourceImpl: Any): Value? {
+//
+//    val language: PolyglotLanguage = this.requirePublicLanguage(languageId)
+//    val prev: Any = engine.enterIfNeeded(this)
+//    val languageContext: PolyglotLanguageContext = getContext(language)
+//        languageContext.checkAccess(null)
+//        languageContext.ensureInitialized(null)
+//        val source = sourceImpl as com.oracle.truffle.api.source.Source
+//        val target = languageContext.parseCached(null, source, null)
+//        val result = target.call(*PolyglotImpl.EMPTY_ARGS)
+//        val hostValue: Value
+//        hostValue = try {
+//            languageContext.asValue(result)
+//        } catch (e: NullPointerException) {
+//            throw AssertionError(
+//                String.format(
+//                    "Language %s returned an invalid return value %s. Must be an interop value.",
+//                    languageId,
+//                    result
+//                ), e
+//            )
+//        } catch (e: ClassCastException) {
+//            throw AssertionError(
+//                String.format(
+//                    "Language %s returned an invalid return value %s. Must be an interop value.",
+//                    languageId,
+//                    result
+//                ), e
+//            )
+//        }
+//        if (source.isInteractive) {
+//            PolyglotContextImpl.printResult(languageContext, result)
+//        }
+//        hostValue
+//    } catch (e: Throwable) {
+//        throw PolyglotImpl.wrapGuestException(languageContext, e)
+//    } finally {
+//        engine.leaveIfNeeded(prev, this)
+//    }
+//}
+
+
 fun main() {
     val out = ByteArrayOutputStream()
 
     val context = Context.newBuilder().allowAllAccess(true).out(out).build()
 
+    lateinit var requirePublicLanguage: KCallable<*>
+    lateinit var getContext: KCallable<*>
+
+//    for(member in context::class.members) {
+//        if(member.name.contains("requirePublicLanguage")) {
+//            requirePublicLanguage = member
+//        }
+//
+//        if(member.name.contains("getContext")) {
+//
+//        }
+//    }
 
 //    val cpart = context.eval(
 //        Source.newBuilder(
@@ -38,9 +95,10 @@ fun main() {
             Source.newBuilder(
                 "trufflecrl",
 //                    File("./test/func.il")
-                File("./test/array.il")
+                File("./test/func_fib.il")
             ).build()
         )
+
 
 //        execution.getMember("main");
 
@@ -53,21 +111,25 @@ fun main() {
     println(members)
 
 //    val main = bindings.getMember("HelloWorld.Program::Main(string[])")
-    val main = bindings.getMember("HelloWorld.Program::Main()")
+    val ProgramClass = bindings.getMember("HelloWorld.Program")
+
+    println(ProgramClass.memberKeys)
+
+    val main = ProgramClass.getMember("void Main(string[])")
 
     for(i in 0..2) {
-        main.execute()
+        main.execute(0)
         out.reset()
         print("$i ")
     }
     println()
 
     val time = measureTimeMillis {
-        main.execute()
+        main.execute(0)
         println(out.toString("utf-8"))
     }
 
-    println("Completed in: ${time}")
+    println("Completed in: ${time}ms")
 }
 
 /*

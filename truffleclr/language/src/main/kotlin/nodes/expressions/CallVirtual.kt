@@ -12,23 +12,19 @@ import com.oracle.truffle.api.nodes.NodeInfo
 import nodes.ExpressionNode
 import runtime.Method
 
-@NodeInfo(shortName = "call")
-class Call(var method: Method, @Children var args: Array<ExpressionNode>): ExpressionNode() {
+@NodeInfo(shortName = "callvirt")
+class CallVirtual(var methodName: String, @Children var args: Array<ExpressionNode>): ExpressionNode() {
+
+    @Child var callNode: IndirectCallNode = Truffle.getRuntime().createIndirectCallNode()
+//    @Child var callNode: DirectCallNode = Truffle.getRuntime().createDirectCallNode(callTarget)
     @Child var interopLib = InteropLibrary.getFactory().createDispatched(5)
 
     @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.FULL_EXPLODE_UNTIL_RETURN)
     override fun execute(env: VirtualFrame): Any? {
-        val arguments = arrayOfNulls<Any>(args.size)
-        for(i in 0 until args.size) {
-            arguments[i] = args[i].execute(env)
-        }
-//        if(CompilerDirectives.inInterpreter()) {
-//            println("${method.name} (${arguments.joinToString(",")})")
-//        }
-        return interopLib.execute(method, *arguments)
+        return 0
     }
 
     override fun toString(): String {
-        return "(call ${method.name} ${args.joinToString(" ")})";
+        return "(callvirt ${methodName} ${args.joinToString(" ")})";
     }
 }
