@@ -17,14 +17,15 @@ fun main() {
     val clr = Clr()
 
     val appDomain = IlAppDomain()
-//    clr.parseFile(appDomain, CharStreams.fromFileName("./test/array.il"))
     clr.parseFile(
         appDomain, CharStreams.fromPath(
             File("./language/src/main/resources/System.Private.CoreLib.il").toPath()
         )
     )
+    clr.parseFile(appDomain, CharStreams.fromFileName("./test/do_while.il"))
+
+    val context = ClrContext()
     val methods = appDomain.assemblies.flatMap {
-        val context = ClrContext()
         clr.tmp = context
         it.types.values
 //            .filter { it.name.contains("Program") }
@@ -32,7 +33,7 @@ fun main() {
                 val type = Type()
                 type.name = it.fullName
                 context.types.put(type.name, type)
-                it.methods.values.filter { !it.internal }.map {
+                it.methods.values.map {
                     type.members[it.toString()] = Method(it.toString(), null)
                     CompileMethod(it, clr, type)
                 }

@@ -51,15 +51,17 @@ fun test(methodRef: MethodRefContext) {
 }
 
 fun MethodVisitor.extractFromMethodRefTest(methodRef: MethodRefContext): IlMethod {
-    val methodName: String = match(methodRef.methodName()) {
+    val methodName: String = Regex("'(.*?)'").replace(match(methodRef.methodName()) {
         case(dottedName()) {
-            text.let {
-                Regex("'(.*?)'").replace(it, "$1")
-            }
+            text
         }
-        case(D_CCTOR()) { text }
-        case(D_CTOR()) { text }
-    }
+        case(D_CCTOR()) {
+            text
+        }
+        case(D_CTOR()) {
+            text
+        }
+    }, "$1")
 
     val className: String = match(methodRef.typeSpec()) {
         case(type()) {
@@ -95,10 +97,10 @@ class ParsedType() {
 fun TypeContext.toParsedType(): String {
     return when (this) {
         is TypeClassContext -> {
-            className().text
+            className().slashedName().text
         }
         is TypePrimitiveContext -> {
-            when(text) {
+            when (text) {
                 "int32" -> "System.Int32"
                 "uint32" -> "System.UInt32"
                 "int8" -> "System.UInt8"

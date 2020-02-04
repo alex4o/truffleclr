@@ -95,7 +95,7 @@ fun main() {
             Source.newBuilder(
                 "trufflecrl",
 //                    File("./test/func.il")
-                File("./test/array.il")
+                File("./test/func_fib.il")
             ).build()
         )
 
@@ -115,7 +115,7 @@ fun main() {
 
     println(ProgramClass.memberKeys)
 
-    val main = ProgramClass.getMember("void Main()")
+    val main = ProgramClass.getMember("void Main(string[])")
 
     for(i in 0..2) {
         main.execute(0)
