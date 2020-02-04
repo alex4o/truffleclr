@@ -6,7 +6,11 @@ import nodes.ExpressionNode
 
 @NodeInfo(shortName = "ldstr")
 class LoadString(val string: String): ExpressionNode() {
-    override fun execute(env: VirtualFrame): String {
+    override fun execute(env: VirtualFrame): Any? {
+        return executeString(env)
+    }
+
+    override fun executeString(env: VirtualFrame): String {
         return string;
     }
 

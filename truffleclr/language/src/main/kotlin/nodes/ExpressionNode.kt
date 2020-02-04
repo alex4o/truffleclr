@@ -21,6 +21,18 @@ abstract class ExpressionNode: StatementNode() {
         return TypeSystemGen.expectInteger(execute(env))
     }
 
+    open fun executeLong(env: VirtualFrame): Long {
+        return TypeSystemGen.expectLong(execute(env))
+    }
+
+    open fun executeFloat(env: VirtualFrame): Float {
+        return TypeSystemGen.expectFloat(execute(env))
+    }
+
+    open fun executeDouble(env: VirtualFrame): Double {
+        return TypeSystemGen.expectDouble(execute(env))
+    }
+
     open fun executeString(env: VirtualFrame): String {
         return TypeSystemGen.expectString(execute(env))
     }

@@ -13,8 +13,7 @@ class CanCompareBits() :
     ExpressionNode() {
 
     override fun execute(env: VirtualFrame): Any? {
-        run(env.arguments[0])
-        return CTSNull
+        return run(env.arguments[0])
     }
 
     @CompilerDirectives.TruffleBoundary

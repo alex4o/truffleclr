@@ -10,12 +10,11 @@ import nodes.controlflow.Return
 import nodes.controlflow.ReturnValue
 import nodes.expressions.*
 import nodes.expressions.`object`.*
-import nodes.expressions.array.LoadElement
-import nodes.expressions.array.LoadLength
-import nodes.expressions.array.NewArray
-import nodes.expressions.array.StoreElement
-import nodes.internal.ConsoleWrite
-import nodes.internal.ConsoleWriteLine
+import nodes.expressions.array.*
+import nodes.expressions.math.AddNodeGen
+import nodes.expressions.math.MultiplyNodeGen
+import nodes.expressions.math.ReminderNodeGen
+import nodes.expressions.math.SubtractNodeGen
 import nodes.statements.*
 import parser.generic.Graph
 import parser.generic.InstructionBlock
@@ -94,7 +93,7 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
                 val s1 = stack.pop()
 
 
-                val node = Add((s1.second)!!, (s0.second)!!)
+                val node = AddNodeGen.create((s1.second)!!, (s0.second)!!)
                 stack.push(Pair(s0.first, node))
             }
             if (instruction.instruction == "add.ovf" && instruction is InstructionNone) {
@@ -120,7 +119,7 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
             if (instruction.instruction == "sub" && instruction is InstructionNone) {
                 val s0 = stack.pop()
                 val s1 = stack.pop()
-                val node = Subtract(s1.second, s0.second)
+                val node = SubtractNodeGen.create(s1.second, s0.second)
                 stack.push(Pair(s0.first, node))
             }
             if (instruction.instruction == "sub.ovf" && instruction is InstructionNone) {
@@ -147,7 +146,7 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
                 val s0 = stack.pop()
                 val s1 = stack.pop()
 
-                val node = Multiply(s1.second, s0.second)
+                val node = MultiplyNodeGen.create(s1.second, s0.second)
                 stack.push(Pair(s0.first, node))
             }
             if (instruction.instruction == "mul.ovf" && instruction is InstructionNone) {
@@ -194,7 +193,7 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
                 val s0 = stack.pop()
                 val s1 = stack.pop()
 
-                val node = Reminder(s1.second, s0.second)
+                val node = ReminderNodeGen.create(s1.second, s0.second)
                 stack.push(Pair(s0.first, node))
             }
             if (instruction.instruction == "rem.un" && instruction is InstructionNone) {
@@ -333,7 +332,10 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
                     error("")
                 }
 
-                val node = NewArray(s0.second)
+                //TODO: fix types for array creation
+
+
+                val node = NewArrayNodeGen.create(IntArray::class.java, s0.second)
                 stack.push(Pair("Ref", node))
             }
             if (instruction.instruction == "refanyval" && instruction is InstructionType) {
@@ -575,17 +577,17 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
                 var number = if (arg == "m1") {
                     -1
                 } else {
-                    arg.toInt()
+                    arg.toLong()
                 }
 
-                val node = LoadConstInt(number)
+                val node = LoadConst(number, Int::class)
                 stack.push(Pair("int32", node))
             }
 //types: "ldc.i4.s","ldc.i4"
             if (instruction.instruction.startsWith("ldc") && instruction is InstructionI) {
 
 
-                val node = LoadConstInt(instruction.arg)
+                val node = LoadConst(instruction.arg.toLong(), Int::class)
                 stack.push(Pair("int32", node))
             }
 //types: "ldc.i8"
@@ -675,7 +677,7 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
                     error("")
                 }
 
-                val node = LoadLength(s0.second)
+                val node = LoadLengthNodeGen.create(s0.second)
                 stack.push(Pair("int32", node))
             }
 //types: "ldelema"
@@ -705,7 +707,7 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
                     error("")
                 }
 
-                val node = LoadElement(s1.second, s0.second)
+                val node = LoadElementNodeGen.create(s1.second, s0.second)
                 stack.push(Pair("int32", node))
             }
 //types: "ldelem"
@@ -891,7 +893,7 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
                 }
 
                 val node =
-                    StoreElement(s0.second, s1.second, s2.second)
+                    StoreElementNodeGen.create(s0.second, s1.second, s2.second)
                 res.add(node)
             }
 //types: "stelem"
@@ -1098,7 +1100,7 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
                 val args = instruction.method.arguments.map { stack.pop() }
 
                 val thisValue = if(instruction.method.static) {
-                    LoadConstInt(0)
+                    LoadConst(0, Long::class)
                 }else{
                     stack.pop().second
                 }
@@ -1163,7 +1165,7 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
                 val args = instruction.method.arguments.map { stack.pop() }
 
                 val thisValue = if(instruction.method.static) {
-                    LoadConstInt(0)
+                    LoadConst(0, Long::class)
                 }else{
                     stack.pop().second
                 }

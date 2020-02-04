@@ -1,7 +1,6 @@
 package main.compilationNodes
 
 import com.oracle.truffle.api.CompilerDirectives
-import com.oracle.truffle.api.Scope
 import com.oracle.truffle.api.Truffle
 import com.oracle.truffle.api.TruffleLanguage
 import com.oracle.truffle.api.frame.FrameDescriptor
@@ -12,10 +11,9 @@ import com.oracle.truffle.api.nodes.Node
 import com.oracle.truffle.api.nodes.RepeatingNode
 import com.oracle.truffle.api.nodes.RootNode
 import nodes.ExpressionNode
-import nodes.MethodBody
-import nodes.expressions.LoadConstInt
+import nodes.expressions.LoadConst
 import nodes.expressions.LoadLocalNodeGen
-import nodes.expressions.Subtract
+import nodes.expressions.math.SubtractNodeGen
 import nodes.statements.StoreLocalNodeGen
 import parser.generic.IlAppDomain
 import runtime.ClrContext
@@ -83,7 +81,7 @@ class Initialize(
         var counter: ExpressionNode = LoadLocalNodeGen.create(0, counterSlot)
 
         @Child
-        var counterWrite: ExpressionNode = StoreLocalNodeGen.create(Subtract(counter, LoadConstInt(1)), 0, counterSlot)
+        var counterWrite: ExpressionNode = StoreLocalNodeGen.create(SubtractNodeGen.create(counter, LoadConst(1, Int::class)), 0, counterSlot)
 
         override fun executeRepeating(env: VirtualFrame): Boolean {
             val index = counter.executeInt(env)

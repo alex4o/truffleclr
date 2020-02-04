@@ -13,8 +13,7 @@ class FastEqualsCheck() :
     ExpressionNode() {
 
     override fun execute(env: VirtualFrame): Any? {
-        run(env.arguments[0], env.arguments[1])
-        return CTSNull
+        return run(env.arguments[0], env.arguments[1])
     }
 
     @CompilerDirectives.TruffleBoundary

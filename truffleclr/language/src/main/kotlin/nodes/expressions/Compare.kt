@@ -49,69 +49,58 @@ enum class CompareCondition {
 //    }
 }
 
+@ExperimentalUnsignedTypes
 @NodeInfo(shortName = "cmp")
 abstract class Compare(
     @CompilerDirectives.CompilationFinal @JvmField private val condition: CompareCondition,
-    @CompilerDirectives.CompilationFinal @JvmField val unsigned: Boolean = false) :
+    @CompilerDirectives.CompilationFinal @JvmField val unsigned: Boolean = false):
     BinaryNode() {
 
-    val compare: (Comparable<Number>, Number) -> Boolean = genCompare()
+    val compare: (Int) -> Boolean = genCompare()
 
     @Specialization
     protected open fun op(left: Int, right: Int): Boolean {
-        val a = if (unsigned) {
-            left xor Int.MIN_VALUE
-        } else {
-            left
-        } as Comparable<Number>
-        val b = if (unsigned) {
-            right xor Int.MIN_VALUE
-        } else {
-            right
-        } as Number
-        return compare(a, b)
+        return if (unsigned) {
+            compare(left.toUInt().compareTo(right.toUInt()))
+        }else{
+            compare(left.compareTo(right))
+        }
     }
 
     @Specialization
     protected open fun op(left: Long, right: Long): Boolean {
-        val a = if (unsigned) {
-            left xor Long.MIN_VALUE
-        } else {
-            left
-        } as Comparable<Number>
-        val b = if (unsigned) {
-            right xor Long.MIN_VALUE
-        } else {
-            right
-        } as Number
-        return compare(a, b)
+        return if (unsigned) {
+            compare(left.toULong().compareTo(right.toULong()))
+        }else{
+            compare(left.compareTo(right))
+        }
     }
 
     @Specialization
     protected open fun op(left: Float, right: Float): Boolean {
-        return compare(left as Comparable<Number>, right as Number)
+        return compare(left.compareTo(right))
     }
 
     @Specialization
     protected open fun op(left: Double, right: Double): Boolean {
-        return compare(left as Comparable<Number>, right as Number)
+        return compare(left.compareTo(right))
     }
 
-    private inline fun genCompare(): (Comparable<Number>, Number) -> Boolean = when (condition) {
+    private inline fun genCompare(): (Int) -> Boolean = when (condition) {
         EQ -> {
-            { a, b -> a == b }
+            { a -> a == 0 }
         }
         LT -> {
-            { a, b -> a < b }
+            { a -> a < 0 }
         }
         GT -> {
-            { a, b -> a > b }
+            { a -> a > 0 }
         }
         GE -> {
-            { a, b -> a >= b }
+            { a -> a >= 0 }
         }
         LE -> {
-            { a, b -> a <= b }
+            { a -> a <= 0 }
         }
     }
 

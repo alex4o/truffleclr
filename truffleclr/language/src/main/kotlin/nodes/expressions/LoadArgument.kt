@@ -33,6 +33,24 @@ abstract class LoadArgument(@CompilationFinal val index: Int) : ExpressionNode()
         return env.frameDescriptor.getFrameSlotKind(slot) == FrameSlotKind.Boolean
     }
 
+    fun isObject(env: VirtualFrame): Boolean {
+        return env.frameDescriptor.getFrameSlotKind(slot) == FrameSlotKind.Object
+    }
+
+    fun isLong(env: VirtualFrame): Boolean {
+        return env.frameDescriptor.getFrameSlotKind(slot) == FrameSlotKind.Long
+    }
+
+    fun isFloat(env: VirtualFrame): Boolean {
+        return env.frameDescriptor.getFrameSlotKind(slot) == FrameSlotKind.Float
+    }
+
+
+    fun isDouble(env: VirtualFrame): Boolean {
+        return env.frameDescriptor.getFrameSlotKind(slot) == FrameSlotKind.Double
+    }
+
+
     override fun toString(): String {
         return "(ldarg $index)"
     }
