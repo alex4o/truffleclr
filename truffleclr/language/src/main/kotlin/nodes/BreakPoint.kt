@@ -7,7 +7,6 @@ import types.CTSNull
 @NodeInfo(shortName = "break")
 class BreakPoint : ExpressionNode() {
     override fun execute(env: VirtualFrame): Any? {
-        
         return CTSNull
     }
 

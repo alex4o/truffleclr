@@ -8,7 +8,7 @@ import nodes.ExpressionNode
 import types.CTSNull
 import java.io.PrintStream
 
-@NodeInfo(shortName = "WriteLine")
+@NodeInfo(description = "WriteLine")
 class ConsoleWriteLine() :
     ExpressionNode() {
     val context by lazy {
@@ -27,5 +27,27 @@ class ConsoleWriteLine() :
     @CompilerDirectives.TruffleBoundary
     fun writeLine(any: Any?) {
         stream.println(any)
+    }
+}
+
+@NodeInfo(shortName = "WriteLine")
+class ConsoleWriteLine0() :
+    ExpressionNode() {
+    val context by lazy {
+        lookupContextReference(Clr::class.java).get()
+    }
+
+    val stream by lazy {
+        PrintStream(context.env.out())
+    }
+
+    override fun execute(env: VirtualFrame): Any? {
+        writeLine()
+        return CTSNull
+    }
+
+    @CompilerDirectives.TruffleBoundary
+    fun writeLine() {
+        stream.println()
     }
 }

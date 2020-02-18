@@ -15,6 +15,9 @@ class Type: TruffleObject {
     val members: MutableMap<String, Method> = mutableMapOf()
     var name: String = ""
 
+    lateinit var info: TypeInfo
+    lateinit var baseType: Type
+
     @ExportMessage
     fun hasMembers(): Boolean {
         return members.isNotEmpty()

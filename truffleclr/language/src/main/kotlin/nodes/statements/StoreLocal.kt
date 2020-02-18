@@ -1,5 +1,6 @@
 package nodes.statements
 
+import com.oracle.truffle.api.dsl.NodeChild
 import com.oracle.truffle.api.dsl.NodeField
 import com.oracle.truffle.api.dsl.Specialization
 import com.oracle.truffle.api.frame.FrameSlot
@@ -9,39 +10,44 @@ import com.oracle.truffle.api.nodes.Node
 import nodes.ExpressionNode
 
 @NodeField(name = "slot", type = FrameSlot::class)
-abstract class StoreLocal(@Child var expressionNode: ExpressionNode, val index: Int): ExpressionNode() {
+@NodeChild("expressionNode")
+abstract class StoreLocal(val index: Int): ExpressionNode() {
 
     protected abstract val slot: FrameSlot?
 
     abstract override fun execute(env: VirtualFrame): Any
 
     @Specialization(guards = ["isLong(env)"])
-    protected fun writeLong(env: VirtualFrame): Long {
+    protected fun writeLong(env: VirtualFrame, value: Long): Long {
 //        frame.frameDescriptor.setFrameSlotKind(slot, FrameSlotKind.Long);
-        val value = expressionNode.execute(env) as Long
         env.setLong(slot, value);
         return value;
     }
 
     @Specialization(guards = ["isBoolean(env)"])
-    protected fun writeBoolean(env: VirtualFrame): Boolean {
+    protected fun writeBoolean(env: VirtualFrame, value: Boolean): Boolean {
 //        frame.frameDescriptor.setFrameSlotKind(slot, FrameSlotKind.Long);
-        val value = expressionNode.executeBool(env)
         env.setBoolean(slot, value);
         return value;
     }
 
-    @Specialization(guards = ["isInt(env)"])
-    protected fun writeInt(env: VirtualFrame): Int {
+    @Specialization(guards = ["isBoolean(env)"])
+    protected fun writeBoolean(env: VirtualFrame, value: Int): Boolean {
 //        frame.frameDescriptor.setFrameSlotKind(slot, FrameSlotKind.Long);
-        val value = expressionNode.executeInt(env)
+        env.setBoolean(slot, value != 0);
+        return value != 0;
+    }
+
+
+    @Specialization(guards = ["isInt(env)"])
+    protected fun writeInt(env: VirtualFrame, value: Int): Int {
+//        frame.frameDescriptor.setFrameSlotKind(slot, FrameSlotKind.Long);
         env.setInt(slot, value);
         return value;
     }
 
     @Specialization(guards = ["isObject(env)"])
-    protected fun writeObject(env: VirtualFrame): Any? {
-        val value = expressionNode.execute(env)
+    protected fun writeObject(env: VirtualFrame, value: Any): Any? {
         env.setObject(slot, value);
         return value;
     }
@@ -67,7 +73,7 @@ abstract class StoreLocal(@Child var expressionNode: ExpressionNode, val index: 
     }
 
     override fun toString(): String {
-        return "\t\t(stloc $index $expressionNode)"
+        return "\t\t(stloc $index ${this.children.joinToString(" ")})"
     }
 
 }

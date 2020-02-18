@@ -50,6 +50,20 @@ fun test(methodRef: MethodRefContext) {
     }
 }
 
+fun TypeSpecContext.toClassName(): String {
+    return match(this) {
+        case(type()) {
+            toParsedType()
+        }
+        case(className()) {
+            slashedName().text
+        }
+        default {
+            error("Unable to determine typeSpec for $parent (line: ${ start.line})")
+        }
+    }
+}
+
 fun MethodVisitor.extractFromMethodRefTest(methodRef: MethodRefContext): IlMethod {
     val methodName: String = Regex("'(.*?)'").replace(match(methodRef.methodName()) {
         case(dottedName()) {
@@ -63,17 +77,7 @@ fun MethodVisitor.extractFromMethodRefTest(methodRef: MethodRefContext): IlMetho
         }
     }, "$1")
 
-    val className: String = match(methodRef.typeSpec()) {
-        case(type()) {
-            toParsedType()
-        }
-        case(className()) {
-            slashedName().text
-        }
-        default {
-            error("Unable to determine method typeSpec (line: ${methodRef.start.line})")
-        }
-    }
+    val className: String = methodRef.typeSpec().toClassName()
 
     val arguments = if (methodRef.sigArgs0().sigArgs1() != null) {
         methodRef.sigArgs0().sigArgs1().sigArg().map { it.text }

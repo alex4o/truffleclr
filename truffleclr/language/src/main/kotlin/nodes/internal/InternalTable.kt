@@ -4,14 +4,16 @@ import com.sun.org.apache.xpath.internal.ExpressionNode
 
 object InternalTable {
     var staticMethods = mutableMapOf(
-        "void Write(int32)" to ConsoleWrite(),
-        "void Write(object)" to ConsoleWrite(),
-        "void Write(string)" to ConsoleWrite(),
-        "void WriteLine(int32)" to ConsoleWriteLine(),
-        "void WriteLine(string)" to ConsoleWriteLine(),
-        "void WriteLine(object)" to ConsoleWriteLine(),
-        "bool CanCompareBits(object)" to CanCompareBits(),
-        "bool FastEqualsCheck(object,object)" to FastEqualsCheck(),
-        "int32 GetHashCode()" to GetHashCode()
+        "void System.Console::Write(int32)" to ConsoleWrite(),
+        "void System.Console::Write(object)" to ConsoleWrite(),
+        "void System.Console::Write(string)" to ConsoleWrite(),
+        "void System.Console::WriteLine(int32)" to ConsoleWriteLine(),
+        "void System.Console::WriteLine(string)" to ConsoleWriteLine(),
+        "void System.Console::WriteLine(object)" to ConsoleWriteLine(),
+        "void System.Console::WriteLine()" to ConsoleWriteLine0(),
+        "bool System.Convert::ToBoolean(int32)" to ToBoolean(),
+        "bool System.ValueType::CanCompareBits(object)" to CanCompareBits(),
+        "bool System.ValueType::FastEqualsCheck(object,object)" to FastEqualsCheck(),
+        "int32 System.ValueType::GetHashCode()" to GetHashCode()
     )
 }

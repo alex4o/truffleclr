@@ -1,9 +1,12 @@
+import com.oracle.truffle.api.TruffleException
+import com.oracle.truffle.api.frame.FrameSlotTypeException
 import org.graalvm.polyglot.Context
 import org.graalvm.polyglot.Source
 import org.graalvm.polyglot.Value
 import org.graalvm.polyglot.impl.AbstractPolyglotImpl.AbstractContextImpl
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.lang.Exception
 import kotlin.reflect.KCallable
 import kotlin.system.measureTimeMillis
 
@@ -95,7 +98,7 @@ fun main() {
             Source.newBuilder(
                 "trufflecrl",
 //                    File("./test/func.il")
-                File("./test/func_fib.il")
+                File("./test/nqueen.il")
             ).build()
         )
 
@@ -110,26 +113,29 @@ fun main() {
     val members = bindings.memberKeys
     println(members)
 
-//    val main = bindings.getMember("HelloWorld.Program::Main(string[])")
     val ProgramClass = bindings.getMember("HelloWorld.Program")
 
-    println(ProgramClass.memberKeys)
+//    println(ProgramClass.memberKeys)
 
-    val main = ProgramClass.getMember("void Main(string[])")
+    val main = ProgramClass.getMember("void HelloWorld.Program::Main()")
+//    val main = ProgramClass.getMember("void HelloWorld.Program::Main(string[])")
 
     for(i in 0..2) {
-        main.execute(0)
-        out.reset()
-        print("$i ")
+        val time = measureTimeMillis {
+            main.execute(0)
+            out.reset()
+        }
+        println("Step #$i completed in: ${time}ms")
     }
     println()
 
-    val time = measureTimeMillis {
-        main.execute(0)
-        println(out.toString("utf-8"))
-    }
+        val time = measureTimeMillis {
+            main.execute(0)
+            println(out.toString("utf-8"))
+        }
+        println("Final completed in: ${time}ms")
 
-    println("Completed in: ${time}ms")
+
 }
 
 /*

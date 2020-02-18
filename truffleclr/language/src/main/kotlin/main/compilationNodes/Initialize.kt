@@ -16,9 +16,12 @@ import nodes.expressions.LoadLocalNodeGen
 import nodes.expressions.math.SubtractNodeGen
 import nodes.statements.StoreLocalNodeGen
 import parser.generic.IlAppDomain
+import parser.generic.IlType
 import runtime.ClrContext
+import runtime.CoreTypeInfo
 import runtime.Method
 import runtime.Type
+import java.util.*
 
 class Initialize(
     appDomain: IlAppDomain,
@@ -26,23 +29,51 @@ class Initialize(
     frameDescriptor: FrameDescriptor,
     val language: TruffleLanguage<*>
 ) :
-    RootNode(language, frameDescriptor) {
+    RootNode(
+        language, frameDescriptor
+//        null, null
+    ) {
 
-    val counter = frameDescriptor.findOrAddFrameSlot("counter", FrameSlotKind.Int)
-    val compileChildren = appDomain.assemblies.flatMap {
 
-        it.types.values
-//            .filter { it.name.contains("Program") }
-            .flatMap {
-                val type = Type()
-                type.name = it.fullName
-                context.types.put(type.name, type)
-                it.methods.values
+    //    val counter = frameDescriptor.findOrAddFrameSlot("counter", FrameSlotKind.Int)
+
+    var compileChildren = mutableListOf<CompileMethod>()
+
+    init {
+        for (assembly in appDomain.assemblies) {
+            assembly.types.forEach { k, v ->
+                if (!context.types.contains(v.fullName)) {
+                    context.types.put(v.fullName, processType(v))
+                }
+
+                val type = context.types.getValue(v.fullName)
+
+                compileChildren.addAll(v.methods.values
                     .map {
                         type.members[it.toString()] = Method(it.toString(), null)
                         CompileMethod(it, language, type)
-                    }
+                    })
             }
+        }
+    }
+
+    fun processType(ilType: IlType): Type {
+        val type = Type()
+        type.name = ilType.fullName
+        if (CoreTypeInfo.typeByName.contains(ilType.fullName)) {
+            //Dealing with a core type, use type table
+            type.info = CoreTypeInfo.typeByName.getValue(ilType.fullName)
+        } else {
+            // Find the closest element with populated info prop and use his
+        }
+        if (ilType.extends != null) {
+            if (context.types.contains(ilType.extends?.fullName)) {
+                type.baseType = context.types.getValue(ilType.extends!!.fullName)
+            } else {
+                type.baseType = processType(ilType.extends!!)
+            }
+        }
+        return type
     }
 
     var runtime = Truffle.getRuntime()
@@ -57,7 +88,7 @@ class Initialize(
 //        writeCounter.execute(env)
 //        compileNodes.execute(env)
 
-        for(compileNode in compileChildren) {
+        for (compileNode in compileChildren) {
             compileNode.executeVoid(env)
         }
 
@@ -81,7 +112,12 @@ class Initialize(
         var counter: ExpressionNode = LoadLocalNodeGen.create(0, counterSlot)
 
         @Child
-        var counterWrite: ExpressionNode = StoreLocalNodeGen.create(SubtractNodeGen.create(counter, LoadConst(1, Int::class)), 0, counterSlot)
+        var counterWrite: ExpressionNode =
+            StoreLocalNodeGen.create(
+                0,
+                SubtractNodeGen.create(counter, LoadConst(1, Int::class)),
+                counterSlot
+            )
 
         override fun executeRepeating(env: VirtualFrame): Boolean {
             val index = counter.executeInt(env)

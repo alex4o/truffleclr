@@ -10,7 +10,7 @@ abstract class ExpressionNode: StatementNode() {
     abstract fun execute(env: VirtualFrame): Any?
 
     override fun executeVoid(env: VirtualFrame) {
-        TypeSystemGen.expectCTSNull(execute(env))
+        execute(env)
     }
 
     open fun executeBool(env: VirtualFrame): Boolean {

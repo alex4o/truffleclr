@@ -27,13 +27,13 @@
   .ver 1:0:0:0
 }
 .module System.Private.CoreLib.dll
-// MVID: {e084ea34-1737-41b3-a991-990094a234bc}
+// MVID: {d6880a7c-9d08-4a88-9275-03a4317260c2}
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x00007FF1D91CE000
+// Image base: 0x00007FEE389F5000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -650,6 +650,10 @@
   {
   } // end of method Console::WriteLine
 
+  .method public hidebysig static void  WriteLine() cil managed internalcall
+  {
+  } // end of method Console::WriteLine
+
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
   {
@@ -662,6 +666,26 @@
   } // end of method Console::.ctor
 
 } // end of class System.Console
+
+.class private auto ansi beforefieldinit System.Convert
+       extends System.Object
+{
+  .method public hidebysig static bool  ToBoolean(int32 i) cil managed internalcall
+  {
+  } // end of method Convert::ToBoolean
+
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor() cil managed
+  {
+    // Code size       8 (0x8)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  call       instance void System.Object::.ctor()
+    IL_0006:  nop
+    IL_0007:  ret
+  } // end of method Convert::.ctor
+
+} // end of class System.Convert
 
 .class public auto ansi beforefieldinit System.Object
 {

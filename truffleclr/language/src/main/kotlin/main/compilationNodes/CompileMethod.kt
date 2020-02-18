@@ -75,12 +75,12 @@ class CompileMethod(val method: IlMethod, val language: TruffleLanguage<*>, val 
 
     @CompilerDirectives.TruffleBoundary
     fun log() {
-        println("Compiling: ${method.toString()}")
+//        println("Compiling: ${method.toString()}")
     }
 
 
     fun compileInternal() {
-        println("Internal: ${method.toString()}")
+//        println("Internal: ${method.toString()}")
         val methodBody = InternalMethod(staticMethods[method.toString()]!!, frameDescriptor, language)
         type.members[method.toString()]!!.callTarget = runtime.createCallTarget(methodBody)
     }

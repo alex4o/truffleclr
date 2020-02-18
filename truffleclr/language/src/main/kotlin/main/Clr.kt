@@ -61,7 +61,7 @@ class Clr : TruffleLanguage<ClrContext>() {
             decl.accept(rootVisitor)
         }
 
-        DeclVisitor.layerVisit()
+        rootVisitor.layerVisit()
         ClassVisitor.layerVisit()
     }
 

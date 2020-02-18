@@ -8,7 +8,7 @@ import nodes.ExpressionNode
 import types.CTSNull
 import java.io.PrintStream
 
-@NodeInfo(shortName = "CanCompareBits")
+@NodeInfo(description = "CanCompareBits")
 class CanCompareBits() :
     ExpressionNode() {
 

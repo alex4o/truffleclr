@@ -16,16 +16,20 @@ class DeclVisitor(var appDomain: IlAppDomain) : Cil.CilBaseVisitor<Unit>() {
     lateinit var assembly: IlAssembly
     private val namespaces = Stack<String>()
 
-    companion object {
-        val decl_children: Queue<Pair<CilBaseVisitor<*>, ParserRuleContext>> = LinkedList()
 
-        fun layerVisit() {
-            for((visitor, tree) in decl_children) {
-                tree.accept(visitor)
-            }
+    val lateClasses: Queue<CilParser.ClassContext> = LinkedList()
+
+    val decl_children: Queue<Pair<CilBaseVisitor<*>, ParserRuleContext>> = LinkedList()
+
+    fun layerVisit() {
+        while (lateClasses.isNotEmpty()) {
+            transformClass(lateClasses.remove())
+        }
+
+        for ((visitor, tree) in decl_children) {
+            tree.accept(visitor)
         }
     }
-
 
 
     override fun visitAssembly(ctx: CilParser.AssemblyContext) {
@@ -48,11 +52,32 @@ class DeclVisitor(var appDomain: IlAppDomain) : Cil.CilBaseVisitor<Unit>() {
         namespaces.pop()
     }
 
-    override fun visitClass(ctx: CilParser.ClassContext) {
-        val name = if(namespaces.isNotEmpty()) { "${namespaces.peek()}." } else { "" } + ctx.classHead().classHeadBegin().dottedName().text
+    override fun visitClass(ctx: CilParser.ClassContext) = transformClass(ctx)
+    private fun transformClass(ctx: CilParser.ClassContext) {
+        var head = ctx.classHead()
+        val name = if (namespaces.isNotEmpty()) {
+            "${namespaces.peek()}."
+        } else {
+            ""
+        } + head.classHeadBegin().dottedName().text
+
+        val extends: String? = head.extendsClause().typeSpec()?.toClassName()
+
+        val extendsType = if (extends == null) {
+            null
+        } else if (assembly.types.contains(extends)) {
+            assembly.types.getValue(extends)
+        } else if (appDomain.assemblies.map { it.types }.any { it.contains(extends) }) { // Very bad code but I don't have a global table of types
+            appDomain.assemblies.map { it.types }.first { it.contains(extends) }.getValue(extends)
+        } else {
+            lateClasses.add(ctx)
+            return
+        }
+
         val type = IlType(name)
 
-        type.attribtes = ctx.classHead().classHeadBegin().classAttr().map { it.text }.toSet()
+        type.extends = extendsType
+        type.attribtes = head.classHeadBegin().classAttr().map { it.text }.toSet()
 
         assembly.types.put(name, type)
         decl_children.add(Pair(ClassVisitor(appDomain, type), ctx.classDecls()))

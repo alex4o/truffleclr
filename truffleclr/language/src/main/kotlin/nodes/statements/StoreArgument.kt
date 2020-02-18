@@ -43,9 +43,9 @@ abstract class StoreArgument(val index: Int): ExpressionNode() {
     }
 
     @Specialization(guards = ["isObject(env)"])
-    protected fun writeObject(env: VirtualFrame): Int {
+    protected fun writeObject(env: VirtualFrame): Any {
 //        env.frameDescriptor.setFrameSlotKind(slot, FrameSlotKind.Long);
-        val value = TypeSystemGen.expectInteger(env.arguments[index])
+        val value = env.arguments[index]
         env.setObject(slot, value);
         return value;
     }

@@ -30,10 +30,10 @@ class DispatchNode(@Children var blocks: Array<Block>) : ExpressionNode() {
             CompilerAsserts.partialEvaluationConstant<Any>(basicBlockIndex)
             val block = blocks[basicBlockIndex]
             block.executeVoid(env)
-            //            final int successor = 0;
+//            println(block.controlFlowNode)
             if (block.controlFlowNode is BoolBranch) {
                 val br = block.controlFlowNode as BoolBranch
-                if (br.executeControlFlow(env) == 0) {
+                if (br.executeInt(env) == 0) {
                     var successor = block.controlFlowNode.successors[0]
                     if (CompilerDirectives.inInterpreter() && successor <= basicBlockIndex) {
                         backEdgeCount += 1

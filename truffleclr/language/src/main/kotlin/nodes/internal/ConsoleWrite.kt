@@ -8,7 +8,7 @@ import nodes.ExpressionNode
 import types.CTSNull
 import java.io.PrintStream
 
-@NodeInfo(shortName = "Write")
+@NodeInfo(description = "Write")
 class ConsoleWrite() :
     ExpressionNode() {
 

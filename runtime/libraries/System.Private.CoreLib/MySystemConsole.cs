@@ -19,5 +19,8 @@ namespace System
 
         [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern void WriteLine(Object o);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern void WriteLine();
     }
 }

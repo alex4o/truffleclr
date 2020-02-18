@@ -8,12 +8,13 @@ import nodes.ExpressionNode
 import types.CTSNull
 import java.io.PrintStream
 
-@NodeInfo(description = "GetHashCode")
-class GetHashCode() :
+@NodeInfo(description = "ToBoolean")
+class ToBoolean() :
     ExpressionNode() {
 
     override fun execute(env: VirtualFrame): Any? {
-        env.arguments[0].hashCode()
-        return CTSNull
+        return env.arguments[0] != 0
     }
+
+
 }

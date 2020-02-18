@@ -18,10 +18,13 @@ class Graph(var nodes: List<InstructionBlock>, var compileNode: CompileMethod) {
     var root = 0
 
     fun visualise(language: TruffleLanguage<*>) {
+        if(compileNode.method.internal) { return }
+
         val nodes = compileNode.compiled.map { (index, node)  -> Pair(index, mutNode(node.name)) }.toMap()
         val visited = mutableMapOf<Int, MutableNode>()
         val stack = Stack<Pair<Int, MutableNode>>()
         stack.push(Pair(0, nodes.getValue(0)))
+
         var prev = Pair<Int, MutableNode>(0, mutNode(""))
         while (stack.isNotEmpty()) {
 

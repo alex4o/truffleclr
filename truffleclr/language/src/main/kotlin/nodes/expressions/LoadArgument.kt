@@ -20,9 +20,15 @@ abstract class LoadArgument(@CompilationFinal val index: Int) : ExpressionNode()
     override fun executeInt(env: VirtualFrame): Int {
         return env.getInt(slot)
     }
+
     @Specialization(guards = ["isBoolean(env)"])
     override fun executeBool(env: VirtualFrame): Boolean {
         return env.getBoolean(slot)
+    }
+
+    @Specialization(guards = ["isObject(env)"])
+    fun executeGeneric(env: VirtualFrame): Any {
+        return env.getObject(slot)
     }
 
     fun isInt(env: VirtualFrame): Boolean {

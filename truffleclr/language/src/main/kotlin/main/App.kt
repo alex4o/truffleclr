@@ -2,7 +2,9 @@ package main
 
 import com.oracle.truffle.api.Scope
 import com.oracle.truffle.api.Truffle
+import com.oracle.truffle.api.frame.FrameDescriptor
 import com.oracle.truffle.api.instrumentation.TruffleInstrument
+import com.oracle.truffle.api.nodes.IndirectCallNode
 import main.compilationNodes.CompileMethod
 import main.compilationNodes.Initialize
 import org.antlr.v4.runtime.CharStream
@@ -22,27 +24,19 @@ fun main() {
             File("./language/src/main/resources/System.Private.CoreLib.il").toPath()
         )
     )
-    clr.parseFile(appDomain, CharStreams.fromFileName("./test/do_while.il"))
+    clr.parseFile(appDomain, CharStreams.fromFileName("./test/nqueen.il"))
 
     val context = ClrContext()
-    val methods = appDomain.assemblies.flatMap {
-        clr.tmp = context
-        it.types.values
-//            .filter { it.name.contains("Program") }
-            .flatMap {
-                val type = Type()
-                type.name = it.fullName
-                context.types.put(type.name, type)
-                it.methods.values.map {
-                    type.members[it.toString()] = Method(it.toString(), null)
-                    CompileMethod(it, clr, type)
-                }
-            }
-    }
+    clr.tmp = context
 
-    methods.forEach {
-        it.executeVoid(Truffle.getRuntime().createMaterializedFrame(arrayOf()))
+    val frameDescriptor = FrameDescriptor()
+    val initNode = Initialize(appDomain, context, frameDescriptor, clr)
+    initNode.execute(Truffle.getRuntime().createMaterializedFrame(arrayOf()))
+
+    initNode.compileChildren.forEach {
         it.graph.visualise(clr)
-
     }
+
+//    var callNode = IndirectCallNode.create()
+//    print(callNode.call(context.types.getValue("HelloWorld.Program").members.getValue("void HelloWorld.Program::Main(string[])").callTarget, 0))
 }

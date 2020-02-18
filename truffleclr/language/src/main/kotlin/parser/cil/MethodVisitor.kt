@@ -75,7 +75,7 @@ class MethodVisitor(var appDomain: IlAppDomain, var method: IlMethod) : Cil.CilB
                     InstructionString(INSTR_STRING().toString(), compQstring().text)
                 }
                 is CilParser.Instr_typeContext -> {
-                    InstructionType(INSTR_TYPE().text)
+                    InstructionType(INSTR_TYPE().text, typeSpec().toClassName())
                 }
                 is CilParser.Instr_fieldContext -> {
                     InstructionField(INSTR_FIELD().text, type().text, typeSpec().text, dottedName().text)

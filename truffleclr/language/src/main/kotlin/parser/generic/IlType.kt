@@ -5,6 +5,7 @@ class IlType(var name: String) {
     var methods: MutableMap<String, IlMethod> = mutableMapOf()
     var fields: MutableMap<String, IlField> = mutableMapOf()
     var attribtes: Set<String> = setOf()
+    var extends: IlType? = null
 
     override fun toString(): String {
         return name

@@ -8,7 +8,7 @@ import nodes.ExpressionNode
 import types.CTSNull
 import java.io.PrintStream
 
-@NodeInfo(shortName = "FastEqualsCheck")
+@NodeInfo(description = "FastEqualsCheck")
 class FastEqualsCheck() :
     ExpressionNode() {
 

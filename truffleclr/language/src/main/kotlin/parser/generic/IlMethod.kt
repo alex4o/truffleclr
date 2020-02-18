@@ -28,7 +28,7 @@ class IlMethod(var name: String, var arguments: List<String>) {
     override fun toString(): String {
 //        return
 //        if (memberOf == null) {
-          return "$returnType $name(${arguments.joinToString(",")})"
+          return "$returnType $memberOf::$name(${arguments.joinToString(",")})"
 //        } else {
 //            "$memberOf::$name(${arguments.joinToString(",")})"
 //        }

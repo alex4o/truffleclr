@@ -6,6 +6,7 @@ import com.oracle.truffle.api.dsl.Specialization
 import com.oracle.truffle.api.frame.FrameSlot
 import com.oracle.truffle.api.nodes.NodeInfo
 import com.sun.org.apache.xpath.internal.compiler.Compiler
+import com.sun.org.apache.xpath.internal.operations.Bool
 import nodes.BinaryNode
 import nodes.ExpressionNode
 import nodes.expressions.CompareCondition.*
@@ -57,6 +58,21 @@ abstract class Compare(
     BinaryNode() {
 
     val compare: (Int) -> Boolean = genCompare()
+
+    @Specialization
+    protected open fun op(left: Boolean, right: Int): Boolean {
+        return compare(left.compareTo(right != 0))
+    }
+
+    @Specialization
+    protected open fun op(left: Int, right: Boolean): Boolean {
+        return compare(right.compareTo(left != 0))
+    }
+
+    @Specialization
+    protected open fun op(left: Boolean, right: Boolean): Boolean {
+        return compare(left.compareTo(right))
+    }
 
     @Specialization
     protected open fun op(left: Int, right: Int): Boolean {

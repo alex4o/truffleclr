@@ -19,7 +19,7 @@ class Call(var method: Method, @Children var args: Array<ExpressionNode>): Expre
     @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.FULL_EXPLODE_UNTIL_RETURN)
     override fun execute(env: VirtualFrame): Any? {
         val arguments = arrayOfNulls<Any>(args.size)
-        for(i in 0 until args.size) {
+        for(i in args.indices) {
             arguments[i] = args[i].execute(env)
         }
 //        if(CompilerDirectives.inInterpreter()) {
