@@ -8,6 +8,7 @@ import guru.nidi.graphviz.engine.Format
 import guru.nidi.graphviz.engine.Graphviz
 import guru.nidi.graphviz.model.Factory.mutGraph
 import guru.nidi.graphviz.model.Factory.mutNode
+import guru.nidi.graphviz.model.Link
 import guru.nidi.graphviz.model.MutableNode
 import main.compilationNodes.CompileMethod
 import main.getNodes
@@ -19,8 +20,11 @@ class Graph(var nodes: List<InstructionBlock>, var compileNode: CompileMethod) {
 
     fun visualise(language: TruffleLanguage<*>) {
         if(compileNode.method.internal) { return }
+        val g = mutGraph(compileNode.method.name).setDirected(true)
 
         val nodes = compileNode.compiled.map { (index, node)  -> Pair(index, mutNode(node.name)) }.toMap()
+        val nodesByName = nodes.map { Pair(it.value.name().toString(), it.value) }.toMap()
+        println(nodesByName.map { it.key })
         val visited = mutableMapOf<Int, MutableNode>()
         val stack = Stack<Pair<Int, MutableNode>>()
         stack.push(Pair(0, nodes.getValue(0)))
@@ -28,7 +32,7 @@ class Graph(var nodes: List<InstructionBlock>, var compileNode: CompileMethod) {
         var prev = Pair<Int, MutableNode>(0, mutNode(""))
         while (stack.isNotEmpty()) {
 
-            var (target, node) = stack.pop()
+            val (target, node) = stack.pop()
             val block = compileNode.compiled[target]!!
 
             if (visited.contains(target)) {
@@ -43,6 +47,15 @@ class Graph(var nodes: List<InstructionBlock>, var compileNode: CompileMethod) {
                 }
 //                prev.second.attrs().add(Color.BLUE)
                 continue
+            }
+
+            println(node.name())
+            dominators.tree.getValue(node.name().toString()).forEach {
+                println("\t$it")
+                if(nodesByName.contains(it)) {
+                    val res = node.linkTo(nodesByName.getValue(it)).with(Color.BLUE)
+                    node.addLink(res)
+                }
             }
 
             visited.put(target, node)
@@ -88,7 +101,6 @@ class Graph(var nodes: List<InstructionBlock>, var compileNode: CompileMethod) {
             prev = Pair(target, node)
         }
 
-        val g = mutGraph(compileNode.method.name).setDirected(true)
         nodes.values.forEach { g.add(it) }
         // Basic block
 

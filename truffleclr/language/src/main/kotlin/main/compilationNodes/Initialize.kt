@@ -30,8 +30,8 @@ class Initialize(
     val language: TruffleLanguage<*>
 ) :
     RootNode(
-        language, frameDescriptor
-//        null, null
+//        language, frameDescriptor
+        null, null
     ) {
 
 
