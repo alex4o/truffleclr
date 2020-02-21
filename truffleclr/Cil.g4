@@ -522,13 +522,13 @@ vtableHead              : D_VTABLE '=' '('        /* deprecated */
                         ;
 
 /*  Namespace and class declaration  */
-nameSpaceHead           : D_NAMESPACE dottedName { System.out.println("Namespace: " + $dottedName.text); }
+nameSpaceHead           : D_NAMESPACE dottedName
                         ;
 
 klass                  : D_CLASS
                         ;
 
-classHeadBegin          : klass classAttr*? dottedName typarsClause {  System.out.println("Class: " + $dottedName.text); }
+classHeadBegin          : klass classAttr*? dottedName typarsClause
                         ;
 classHead               : classHeadBegin extendsClause implClause
                         ;

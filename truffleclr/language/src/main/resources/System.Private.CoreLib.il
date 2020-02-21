@@ -27,13 +27,13 @@
   .ver 1:0:0:0
 }
 .module System.Private.CoreLib.dll
-// MVID: {d6880a7c-9d08-4a88-9275-03a4317260c2}
+// MVID: {7daca8f9-1e21-4de6-a3a4-4720055c44c3}
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x00007FEE389F5000
+// Image base: 0x00007F2DC55BA000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -372,6 +372,153 @@
 
 } // end of class System.Boolean
 
+.class public sequential ansi sealed beforefieldinit System.Char
+       extends System.ValueType
+{
+  .custom instance void System.Runtime.CompilerServices.IsReadOnlyAttribute::.ctor()
+           = {}
+  .field private initonly char m_value
+  .field public static literal char MaxValue = char(0xFFFF)
+  .field public static literal char MinValue = char(0x0000)
+  .field private static literal uint8 IsWhiteSpaceFlag = uint8(0x80)
+  .field private static literal uint8 IsUpperCaseLetterFlag = uint8(0x40)
+  .field private static literal uint8 IsLowerCaseLetterFlag = uint8(0x20)
+  .field private static literal uint8 UnicodeCategoryMask = uint8(0x1F)
+  .method private hidebysig static bool  IsAscii(char ch) cil managed
+  {
+    // Code size       14 (0xe)
+    .maxstack  2
+    .locals init (bool V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  ldc.i4.s   127
+    IL_0004:  cgt.un
+    IL_0006:  ldc.i4.0
+    IL_0007:  ceq
+    IL_0009:  stloc.0
+    IL_000a:  br.s       IL_000c
+
+    IL_000c:  ldloc.0
+    IL_000d:  ret
+  } // end of method Char::IsAscii
+
+  .method public hidebysig virtual instance int32 
+          GetHashCode() cil managed
+  {
+    // Code size       14 (0xe)
+    .maxstack  3
+    .locals init (int32 V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  ldind.u2
+    IL_0003:  ldarg.0
+    IL_0004:  ldind.u2
+    IL_0005:  ldc.i4.s   16
+    IL_0007:  shl
+    IL_0008:  or
+    IL_0009:  stloc.0
+    IL_000a:  br.s       IL_000c
+
+    IL_000c:  ldloc.0
+    IL_000d:  ret
+  } // end of method Char::GetHashCode
+
+  .method public hidebysig virtual instance bool 
+          Equals(object obj) cil managed
+  {
+    .custom instance void System.Runtime.CompilerServices.NullableContextAttribute::.ctor(uint8)
+             = {uint8(2)}
+    // Code size       37 (0x25)
+    .maxstack  2
+    .locals init (bool V_0,
+             bool V_1)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  isinst     System.Char
+    IL_0007:  ldnull
+    IL_0008:  cgt.un
+    IL_000a:  ldc.i4.0
+    IL_000b:  ceq
+    IL_000d:  stloc.0
+    IL_000e:  ldloc.0
+    IL_000f:  brfalse.s  IL_0016
+
+    IL_0011:  nop
+    IL_0012:  ldc.i4.0
+    IL_0013:  stloc.1
+    IL_0014:  br.s       IL_0023
+
+    IL_0016:  ldarg.0
+    IL_0017:  ldind.u2
+    IL_0018:  ldarg.1
+    IL_0019:  unbox.any  System.Char
+    IL_001e:  ceq
+    IL_0020:  stloc.1
+    IL_0021:  br.s       IL_0023
+
+    IL_0023:  ldloc.1
+    IL_0024:  ret
+  } // end of method Char::Equals
+
+  .method public hidebysig instance bool 
+          Equals(char obj) cil managed
+  {
+    .custom instance void System.Runtime.Versioning.NonVersionableAttribute::.ctor()
+             = {}
+    // Code size       11 (0xb)
+    .maxstack  2
+    .locals init (bool V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  ldind.u2
+    IL_0003:  ldarg.1
+    IL_0004:  ceq
+    IL_0006:  stloc.0
+    IL_0007:  br.s       IL_0009
+
+    IL_0009:  ldloc.0
+    IL_000a:  ret
+  } // end of method Char::Equals
+
+  .method public hidebysig instance int32 
+          CompareTo(char 'value') cil managed
+  {
+    // Code size       10 (0xa)
+    .maxstack  2
+    .locals init (int32 V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  ldind.u2
+    IL_0003:  ldarg.1
+    IL_0004:  sub
+    IL_0005:  stloc.0
+    IL_0006:  br.s       IL_0008
+
+    IL_0008:  ldloc.0
+    IL_0009:  ret
+  } // end of method Char::CompareTo
+
+  .method assembly hidebysig static bool 
+          IsInRange(char c,
+                    char min,
+                    char max) cil managed
+  {
+    // Code size       12 (0xc)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.1
+    IL_0002:  sub
+    IL_0003:  ldarg.2
+    IL_0004:  ldarg.1
+    IL_0005:  sub
+    IL_0006:  cgt.un
+    IL_0008:  ldc.i4.0
+    IL_0009:  ceq
+    IL_000b:  ret
+  } // end of method Char::IsInRange
+
+} // end of class System.Char
+
 .class public abstract auto ansi beforefieldinit System.Enum
        extends System.ValueType
 {
@@ -630,6 +777,10 @@
   {
   } // end of method Console::Write
 
+  .method public hidebysig static void  Write(char i) cil managed internalcall
+  {
+  } // end of method Console::Write
+
   .method public hidebysig static void  Write(string s) cil managed internalcall
   {
   } // end of method Console::Write
@@ -650,9 +801,17 @@
   {
   } // end of method Console::WriteLine
 
+  .method public hidebysig static void  WriteLine(bool b) cil managed internalcall
+  {
+  } // end of method Console::WriteLine
+
   .method public hidebysig static void  WriteLine() cil managed internalcall
   {
   } // end of method Console::WriteLine
+
+  .method public hidebysig static int32  Read() cil managed internalcall
+  {
+  } // end of method Console::Read
 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
@@ -673,6 +832,10 @@
   .method public hidebysig static bool  ToBoolean(int32 i) cil managed internalcall
   {
   } // end of method Convert::ToBoolean
+
+  .method public hidebysig static char  ToChar(int32 i) cil managed internalcall
+  {
+  } // end of method Convert::ToChar
 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
@@ -2388,6 +2551,27 @@
     .set instance void System.Reflection.ObfuscationAttribute::set_Feature(string)
   } // end of property ObfuscationAttribute::Feature
 } // end of class System.Reflection.ObfuscationAttribute
+
+.class private auto ansi beforefieldinit System.IO.File
+       extends System.Object
+{
+  .method public hidebysig static uint8[] 
+          ReadAllBytes(string name) cil managed internalcall
+  {
+  } // end of method File::ReadAllBytes
+
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor() cil managed
+  {
+    // Code size       8 (0x8)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  call       instance void System.Object::.ctor()
+    IL_0006:  nop
+    IL_0007:  ret
+  } // end of method File::.ctor
+
+} // end of class System.IO.File
 
 
 // =============================================================

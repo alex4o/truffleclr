@@ -14,6 +14,7 @@ import nodes.ExpressionNode
 import nodes.expressions.LoadConst
 import nodes.expressions.LoadLocalNodeGen
 import nodes.expressions.math.SubtractNodeGen
+import nodes.internal.InternalTable
 import nodes.statements.StoreLocalNodeGen
 import parser.generic.IlAppDomain
 import parser.generic.IlType
@@ -22,6 +23,7 @@ import runtime.CoreTypeInfo
 import runtime.Method
 import runtime.Type
 import java.util.*
+import kotlin.reflect.full.createInstance
 
 class Initialize(
     appDomain: IlAppDomain,
@@ -30,14 +32,18 @@ class Initialize(
     val language: TruffleLanguage<*>
 ) :
     RootNode(
-//        language, frameDescriptor
-        null, null
+        language, frameDescriptor
+//        null, null
     ) {
 
 
     //    val counter = frameDescriptor.findOrAddFrameSlot("counter", FrameSlotKind.Int)
 
     var compileChildren = mutableListOf<CompileMethod>()
+
+    val internalMethods by lazy() {
+        InternalTable.staticMethods()
+    }
 
     init {
         for (assembly in appDomain.assemblies) {
@@ -51,7 +57,7 @@ class Initialize(
                 compileChildren.addAll(v.methods.values
                     .map {
                         type.members[it.toString()] = Method(it.toString(), null)
-                        CompileMethod(it, language, type)
+                        CompileMethod(it, this, language, type)
                     })
             }
         }

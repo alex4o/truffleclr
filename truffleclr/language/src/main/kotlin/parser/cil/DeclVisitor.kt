@@ -45,7 +45,7 @@ class DeclVisitor(var appDomain: IlAppDomain) : Cil.CilBaseVisitor<Unit>() {
     }
 
     override fun visitNamespace(ctx: CilParser.NamespaceContext) {
-        namespaces.push(ctx.nameSpaceHead().dottedName.text)
+        namespaces.push(ctx.nameSpaceHead().dottedName().text)
         for (decl in ctx.decls().decl()) {
             (decl as ParseTree).accept(this)
         }

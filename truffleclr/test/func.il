@@ -83,7 +83,7 @@
 	IL_002a:  add 
 	IL_002b:  stloc.0 
 	IL_002c:  ldloc.0 
-	IL_002d:  ldc.i4 1100
+	IL_002d:  ldc.i4 12
 	IL_0032:  clt 
 	IL_0034:  stloc.1 
 	IL_0035:  ldloc.1 

@@ -255,7 +255,7 @@
 	IL_000a:  ldc.i4.1 
 	IL_000b:  add 
 	IL_000c:  stfld int32 HelloWorld.Program/'<>c__DisplayClass0_0'::i
-	IL_0011:  ldstr "Shit"
+	IL_0011:  ldstr "Test"
 	IL_0016:  call void class [mscorlib]System.Console::WriteLine(string)
 	IL_001b:  nop 
 	IL_001c:  ret 

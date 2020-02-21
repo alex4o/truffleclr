@@ -2,25 +2,32 @@ package main
 
 import Cil.CilLexer
 import Cil.CilParser
-import com.oracle.truffle.api.*
+import com.oracle.truffle.api.CallTarget
+import com.oracle.truffle.api.Scope
+import com.oracle.truffle.api.Truffle
+import com.oracle.truffle.api.TruffleLanguage
 import com.oracle.truffle.api.debug.DebuggerTags
 import com.oracle.truffle.api.frame.FrameDescriptor
 import com.oracle.truffle.api.instrumentation.ProvidedTags
 import com.oracle.truffle.api.instrumentation.StandardTags
 import com.oracle.truffle.api.interop.InteropLibrary
 import com.oracle.truffle.api.library.LibraryFactory
-import main.compilationNodes.*
+import main.compilationNodes.Initialize
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
+import org.antlr.v4.runtime.RuntimeMetaData
 import parser.cil.ClassVisitor
 import parser.cil.DeclVisitor
 import parser.generic.IlAppDomain
 import runtime.ClrContext
 import java.io.File
+import java.net.URL
+import java.net.URLClassLoader
+
 
 @TruffleLanguage.Registration(
-    id = "trufflecrl",
+    id = "clr",
     name = "clr",
     defaultMimeType = "application/il",
     characterMimeTypes = ["application/il"],
@@ -68,26 +75,20 @@ class Clr : TruffleLanguage<ClrContext>() {
     override fun parse(request: ParsingRequest): CallTarget {
         val appDomain = IlAppDomain()
 
-
         parseFile(
             appDomain, CharStreams.fromPath(
                 File("./language/src/main/resources/System.Private.CoreLib.il").toPath()
             )
         )
 
-
         parseFile(appDomain, CharStreams.fromReader(request.source.reader))
         val context = getCurrentContext(Clr::class.java)
         tmp = context
-
-        val lib = LibraryFactory.resolve(InteropLibrary::class.java)
 
         val frameDescriptor = FrameDescriptor()
         return Truffle.getRuntime().createCallTarget(
             Initialize(appDomain, context, frameDescriptor, this)
         )
-
-
     }
 
     override fun findTopScopes(context: ClrContext): MutableIterable<Scope> {

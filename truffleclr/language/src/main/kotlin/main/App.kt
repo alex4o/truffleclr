@@ -24,7 +24,7 @@ fun main() {
             File("./language/src/main/resources/System.Private.CoreLib.il").toPath()
         )
     )
-    clr.parseFile(appDomain, CharStreams.fromFileName("./test/nqueen.il"))
+    clr.parseFile(appDomain, CharStreams.fromFileName("./test/loop.il"))
 
     val context = ClrContext()
     clr.tmp = context

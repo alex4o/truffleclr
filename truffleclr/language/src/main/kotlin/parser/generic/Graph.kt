@@ -24,7 +24,7 @@ class Graph(var nodes: List<InstructionBlock>, var compileNode: CompileMethod) {
 
         val nodes = compileNode.compiled.map { (index, node)  -> Pair(index, mutNode(node.name)) }.toMap()
         val nodesByName = nodes.map { Pair(it.value.name().toString(), it.value) }.toMap()
-        println(nodesByName.map { it.key })
+//        println(nodesByName.map { it.key })
         val visited = mutableMapOf<Int, MutableNode>()
         val stack = Stack<Pair<Int, MutableNode>>()
         stack.push(Pair(0, nodes.getValue(0)))
@@ -37,7 +37,7 @@ class Graph(var nodes: List<InstructionBlock>, var compileNode: CompileMethod) {
 
             if (visited.contains(target)) {
                 val visitedNode = visited.getValue(target)
-                println(target)
+//                println(target)
 //                var p = path(target);
 //                p.forEach { nodes[it]!!.attrs().add(Color.PINK) }
 //                println(Pair(target, p))
@@ -49,9 +49,9 @@ class Graph(var nodes: List<InstructionBlock>, var compileNode: CompileMethod) {
                 continue
             }
 
-            println(node.name())
+//            println(node.name())
             dominators.tree.getValue(node.name().toString()).forEach {
-                println("\t$it")
+//                println("\t$it")
                 if(nodesByName.contains(it)) {
                     val res = node.linkTo(nodesByName.getValue(it)).with(Color.BLUE)
                     node.addLink(res)

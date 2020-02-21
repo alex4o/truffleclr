@@ -70,10 +70,6 @@ fun main() {
     val out = ByteArrayOutputStream()
 
     val context = Context.newBuilder().allowAllAccess(true).out(out).build()
-
-    lateinit var requirePublicLanguage: KCallable<*>
-    lateinit var getContext: KCallable<*>
-
 //    for(member in context::class.members) {
 //        if(member.name.contains("requirePublicLanguage")) {
 //            requirePublicLanguage = member
@@ -96,38 +92,28 @@ fun main() {
 
         var execution = context.eval(
             Source.newBuilder(
-                "trufflecrl",
-//                    File("./test/func.il")
-                File("./test/nqueen.il")
+                "clr",
+                File("./test/loop.il")
             ).build()
         )
-
-
-//        execution.getMember("main");
 
         println(
             execution
         )
 
-    val bindings = context.getBindings("trufflecrl")
-    val members = bindings.memberKeys
-    println(members)
-
+    val bindings = context.getBindings("clr")
     val ProgramClass = bindings.getMember("HelloWorld.Program")
+    val mainMethod = ProgramClass.memberKeys.find { it.contains("Main(") }
+    val main = ProgramClass.getMember(mainMethod)
 
-//    println(ProgramClass.memberKeys)
-
-    val main = ProgramClass.getMember("void HelloWorld.Program::Main()")
-//    val main = ProgramClass.getMember("void HelloWorld.Program::Main(string[])")
-
-    for(i in 0..2) {
-        val time = measureTimeMillis {
-            main.execute(0)
-            out.reset()
-        }
-        println("Step #$i completed in: ${time}ms")
-    }
-    println()
+//    for(i in 0..2) {
+//        val time = measureTimeMillis {
+//            main.execute(0)
+//            out.reset()
+//        }
+//        println("Step #$i completed in: ${time}ms")
+//    }
+//    println()
 
         val time = measureTimeMillis {
             main.execute(0)

@@ -8,10 +8,7 @@ import nodes.controlflow.*
 import nodes.expressions.*
 import nodes.expressions.`object`.*
 import nodes.expressions.array.*
-import nodes.expressions.math.AddNodeGen
-import nodes.expressions.math.MultiplyNodeGen
-import nodes.expressions.math.ReminderNodeGen
-import nodes.expressions.math.SubtractNodeGen
+import nodes.expressions.math.*
 import nodes.statements.*
 import parser.generic.Graph
 import parser.generic.InstructionBlock
@@ -214,14 +211,13 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
                 //stack.push(Pair(s0.first, node))
             }
             if (instruction.instruction == "or" && instruction is InstructionNone) {
-                TODO("not implemented")
                 val s0 = stack.pop()
 
                 val s1 = stack.pop()
 
 
-                //val node = null
-                //stack.push(Pair(s0.first, node))
+                val node = OrNodeGen.create(s1.second, s0.second)
+                stack.push(Pair(s0.first, node))
             }
             if (instruction.instruction == "xor" && instruction is InstructionNone) {
                 TODO("not implemented")
@@ -234,14 +230,12 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
                 //stack.push(Pair(s0.first, node))
             }
             if (instruction.instruction == "shl" && instruction is InstructionNone) {
-                TODO("not implemented")
                 val s0 = stack.pop()
 
                 val s1 = stack.pop()
 
-
-                //val node = null
-                //stack.push(Pair(s0.first, node))
+                val node = ShiftLeftNodeGen.create(s1.second, s0.second)
+                stack.push(Pair(s0.first, node))
             }
             if (instruction.instruction == "shr" && instruction is InstructionNone) {
                 TODO("not implemented")
@@ -681,18 +675,17 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
             }
 //types: "ldelema"
             if (instruction.instruction.startsWith("ldelema") && instruction is InstructionType) {
-                TODO("not implemented")
                 val s0 = stack.pop()
-                if (s0.first != "Ref") {
+                if (s0.first != "int32") {
                     error("")
                 }
                 val s1 = stack.pop()
-                if (s1.first != "int32") {
-                    error("")
+                if (s1.first != "Ref") {
+//                    error("")
                 }
 
-                //val node = null
-                //stack.push(Pair("int32", node))
+                val node = LoadElementNodeGen.create(s1.second, s0.second)
+                stack.push(Pair("int32", node)) // TODO: fix type
             }
 //types: "ldelem.i1","ldelem.u1","ldelem.i2","ldelem.u2","ldelem.i4","ldelem.u4","ldelem.i8","ldelem.i","ldelem.r4","ldelem.r8","ldelem.ref"
             if (instruction.instruction.startsWith("ldelem") && instruction is InstructionNone) {
@@ -707,7 +700,7 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
 //                }
 
                 val node = LoadElementNodeGen.create(s1.second, s0.second)
-                stack.push(Pair("int32", node))
+                stack.push(Pair("int32", node)) // TODO: fix type
             }
 //types: "ldelem"
             if (instruction.instruction.startsWith("ldelem") && instruction is InstructionType) {
@@ -1167,7 +1160,7 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>): Block {
             }
 //types: "callvirt"
             if (instruction.instruction.startsWith("callvirt") && instruction is InstructionMethod) {
-                println(instruction.method)
+//                println(instruction.method)
                 val args = instruction.method.arguments.map { stack.pop() }
 
                 val thisValue = if (instruction.method.static) {

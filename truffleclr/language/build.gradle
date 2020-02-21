@@ -15,7 +15,7 @@ repositories {
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
-    implementation group: 'org.antlr', name: 'antlr4-runtime', version: '4.8'
+    implementation group: 'org.antlr', name: 'antlr4-runtime', version: '4.7.2'
     implementation group: 'org.graalvm.truffle', name: 'truffle-api', version: '19.3.0.2'
     implementation group: 'guru.nidi', name: 'graphviz-java', version: '0.11.0'
     implementation "org.jetbrains.kotlin:kotlin-reflect"
@@ -28,7 +28,8 @@ dependencies {
 
 
 task fatJar(type: Jar) {
-    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    from { configurations.runtimeClasspath.collect {
+        it.isDirectory() ? it : zipTree(it) } }
     with jar
 }
 

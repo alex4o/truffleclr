@@ -17,7 +17,6 @@ class Block(var id: Int,var name: String) : StatementNode() {
     override fun executeVoid(env: VirtualFrame) {
         CompilerAsserts.compilationConstant<Any>(nodes.size)
         for (node in nodes) {
-//            println(node)
             node.executeVoid(env)
         }
     }

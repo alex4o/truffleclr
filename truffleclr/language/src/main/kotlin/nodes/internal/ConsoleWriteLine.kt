@@ -11,6 +11,7 @@ import java.io.PrintStream
 @NodeInfo(description = "WriteLine")
 class ConsoleWriteLine() :
     ExpressionNode() {
+
     val context by lazy {
         lookupContextReference(Clr::class.java).get()
     }
@@ -26,7 +27,11 @@ class ConsoleWriteLine() :
 
     @CompilerDirectives.TruffleBoundary
     fun writeLine(any: Any?) {
-        stream.println(any)
+        if(any is Boolean) {
+            stream.println(if(any) { "True" } else { "False" })
+        }else {
+            stream.println(any)
+        }
     }
 }
 

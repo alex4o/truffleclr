@@ -1,9 +1,6 @@
 package main.compilationNodes
 
-import com.oracle.truffle.api.CompilerDirectives
-import com.oracle.truffle.api.RootCallTarget
-import com.oracle.truffle.api.Truffle
-import com.oracle.truffle.api.TruffleLanguage
+import com.oracle.truffle.api.*
 import com.oracle.truffle.api.frame.FrameDescriptor
 import com.oracle.truffle.api.frame.FrameSlot
 import com.oracle.truffle.api.frame.FrameSlotKind
@@ -14,7 +11,6 @@ import nodes.*
 import nodes.expressions.LoadArgument
 import nodes.expressions.LoadArgumentNodeGen
 import nodes.internal.InternalMethod
-import nodes.internal.InternalTable.staticMethods
 import parser.generic.Graph
 import parser.generic.IlMethod
 import parser.generic.InstructionBlock
@@ -22,7 +18,7 @@ import parser.generic.instruction.InstructionBrTarget
 import runtime.Type
 import java.util.*
 
-class CompileMethod(val method: IlMethod, val language: TruffleLanguage<*>, val type: Type) :
+class CompileMethod(val method: IlMethod, val initialize: Initialize, val language: TruffleLanguage<*>, val type: Type) :
     StatementNode() {
     val frameDescriptor = FrameDescriptor();
 
@@ -80,8 +76,8 @@ class CompileMethod(val method: IlMethod, val language: TruffleLanguage<*>, val 
 
 
     fun compileInternal() {
-//        println("Internal: ${method.toString()}")
-        val methodBody = InternalMethod(staticMethods[method.toString()]!!, frameDescriptor, language)
+//        println("Internal: ${method}")
+        val methodBody = InternalMethod(initialize.internalMethods[method.toString()]!!, frameDescriptor, language)
         type.members[method.toString()]!!.callTarget = runtime.createCallTarget(methodBody)
     }
 
