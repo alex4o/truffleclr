@@ -8,14 +8,15 @@ import com.oracle.truffle.api.frame.VirtualFrame
 import com.oracle.truffle.api.nodes.ExplodeLoop
 import main.getNodes
 import nodes.*
-import nodes.expressions.LoadArgument
-import nodes.expressions.LoadArgumentNodeGen
 import nodes.internal.InternalMethod
-import parser.generic.Graph
-import parser.generic.IlMethod
-import parser.generic.InstructionBlock
-import parser.generic.instruction.InstructionBrTarget
+import main.Graph
+import metadata.IlMethod
+import main.InstructionBlock
+import metadata.instruction.InstructionBrTarget
+import runtime.CorElementType
+import runtime.Method
 import runtime.Type
+import java.lang.Exception
 import java.util.*
 
 class CompileMethod(val method: IlMethod, val initialize: Initialize, val language: TruffleLanguage<*>, val type: Type) :
@@ -26,65 +27,88 @@ class CompileMethod(val method: IlMethod, val initialize: Initialize, val langua
 
     // TODO: Type parser
     val frameSlots = method.locals.mapIndexed { index, local ->
-        val kind = when (local) {
-            "int32" -> FrameSlotKind.Int
-            "int64" -> FrameSlotKind.Long
-            "bool" -> FrameSlotKind.Boolean
-            "string" -> FrameSlotKind.Object
-            "object" -> FrameSlotKind.Object
-            else -> FrameSlotKind.Object
+        if(local.isPrimiteive) {
+            val kind = when (local.type) {
+                CorElementType.BOOLEAN -> FrameSlotKind.Boolean
+                CorElementType.CHAR -> FrameSlotKind.Int
+                CorElementType.I1 -> FrameSlotKind.Byte
+                CorElementType.U1 -> FrameSlotKind.Byte
+//                CorElementType.I2 -> TODO()
+//                CorElementType.U2 -> TODO()
+                CorElementType.I4 -> FrameSlotKind.Int
+                CorElementType.U4 -> FrameSlotKind.Int
+                CorElementType.I8 -> FrameSlotKind.Long
+                CorElementType.U8 -> FrameSlotKind.Long
+                CorElementType.R4 -> FrameSlotKind.Float
+                CorElementType.R8 -> FrameSlotKind.Double
+//                CorElementType.VALUETYPE -> TODO()
+                else -> error("Unknown local type encountered: ${local.type}")
+            }
+            frameDescriptor.addFrameSlot("local$index", kind)
+        }else{
+            frameDescriptor.addFrameSlot("local$index", FrameSlotKind.Object)
         }
-        frameDescriptor.addFrameSlot("local$index", kind)
     }
 
     val argumentsSlots = if (method.static) {
         method.arguments
     } else {
-        listOf("object") + method.arguments
+        listOf(method.memberOf!!) + method.arguments
     }.mapIndexed { index, local ->
-        val kind = when (local) {
-            "int32" -> FrameSlotKind.Int
-            "int64" -> FrameSlotKind.Long
-            "bool" -> FrameSlotKind.Boolean
-            "string" -> FrameSlotKind.Object
-            "object" -> FrameSlotKind.Object
-            else -> FrameSlotKind.Object
+        if(local.isPrimiteive) {
+            val kind = when (local.type) {
+                CorElementType.BOOLEAN -> FrameSlotKind.Boolean
+                CorElementType.CHAR -> FrameSlotKind.Int
+                CorElementType.I1 -> FrameSlotKind.Byte
+                CorElementType.U1 -> FrameSlotKind.Byte
+//                CorElementType.I2 -> TODO()
+//                CorElementType.U2 -> TODO()
+                CorElementType.I4 -> FrameSlotKind.Int
+                CorElementType.U4 -> FrameSlotKind.Int
+                CorElementType.I8 -> FrameSlotKind.Long
+                CorElementType.U8 -> FrameSlotKind.Long
+                CorElementType.R4 -> FrameSlotKind.Float
+                CorElementType.R8 -> FrameSlotKind.Double
+//                CorElementType.VALUETYPE -> TODO()
+                else -> error("Unknown local type encountered: ${local.type}")
+            }
+            frameDescriptor.addFrameSlot("argument$index", kind)
+        }else{
+            frameDescriptor.addFrameSlot("argument$index", FrameSlotKind.Object)
         }
-        frameDescriptor.addFrameSlot("argument$index", kind)
     }.filter { it.kind != FrameSlotKind.Illegal }
 
     var dupCount = 0
     fun genDupSlot(): FrameSlot {
 //        return frameDescriptor.findOrAddFrameSlot("dup$dupCount", FrameSlotKind.Object)
-        return frameDescriptor.findOrAddFrameSlot("dup$dupCount")
+        return frameDescriptor.findOrAddFrameSlot("dup$dupCount", FrameSlotKind.Object)
     }
 
     private fun body(dispatchNode: DispatchNode): MethodBody {
         return MethodBody(method.name, dispatchNode, argumentsSlots.toTypedArray(), frameDescriptor, language)
     }
 
-    //    private fun callTarget(): RootCallTarget {
-//        return Truffle.getRuntime()
-//            .createCallTarget(body())
-//    }
     val runtime = Truffle.getRuntime()
 
-    @CompilerDirectives.TruffleBoundary
-    fun log() {
-//        println("Compiling: ${method.toString()}")
-    }
-
-
     fun compileInternal() {
-//        println("Internal: ${method}")
-        val methodBody = InternalMethod(initialize.internalMethods[method.toString()]!!, frameDescriptor, language)
-        type.members[method.toString()]!!.callTarget = runtime.createCallTarget(methodBody)
+        try {
+            val methodBody = InternalMethod(initialize.internalMethods[method.toString()]!!, frameDescriptor, language)
+            val member = type.members.getValue(method.toString())
+            if(member is Method) {
+                    member.callTarget = runtime.createCallTarget(methodBody)
+            }else{
+                error("Trying to compile a non method as a method")
+            }
+        } catch (exception: Exception) {
+            println("Internal: ${method}")
+            exception.printStackTrace()
+        }
     }
 
     fun compileDefault() {
+//        println(method.name)
         val queue = ArrayDeque<Int>()
         val visited = mutableSetOf<Int>()
-        log()
 
         queue.add(graph.root)
         while (queue.isNotEmpty()) {
@@ -102,7 +126,7 @@ class CompileMethod(val method: IlMethod, val initialize: Initialize, val langua
             queue.addAll(block.targets)
         }
 
-        var blocks = arrayOfNulls<Block>(compiled.lastKey() + 1);
+        val blocks = arrayOfNulls<Block>(compiled.lastKey() + 1);
         compiled.forEach {
             blocks[it.key] = it.value
         }
@@ -110,10 +134,11 @@ class CompileMethod(val method: IlMethod, val initialize: Initialize, val langua
         val dispatchNode = DispatchNode(blocks as Array<Block>)
 
         val methodBody = body(dispatchNode)
-        type.members[method.toString()]!!.callTarget = runtime.createCallTarget(methodBody)
-
-        if(CompilerDirectives.inInterpreter()) {
-//            graph.visualise(language)
+        val member = type.members.getValue(method.toString())
+        if(member is Method) {
+            member.callTarget = runtime.createCallTarget(methodBody)
+        }else{
+            error("Trying to compile a non method as a method")
         }
     }
 
@@ -125,13 +150,7 @@ class CompileMethod(val method: IlMethod, val initialize: Initialize, val langua
 
     @ExplodeLoop
     override fun executeVoid(env: VirtualFrame) {
-//        try {
         compile()
-//        } catch (e: Exception) {
-//            println("Compilation failed for method: $method")
-//            e.printStackTrace()
-//            throw e
-//        }
     }
 
     val graph: Graph by lazy() @CompilerDirectives.TruffleBoundary
@@ -167,10 +186,7 @@ class CompileMethod(val method: IlMethod, val initialize: Initialize, val langua
                 block.instructions.add(instruction)
 
                 if (instruction is InstructionBrTarget) {
-                    if (instruction.instruction == "br" ||
-                        instruction.instruction == "br.s" ||
-                        instruction.instruction.startsWith("leave")
-                    ) {
+                    if (instruction.instruction == "br" || instruction.instruction.startsWith("leave")) {
                         block.targetLabels.addAll(listOf(instruction.target))
                     } else {
                         block.targetLabels.addAll(listOf(instruction.target, indexLabels[index + 1]!!))
@@ -196,6 +212,6 @@ class CompileMethod(val method: IlMethod, val initialize: Initialize, val langua
     }
 
     override fun toString(): String {
-        return "Compile: ${method.toString()}"
+        return "Compile(${method})"
     }
 }

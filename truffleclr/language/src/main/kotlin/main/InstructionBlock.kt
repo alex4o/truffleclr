@@ -1,6 +1,6 @@
-package parser.generic
+package main
 
-import parser.generic.instruction.Instruction
+import metadata.instruction.Instruction
 
 class InstructionBlock(var label: String = "", var index: Int = -1) {
 

@@ -10,15 +10,12 @@ import com.oracle.truffle.api.library.ExportLibrary
 import com.oracle.truffle.api.library.ExportMessage
 import com.oracle.truffle.api.nodes.DirectCallNode
 import com.oracle.truffle.api.nodes.IndirectCallNode
-import metadata.IlMethod
 
 @ExportLibrary(InteropLibrary::class)
-class Method(val metadata: IlMethod, @CompilerDirectives.CompilationFinal var callTarget: RootCallTarget?): TruffleObject {
+class Property(val name: String, @CompilerDirectives.CompilationFinal var callTarget: RootCallTarget?): TruffleObject {
 
-    val memberType = MemberType.Method
+    val memberType = MemberType.Property
 
-    val name
-        get() = metadata.name
 
     @ExportMessage
     fun isExecutable(): Boolean {
@@ -26,7 +23,7 @@ class Method(val metadata: IlMethod, @CompilerDirectives.CompilationFinal var ca
     }
 
     fun isInstance(obj: TruffleObject?): Boolean {
-        return obj is Method
+        return obj is Property
     }
 
     @ExportMessage
@@ -38,7 +35,7 @@ class Method(val metadata: IlMethod, @CompilerDirectives.CompilationFinal var ca
             )
             @JvmStatic
             fun doDirect(
-                method: Method, arguments: Array<Any?>,
+                method: Property, arguments: Array<Any?>,
                 @Cached("method.getCallTarget()") cachedTarget: RootCallTarget?,
 //                @Cached callNode: IndirectCallNode
                 @Cached("create(cachedTarget)") callNode: DirectCallNode
@@ -55,15 +52,11 @@ class Method(val metadata: IlMethod, @CompilerDirectives.CompilationFinal var ca
             @Specialization(replaces = ["doDirect"])
             @JvmStatic
             fun doIndirect(
-                method: Method, arguments: Array<Any?>,
+                method: Property, arguments: Array<Any?>,
                 @Cached callNode: IndirectCallNode
             ): Any {
                 return callNode.call(method.callTarget, *arguments)
             }
         }
-    }
-
-    override fun toString(): String {
-        return name
     }
 }

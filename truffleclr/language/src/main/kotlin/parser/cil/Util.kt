@@ -3,8 +3,9 @@ package parser.cil
 import Cil.CilParser.*
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.tree.ParseTree
-import parser.generic.IlMethod
-import parser.generic.IlType
+import metadata.IlAppDomain
+import metadata.IlMethod
+import metadata.IlType
 import java.util.*
 
 
@@ -59,8 +60,47 @@ fun TypeSpecContext.toClassName(): String {
             slashedName().text
         }
         default {
-            error("Unable to determine typeSpec for $parent (line: ${ start.line})")
+            error("Unable to determine typeSpec for $parent (line: ${start.line})")
         }
+    }
+}
+
+fun TypeContext.getType(appDomain: IlAppDomain): IlType {
+    return if (this is TypeArrayContext) {
+        appDomain.getType(this.type().toClassName()).makeArray(1)
+    } else {
+        appDomain.getType(this.toClassName())
+    }
+}
+
+fun TypeContext.toClassName(): String {
+    return when (this) {
+        is TypeClassContext -> {
+            className().text
+        }
+        is TypeObjectContext -> {
+            "System.Object"
+        }
+        is TypePrimitiveContext -> {
+            when (this.text) {
+                "bool" -> "System.Boolean"
+                "uint8" -> "System.Byte"
+                "char" -> "System.Char"
+                "int32" -> "System.Int32"
+                "uint32" -> "System.UInt32"
+                "float" -> "System.Float"
+                "double" -> "System.Double"
+                "string" -> "System.String"
+                else -> error("Encountered unknown primitive type: ${this.text}")
+            }
+        }
+        is TypeValueTypeContext -> {
+            this.className().text
+        }
+        is TypeVoidContext -> {
+            "System.Void"
+        }
+        else -> error("Unrecognized type context encountered: ${this.javaClass.name}")
     }
 }
 
@@ -80,14 +120,14 @@ fun MethodVisitor.extractFromMethodRefTest(methodRef: MethodRefContext): IlMetho
     val className: String = methodRef.typeSpec().toClassName()
 
     val arguments = if (methodRef.sigArgs0().sigArgs1() != null) {
-        methodRef.sigArgs0().sigArgs1().sigArg().map { it.text }
+        methodRef.sigArgs0().sigArgs1().sigArg().map { it.type().getType(appDomain) }
     } else {
-        listOf<String>()
+        listOf<IlType>()
     }
 
     val method = IlMethod(methodName, arguments)
     method.memberOf = appDomain.getType(className)
-    method.returnType = methodRef.type().text
+    method.returnType = methodRef.type().getType(appDomain)
 
 //    method.static = methodRef.callConv().K_INSTANCE().isEmpty()
 

@@ -41,6 +41,6 @@ abstract class BoolBranch(
     }
 
     override fun toString(): String {
-    return "(br$cond ${this.children.joinToString("")} $label) // (same: $same, diff: $diff)"
+    return "(br$cond ${this.children.joinToString("")} $label)" // (same: $same, diff: $diff)
     }
 }

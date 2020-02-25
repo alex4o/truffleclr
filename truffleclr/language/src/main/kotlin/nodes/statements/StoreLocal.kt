@@ -11,7 +11,7 @@ import nodes.ExpressionNode
 
 @NodeField(name = "slot", type = FrameSlot::class)
 @NodeChild("expressionNode")
-abstract class StoreLocal(val index: Int): ExpressionNode() {
+abstract class StoreLocal: ExpressionNode() {
 
     protected abstract val slot: FrameSlot?
 
@@ -73,7 +73,7 @@ abstract class StoreLocal(val index: Int): ExpressionNode() {
     }
 
     override fun toString(): String {
-        return "\t\t(stloc $index ${this.children.joinToString(" ")})"
+        return "(stloc ${slot!!.identifier} ${this.children.joinToString(" ")})"
     }
 
 }

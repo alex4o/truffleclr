@@ -669,9 +669,7 @@ atOpt                   : /* EMPTY */
                         | K_AT id
                         ;
 
-initOpt                 : /* EMPTY */
-                        | '=' fieldInit
-                                                ;
+initOpt                 : ('=' fieldInit)?;
 
 repeatOpt               : /* EMPTY */
                         | '[' int32 ']'
@@ -1289,7 +1287,7 @@ variantType             : /* EMPTY */
 
 /*  Managed types for signatures  */
 type                    : K_VALUE? K_CLASS className  #typeClass
-                        | K_OBJECT                    #typeObject
+                        | K_OBJECT                    #typeClass
                         | K_VALUETYPE className       #typeValueType
                         | type '[' bounds1? ']'       #typeArray
                         | type '&'                    #typeManageRef

@@ -27,13 +27,13 @@
   .ver 1:0:0:0
 }
 .module System.Private.CoreLib.dll
-// MVID: {7daca8f9-1e21-4de6-a3a4-4720055c44c3}
+// MVID: {37c6d96a-5624-4cdd-8ec9-2b13f81bd8d8}
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x00007F2DC55BA000
+// Image base: 0x00007F143C77C000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -140,6 +140,25 @@
   } // end of method NullableContextAttribute::.ctor
 
 } // end of class System.Runtime.CompilerServices.NullableContextAttribute
+
+.class public abstract auto ansi beforefieldinit System.Array
+       extends System.Object
+{
+  .field static assembly literal int32 MaxArrayLength = int32(0x7FEFFFFF)
+  .field static assembly literal int32 MaxByteArrayLength = int32(0x7FFFFFC7)
+  .method famandassem hidebysig specialname rtspecialname 
+          instance void  .ctor() cil managed
+  {
+    // Code size       9 (0x9)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  call       instance void System.Object::.ctor()
+    IL_0006:  nop
+    IL_0007:  nop
+    IL_0008:  ret
+  } // end of method Array::.ctor
+
+} // end of class System.Array
 
 .class public auto ansi sealed System.AttributeTargets
        extends System.Enum
@@ -371,6 +390,154 @@
   } // end of method Boolean::.cctor
 
 } // end of class System.Boolean
+
+.class public sequential ansi sealed beforefieldinit System.Byte
+       extends System.ValueType
+{
+  .custom instance void System.Runtime.CompilerServices.NullableContextAttribute::.ctor(uint8)
+           = {uint8(2)}
+  .custom instance void System.Runtime.CompilerServices.NullableAttribute::.ctor(uint8)
+           = {uint8(0)}
+  .custom instance void System.Runtime.CompilerServices.IsReadOnlyAttribute::.ctor()
+           = {}
+  .field private initonly uint8 m_value
+  .field public static literal uint8 MaxValue = uint8(0xFF)
+  .field public static literal uint8 MinValue = uint8(0x00)
+  .method public hidebysig instance int32 
+          CompareTo(object 'value') cil managed
+  {
+    // Code size       46 (0x2e)
+    .maxstack  2
+    .locals init (bool V_0,
+             int32 V_1,
+             bool V_2)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  ldnull
+    IL_0003:  ceq
+    IL_0005:  stloc.0
+    IL_0006:  ldloc.0
+    IL_0007:  brfalse.s  IL_000e
+
+    IL_0009:  nop
+    IL_000a:  ldc.i4.1
+    IL_000b:  stloc.1
+    IL_000c:  br.s       IL_002c
+
+    IL_000e:  ldarg.1
+    IL_000f:  isinst     System.Byte
+    IL_0014:  ldnull
+    IL_0015:  cgt.un
+    IL_0017:  ldc.i4.0
+    IL_0018:  ceq
+    IL_001a:  stloc.2
+    IL_001b:  ldloc.2
+    IL_001c:  brfalse.s  IL_0020
+
+    IL_001e:  nop
+    IL_001f:  nop
+    IL_0020:  ldarg.0
+    IL_0021:  ldind.u1
+    IL_0022:  ldarg.1
+    IL_0023:  unbox.any  System.Byte
+    IL_0028:  sub
+    IL_0029:  stloc.1
+    IL_002a:  br.s       IL_002c
+
+    IL_002c:  ldloc.1
+    IL_002d:  ret
+  } // end of method Byte::CompareTo
+
+  .method public hidebysig instance int32 
+          CompareTo(uint8 'value') cil managed
+  {
+    // Code size       10 (0xa)
+    .maxstack  2
+    .locals init (int32 V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  ldind.u1
+    IL_0003:  ldarg.1
+    IL_0004:  sub
+    IL_0005:  stloc.0
+    IL_0006:  br.s       IL_0008
+
+    IL_0008:  ldloc.0
+    IL_0009:  ret
+  } // end of method Byte::CompareTo
+
+  .method public hidebysig virtual instance bool 
+          Equals(object obj) cil managed
+  {
+    // Code size       37 (0x25)
+    .maxstack  2
+    .locals init (bool V_0,
+             bool V_1)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  isinst     System.Byte
+    IL_0007:  ldnull
+    IL_0008:  cgt.un
+    IL_000a:  ldc.i4.0
+    IL_000b:  ceq
+    IL_000d:  stloc.0
+    IL_000e:  ldloc.0
+    IL_000f:  brfalse.s  IL_0016
+
+    IL_0011:  nop
+    IL_0012:  ldc.i4.0
+    IL_0013:  stloc.1
+    IL_0014:  br.s       IL_0023
+
+    IL_0016:  ldarg.0
+    IL_0017:  ldind.u1
+    IL_0018:  ldarg.1
+    IL_0019:  unbox.any  System.Byte
+    IL_001e:  ceq
+    IL_0020:  stloc.1
+    IL_0021:  br.s       IL_0023
+
+    IL_0023:  ldloc.1
+    IL_0024:  ret
+  } // end of method Byte::Equals
+
+  .method public hidebysig instance bool 
+          Equals(uint8 obj) cil managed
+  {
+    .custom instance void System.Runtime.Versioning.NonVersionableAttribute::.ctor()
+             = {}
+    // Code size       11 (0xb)
+    .maxstack  2
+    .locals init (bool V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  ldind.u1
+    IL_0003:  ldarg.1
+    IL_0004:  ceq
+    IL_0006:  stloc.0
+    IL_0007:  br.s       IL_0009
+
+    IL_0009:  ldloc.0
+    IL_000a:  ret
+  } // end of method Byte::Equals
+
+  .method public hidebysig virtual instance int32 
+          GetHashCode() cil managed
+  {
+    // Code size       8 (0x8)
+    .maxstack  1
+    .locals init (int32 V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  ldind.u1
+    IL_0003:  stloc.0
+    IL_0004:  br.s       IL_0006
+
+    IL_0006:  ldloc.0
+    IL_0007:  ret
+  } // end of method Byte::GetHashCode
+
+} // end of class System.Byte
 
 .class public sequential ansi sealed beforefieldinit System.Char
        extends System.ValueType
@@ -918,154 +1085,6 @@
   } // end of method Object::GetHashCode
 
 } // end of class System.Object
-
-.class public sequential ansi sealed beforefieldinit System.Byte
-       extends System.ValueType
-{
-  .custom instance void System.Runtime.CompilerServices.NullableContextAttribute::.ctor(uint8)
-           = {uint8(2)}
-  .custom instance void System.Runtime.CompilerServices.NullableAttribute::.ctor(uint8)
-           = {uint8(0)}
-  .custom instance void System.Runtime.CompilerServices.IsReadOnlyAttribute::.ctor()
-           = {}
-  .field private initonly uint8 m_value
-  .field public static literal uint8 MaxValue = uint8(0xFF)
-  .field public static literal uint8 MinValue = uint8(0x00)
-  .method public hidebysig instance int32 
-          CompareTo(object 'value') cil managed
-  {
-    // Code size       46 (0x2e)
-    .maxstack  2
-    .locals init (bool V_0,
-             int32 V_1,
-             bool V_2)
-    IL_0000:  nop
-    IL_0001:  ldarg.1
-    IL_0002:  ldnull
-    IL_0003:  ceq
-    IL_0005:  stloc.0
-    IL_0006:  ldloc.0
-    IL_0007:  brfalse.s  IL_000e
-
-    IL_0009:  nop
-    IL_000a:  ldc.i4.1
-    IL_000b:  stloc.1
-    IL_000c:  br.s       IL_002c
-
-    IL_000e:  ldarg.1
-    IL_000f:  isinst     System.Byte
-    IL_0014:  ldnull
-    IL_0015:  cgt.un
-    IL_0017:  ldc.i4.0
-    IL_0018:  ceq
-    IL_001a:  stloc.2
-    IL_001b:  ldloc.2
-    IL_001c:  brfalse.s  IL_0020
-
-    IL_001e:  nop
-    IL_001f:  nop
-    IL_0020:  ldarg.0
-    IL_0021:  ldind.u1
-    IL_0022:  ldarg.1
-    IL_0023:  unbox.any  System.Byte
-    IL_0028:  sub
-    IL_0029:  stloc.1
-    IL_002a:  br.s       IL_002c
-
-    IL_002c:  ldloc.1
-    IL_002d:  ret
-  } // end of method Byte::CompareTo
-
-  .method public hidebysig instance int32 
-          CompareTo(uint8 'value') cil managed
-  {
-    // Code size       10 (0xa)
-    .maxstack  2
-    .locals init (int32 V_0)
-    IL_0000:  nop
-    IL_0001:  ldarg.0
-    IL_0002:  ldind.u1
-    IL_0003:  ldarg.1
-    IL_0004:  sub
-    IL_0005:  stloc.0
-    IL_0006:  br.s       IL_0008
-
-    IL_0008:  ldloc.0
-    IL_0009:  ret
-  } // end of method Byte::CompareTo
-
-  .method public hidebysig virtual instance bool 
-          Equals(object obj) cil managed
-  {
-    // Code size       37 (0x25)
-    .maxstack  2
-    .locals init (bool V_0,
-             bool V_1)
-    IL_0000:  nop
-    IL_0001:  ldarg.1
-    IL_0002:  isinst     System.Byte
-    IL_0007:  ldnull
-    IL_0008:  cgt.un
-    IL_000a:  ldc.i4.0
-    IL_000b:  ceq
-    IL_000d:  stloc.0
-    IL_000e:  ldloc.0
-    IL_000f:  brfalse.s  IL_0016
-
-    IL_0011:  nop
-    IL_0012:  ldc.i4.0
-    IL_0013:  stloc.1
-    IL_0014:  br.s       IL_0023
-
-    IL_0016:  ldarg.0
-    IL_0017:  ldind.u1
-    IL_0018:  ldarg.1
-    IL_0019:  unbox.any  System.Byte
-    IL_001e:  ceq
-    IL_0020:  stloc.1
-    IL_0021:  br.s       IL_0023
-
-    IL_0023:  ldloc.1
-    IL_0024:  ret
-  } // end of method Byte::Equals
-
-  .method public hidebysig instance bool 
-          Equals(uint8 obj) cil managed
-  {
-    .custom instance void System.Runtime.Versioning.NonVersionableAttribute::.ctor()
-             = {}
-    // Code size       11 (0xb)
-    .maxstack  2
-    .locals init (bool V_0)
-    IL_0000:  nop
-    IL_0001:  ldarg.0
-    IL_0002:  ldind.u1
-    IL_0003:  ldarg.1
-    IL_0004:  ceq
-    IL_0006:  stloc.0
-    IL_0007:  br.s       IL_0009
-
-    IL_0009:  ldloc.0
-    IL_000a:  ret
-  } // end of method Byte::Equals
-
-  .method public hidebysig virtual instance int32 
-          GetHashCode() cil managed
-  {
-    // Code size       8 (0x8)
-    .maxstack  1
-    .locals init (int32 V_0)
-    IL_0000:  nop
-    IL_0001:  ldarg.0
-    IL_0002:  ldind.u1
-    IL_0003:  stloc.0
-    IL_0004:  br.s       IL_0006
-
-    IL_0006:  ldloc.0
-    IL_0007:  ret
-  } // end of method Byte::GetHashCode
-
-} // end of class System.Byte
 
 .class public abstract auto ansi beforefieldinit System.Attribute
        extends System.Object

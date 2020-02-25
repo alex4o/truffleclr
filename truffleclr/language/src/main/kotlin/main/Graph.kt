@@ -1,4 +1,4 @@
-package parser.generic
+package main
 
 import com.oracle.truffle.api.TruffleLanguage
 import guru.nidi.graphviz.attribute.Color
@@ -8,10 +8,8 @@ import guru.nidi.graphviz.engine.Format
 import guru.nidi.graphviz.engine.Graphviz
 import guru.nidi.graphviz.model.Factory.mutGraph
 import guru.nidi.graphviz.model.Factory.mutNode
-import guru.nidi.graphviz.model.Link
 import guru.nidi.graphviz.model.MutableNode
 import main.compilationNodes.CompileMethod
-import main.getNodes
 import java.io.File
 import java.util.*
 
@@ -64,7 +62,7 @@ class Graph(var nodes: List<InstructionBlock>, var compileNode: CompileMethod) {
 ////                node = prev.second
 //            }else {
 
-                val nodesText = "${this.getNodes(target, language!!).toString()
+                val nodesText = "${this.getNodes(target, language).toString()
                     .replace("<", "&lt;")
                     .replace(">", "&gt;")
                     .replace(">=", "&gt;=")
@@ -73,7 +71,7 @@ class Graph(var nodes: List<InstructionBlock>, var compileNode: CompileMethod) {
 
 //            val nodesText = this.nodes[target]!!.instructions.joinToString("<br align='left'/>")
                 node.attrs().add(
-                    Label.html("<b>$target: ${this.nodes[target]!!.label}</b><br/>${nodesText}").justify(
+                    Label.html("<b>$target: ${this.nodes[target].label}</b><br/>${nodesText}").justify(
                         Label.Justification.LEFT
                     )
                 )
@@ -189,7 +187,7 @@ class LengauerTarjan(val graph: Graph) {
             val p = parent[n]!!
             var s = p
 
-            var ts: InstructionBlock? = null
+            var ts: InstructionBlock?
             for (v in graph.nodes.filter { it.targets.contains(n.index) }) {
                 if (dfnum[v]!! <= dfnum[n]!!) {
                     ts = v
@@ -220,7 +218,7 @@ class LengauerTarjan(val graph: Graph) {
             }
         }
 
-        for ((key, value) in idom) {
+        for ((key, _) in idom) {
             tree.put(key.label, mutableSetOf())
         }
 
@@ -237,7 +235,6 @@ class LengauerTarjan(val graph: Graph) {
         val visited = mutableMapOf<Int, MutableNode>()
         val stack = Stack<Pair<Int, MutableNode>>()
         stack.push(Pair(0, nodes.getValue(graph.nodes[graph.root].label)))
-        var prev = Pair<Int, MutableNode>(0, mutNode(""))
         while (stack.isNotEmpty()) {
 
             val (target, node) = stack.pop()
@@ -245,8 +242,6 @@ class LengauerTarjan(val graph: Graph) {
             if (visited.contains(target)) {
                 continue
             }
-
-            prev = Pair(target, node)
 
             node.attrs().add(Shape.RECTANGLE)
             visited.put(target, node)

@@ -3,13 +3,12 @@ package nodes.expressions.array
 import com.oracle.truffle.api.CompilerDirectives
 import com.oracle.truffle.api.dsl.NodeChild
 import com.oracle.truffle.api.dsl.Specialization
-import com.oracle.truffle.api.frame.VirtualFrame
 import nodes.ExpressionNode
-import runtime.CoreElementType
-import runtime.CoreElementType.*
+import runtime.CorElementType
+import runtime.CorElementType.*
 
 @NodeChild("sizeNode")
-abstract class NewArray(@CompilerDirectives.CompilationFinal @JvmField val type: CoreElementType) : ExpressionNode() {
+abstract class NewArray(@CompilerDirectives.CompilationFinal @JvmField val type: CorElementType) : ExpressionNode() {
 
     @CompilerDirectives.CompilationFinal
     val builder: (Int) -> Any = when(type) {

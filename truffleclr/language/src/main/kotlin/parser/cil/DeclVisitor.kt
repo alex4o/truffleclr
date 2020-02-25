@@ -4,13 +4,14 @@ import Cil.CilBaseVisitor
 import Cil.CilParser
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.tree.ParseTree
-import parser.generic.IlAppDomain
-import parser.generic.IlAssembly
-import parser.generic.IlModule
-import parser.generic.IlType
+import metadata.IlAppDomain
+import metadata.IlAssembly
+import metadata.IlModule
+import metadata.IlType
+import runtime.CoreTypeInfo
 import java.util.*
 
-
+@kotlin.ExperimentalUnsignedTypes
 class DeclVisitor(var appDomain: IlAppDomain) : Cil.CilBaseVisitor<Unit>() {
     lateinit var module: IlModule
     lateinit var assembly: IlAssembly
@@ -74,7 +75,12 @@ class DeclVisitor(var appDomain: IlAppDomain) : Cil.CilBaseVisitor<Unit>() {
             return
         }
 
-        val type = IlType(name)
+        val corType = if(CoreTypeInfo.typeByName.containsKey(name)) {
+            CoreTypeInfo.typeByName.getValue(name).type
+        }else{
+            extendsType!!.type
+        }
+        val type = IlType(name, corType)
 
         type.extends = extendsType
         type.attribtes = head.classHeadBegin().classAttr().map { it.text }.toSet()

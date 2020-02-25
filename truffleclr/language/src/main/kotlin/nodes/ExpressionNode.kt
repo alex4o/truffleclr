@@ -37,7 +37,3 @@ abstract class ExpressionNode: StatementNode() {
         return TypeSystemGen.expectString(execute(env))
     }
 }
-
-abstract class ExpressionNodeGeneric<T>: ExpressionNode() {
-    abstract override fun execute(env: VirtualFrame): T
-}

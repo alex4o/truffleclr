@@ -10,29 +10,24 @@ import com.oracle.truffle.api.debug.DebuggerTags
 import com.oracle.truffle.api.frame.FrameDescriptor
 import com.oracle.truffle.api.instrumentation.ProvidedTags
 import com.oracle.truffle.api.instrumentation.StandardTags
-import com.oracle.truffle.api.interop.InteropLibrary
-import com.oracle.truffle.api.library.LibraryFactory
 import main.compilationNodes.Initialize
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
-import org.antlr.v4.runtime.RuntimeMetaData
 import parser.cil.ClassVisitor
 import parser.cil.DeclVisitor
-import parser.generic.IlAppDomain
+import metadata.IlAppDomain
 import runtime.ClrContext
 import java.io.File
-import java.net.URL
-import java.net.URLClassLoader
 
-
+@kotlin.ExperimentalUnsignedTypes
 @TruffleLanguage.Registration(
     id = "clr",
     name = "clr",
     defaultMimeType = "application/il",
     characterMimeTypes = ["application/il"],
     contextPolicy = TruffleLanguage.ContextPolicy.SHARED,
-    fileTypeDetectors = [IlFileDetector::class]
+    fileTypeDetectors = [ClrIlFileDetector::class]
 )
 @ProvidedTags(
     StandardTags.CallTag::class,

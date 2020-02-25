@@ -1,6 +1,6 @@
 package runtime
 
-enum class CoreElementType {
+enum class CorElementType {
     VOID,
     BOOLEAN,
     CHAR,
@@ -41,7 +41,7 @@ enum class CoreElementType {
     INTERNAL
 }
 
-class TypeInfo(val name: String?, val type: CoreElementType, val size: Int, val isArray: Boolean, val isPrimitive: Boolean, val isFloat: Boolean, val isModifier: Boolean, val isGenericVariable: Boolean)
+class TypeInfo(val name: String?, val type: CorElementType, val size: Int, val isArray: Boolean, val isPrimitive: Boolean, val isFloat: Boolean, val isModifier: Boolean, val isGenericVariable: Boolean)
 
 object CoreTypeInfo {
     val TARGET_POINTER_SIZE = 8;
@@ -49,7 +49,7 @@ object CoreTypeInfo {
     val types = arrayOf(
         TypeInfo(
             "System.Void",
-            CoreElementType.VOID,
+            CorElementType.VOID,
             0,
             false,
             true,
@@ -60,7 +60,7 @@ object CoreTypeInfo {
         ,
         TypeInfo(
             "System.Boolean",
-            CoreElementType.BOOLEAN,
+            CorElementType.BOOLEAN,
             1,
             false,
             true,
@@ -71,7 +71,7 @@ object CoreTypeInfo {
         ,
         TypeInfo(
             "System.Char",
-            CoreElementType.CHAR,
+            CorElementType.CHAR,
             2,
             false,
             true,
@@ -82,7 +82,7 @@ object CoreTypeInfo {
         ,
         TypeInfo(
             "System.SByte",
-            CoreElementType.I1,
+            CorElementType.I1,
             1,
             false,
             true,
@@ -93,7 +93,7 @@ object CoreTypeInfo {
         ,
         TypeInfo(
             "System.Byte",
-            CoreElementType.U1,
+            CorElementType.U1,
             1,
             false,
             true,
@@ -104,7 +104,7 @@ object CoreTypeInfo {
         ,
         TypeInfo(
             "System.Int16",
-            CoreElementType.I2,
+            CorElementType.I2,
             2,
             false,
             true,
@@ -115,7 +115,7 @@ object CoreTypeInfo {
         ,
         TypeInfo(
             "System.UInt16",
-            CoreElementType.U2,
+            CorElementType.U2,
             2,
             false,
             true,
@@ -126,7 +126,7 @@ object CoreTypeInfo {
         ,
         TypeInfo(
             "System.Int32",
-            CoreElementType.I4,
+            CorElementType.I4,
             4,
             false,
             true,
@@ -137,7 +137,7 @@ object CoreTypeInfo {
         ,
         TypeInfo(
             "System.UInt32",
-            CoreElementType.U4,
+            CorElementType.U4,
             4,
             false,
             true,
@@ -148,7 +148,7 @@ object CoreTypeInfo {
         ,
         TypeInfo(
             "System.Int64",
-            CoreElementType.I8,
+            CorElementType.I8,
             8,
             false,
             true,
@@ -159,7 +159,7 @@ object CoreTypeInfo {
         ,
         TypeInfo(
             "System.UInt64",
-            CoreElementType.U8,
+            CorElementType.U8,
             8,
             false,
             true,
@@ -171,7 +171,7 @@ object CoreTypeInfo {
         ,
         TypeInfo(
             "System.Single",
-            CoreElementType.R4,
+            CorElementType.R4,
             4,
             false,
             true,
@@ -182,7 +182,7 @@ object CoreTypeInfo {
         ,
         TypeInfo(
             "System.Double",
-            CoreElementType.R8,
+            CorElementType.R8,
             8,
             false,
             true,
@@ -194,7 +194,7 @@ object CoreTypeInfo {
         ,
         TypeInfo(
             "System.String",
-            CoreElementType.STRING,
+            CorElementType.STRING,
             TARGET_POINTER_SIZE,
             false,
             false,
@@ -205,7 +205,7 @@ object CoreTypeInfo {
         ,
         TypeInfo(
             null,
-            CoreElementType.PTR,
+            CorElementType.PTR,
             TARGET_POINTER_SIZE,
             false,
             false,
@@ -216,7 +216,7 @@ object CoreTypeInfo {
         ,
         TypeInfo(
             null,
-            CoreElementType.BYREF,
+            CorElementType.BYREF,
             TARGET_POINTER_SIZE,
             false,
             false,
@@ -227,7 +227,7 @@ object CoreTypeInfo {
         ,
         TypeInfo(
             null,
-            CoreElementType.VALUETYPE,
+            CorElementType.VALUETYPE,
             NO_SIZE,
             false,
             false,
@@ -238,7 +238,7 @@ object CoreTypeInfo {
         ,
         TypeInfo(
             null,
-            CoreElementType.CLASS,
+            CorElementType.CLASS,
             TARGET_POINTER_SIZE,
             false,
             false,
@@ -249,7 +249,7 @@ object CoreTypeInfo {
         ,
         TypeInfo(
             null,
-            CoreElementType.VAR,
+            CorElementType.VAR,
             TARGET_POINTER_SIZE,
             false,
             false,
@@ -260,7 +260,7 @@ object CoreTypeInfo {
         ,
         TypeInfo(
             null,
-            CoreElementType.ARRAY,
+            CorElementType.ARRAY,
             TARGET_POINTER_SIZE,
             true,
             false,
@@ -272,7 +272,7 @@ object CoreTypeInfo {
         ,
         TypeInfo(
             null,
-            CoreElementType.GENERICINST,
+            CorElementType.GENERICINST,
             TARGET_POINTER_SIZE,
             false,
             false,
@@ -283,7 +283,7 @@ object CoreTypeInfo {
         ,
         TypeInfo(
             "System.TypedReference",
-            CoreElementType.TYPEDBYREF,
+            CorElementType.TYPEDBYREF,
             2 * TARGET_POINTER_SIZE,
             false,
             false,
@@ -293,8 +293,8 @@ object CoreTypeInfo {
         ) // 0x16
         ,
         TypeInfo(
-            " NULL.NULL",
-            CoreElementType.VALUEARRAY_UNSUPPORTED,
+            "NULL.NULL",
+            CorElementType.VALUEARRAY_UNSUPPORTED,
             NO_SIZE,
             false,
             false,
@@ -306,7 +306,7 @@ object CoreTypeInfo {
         ,
         TypeInfo(
             "System.IntPtr",
-            CoreElementType.I,
+            CorElementType.I,
             TARGET_POINTER_SIZE,
             false,
             true,
@@ -317,7 +317,7 @@ object CoreTypeInfo {
         ,
         TypeInfo(
             "System.UIntPtr",
-            CoreElementType.U,
+            CorElementType.U,
             TARGET_POINTER_SIZE,
             false,
             true,
@@ -328,7 +328,7 @@ object CoreTypeInfo {
         ,
         TypeInfo(
             null,
-            CoreElementType.R_UNSUPPORTED,
+            CorElementType.R_UNSUPPORTED,
             NO_SIZE,
             false,
             false,
@@ -340,7 +340,7 @@ object CoreTypeInfo {
         ,
         TypeInfo(
             null,
-            CoreElementType.FNPTR,
+            CorElementType.FNPTR,
             TARGET_POINTER_SIZE,
             false,
             false,
@@ -351,7 +351,7 @@ object CoreTypeInfo {
         ,
         TypeInfo(
             "System.Object",
-            CoreElementType.OBJECT,
+            CorElementType.OBJECT,
             TARGET_POINTER_SIZE,
             false,
             false,
@@ -362,7 +362,7 @@ object CoreTypeInfo {
         ,
         TypeInfo(
             null,
-            CoreElementType.SZARRAY,
+            CorElementType.SZARRAY,
             TARGET_POINTER_SIZE,
             true,
             false,
@@ -373,7 +373,7 @@ object CoreTypeInfo {
         ,
         TypeInfo(
             null,
-            CoreElementType.MVAR,
+            CorElementType.MVAR,
             TARGET_POINTER_SIZE,
             false,
             false,
@@ -384,7 +384,7 @@ object CoreTypeInfo {
         ,
         TypeInfo(
             null,
-            CoreElementType.CMOD_REQD,
+            CorElementType.CMOD_REQD,
             0,
             false,
             false,
@@ -395,7 +395,7 @@ object CoreTypeInfo {
         ,
         TypeInfo(
             null,
-            CoreElementType.CMOD_OPT,
+            CorElementType.CMOD_OPT,
             0,
             false,
             false,
@@ -406,7 +406,7 @@ object CoreTypeInfo {
         ,
         TypeInfo(
             null,
-            CoreElementType.INTERNAL,
+            CorElementType.INTERNAL,
             0,
             false,
             false,

@@ -1,18 +1,11 @@
 package main
 
-import com.oracle.truffle.api.Scope
 import com.oracle.truffle.api.Truffle
 import com.oracle.truffle.api.frame.FrameDescriptor
-import com.oracle.truffle.api.instrumentation.TruffleInstrument
-import com.oracle.truffle.api.nodes.IndirectCallNode
-import main.compilationNodes.CompileMethod
 import main.compilationNodes.Initialize
-import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
-import parser.generic.IlAppDomain
+import metadata.IlAppDomain
 import runtime.ClrContext
-import runtime.Method
-import runtime.Type
 import java.io.File
 
 fun main() {

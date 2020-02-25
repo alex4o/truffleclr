@@ -1,4 +1,4 @@
-package runtime.util
+package mylang
 
 import com.oracle.truffle.api.CompilerDirectives
 import com.oracle.truffle.api.interop.InteropLibrary

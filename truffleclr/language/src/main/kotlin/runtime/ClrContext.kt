@@ -3,6 +3,7 @@ package runtime
 import com.oracle.truffle.api.CompilerDirectives
 import com.oracle.truffle.api.Scope
 import com.oracle.truffle.api.TruffleLanguage
+import com.oracle.truffle.api.`object`.Layout
 import com.oracle.truffle.api.interop.InteropLibrary
 import com.oracle.truffle.api.interop.TruffleObject
 import com.oracle.truffle.api.library.ExportLibrary
@@ -14,6 +15,10 @@ class ClrContext(): TruffleObject {
     lateinit var env: TruffleLanguage.Env
     val types: MutableMap<String, Type> = mutableMapOf()
     val scopes = mutableListOf(Scope.newBuilder("global", this).build())
+
+    val layout = Layout.createLayout()
+    val baseObject = layout.createShape(ClrObject())
+
 
     @ExportMessage
     fun hasMembers(): Boolean {

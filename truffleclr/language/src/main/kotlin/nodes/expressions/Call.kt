@@ -5,6 +5,7 @@ import com.oracle.truffle.api.RootCallTarget
 import com.oracle.truffle.api.Truffle
 import com.oracle.truffle.api.frame.VirtualFrame
 import com.oracle.truffle.api.interop.InteropLibrary
+import com.oracle.truffle.api.interop.TruffleObject
 import com.oracle.truffle.api.nodes.DirectCallNode
 import com.oracle.truffle.api.nodes.ExplodeLoop
 import com.oracle.truffle.api.nodes.IndirectCallNode
@@ -13,7 +14,7 @@ import nodes.ExpressionNode
 import runtime.Method
 
 @NodeInfo(shortName = "call")
-class Call(var method: Method, @Children var args: Array<ExpressionNode>): ExpressionNode() {
+class Call(var method: TruffleObject, @Children var args: Array<ExpressionNode>): ExpressionNode() {
     @Child var interopLib = InteropLibrary.getFactory().createDispatched(5)
 
     @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.FULL_EXPLODE_UNTIL_RETURN)
@@ -22,13 +23,15 @@ class Call(var method: Method, @Children var args: Array<ExpressionNode>): Expre
         for(i in args.indices) {
             arguments[i] = args[i].execute(env)
         }
+
 //        if(CompilerDirectives.inInterpreter()) {
-//            println("${method.name} (${arguments.joinToString(",")})")
+//            println("${method} (${arguments.joinToString(",")})")
 //        }
+
         return interopLib.execute(method, *arguments)
     }
 
     override fun toString(): String {
-        return "(call ${method.name} ${args.joinToString(" ")})";
+        return "(call ${method} ${args.joinToString(" ")})";
     }
 }

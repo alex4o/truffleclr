@@ -1,4 +1,4 @@
-package parser.generic
+package metadata
 
 class IlAppDomain {
 

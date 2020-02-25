@@ -11,7 +11,7 @@ import nodes.ExpressionNode
 
 @NodeInfo(shortName = "ldloc")
 @NodeField(name = "slot", type = FrameSlot::class)
-abstract class LoadLocal(val index: Int) : ExpressionNode() {
+abstract class LoadLocal : ExpressionNode() {
     public abstract val slot: FrameSlot?
 
     override abstract fun execute(env: VirtualFrame): Any?
@@ -55,6 +55,6 @@ abstract class LoadLocal(val index: Int) : ExpressionNode() {
     }
 
     override fun toString(): String {
-        return "(ldloc $index)"
+        return "(ldloc ${slot?.identifier}})"
     }
 }

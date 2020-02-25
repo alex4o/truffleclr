@@ -1,11 +1,9 @@
 package parser.cil
 
 import Cil.CilParser
-import org.antlr.v4.runtime.ParserRuleContext
-import parser.generic.IlAppDomain
-import parser.generic.IlMethod
-import parser.generic.IlType
-import parser.generic.instruction.*
+import metadata.IlAppDomain
+import metadata.IlMethod
+import metadata.instruction.*
 
 class MethodVisitor(var appDomain: IlAppDomain, var method: IlMethod) : Cil.CilBaseVisitor<Any>() {
 
@@ -19,7 +17,7 @@ class MethodVisitor(var appDomain: IlAppDomain, var method: IlMethod) : Cil.CilB
     }
 
     override fun visitMethod_locals(ctx: CilParser.Method_localsContext): Any {
-        method.locals = ctx.sigArgs0().sigArgs1().sigArg().map { it.type().text }
+        method.locals = ctx.sigArgs0().sigArgs1().sigArg().map { it.type().getType(appDomain) }
         return method.locals
     }
 
@@ -47,6 +45,8 @@ class MethodVisitor(var appDomain: IlAppDomain, var method: IlMethod) : Cil.CilB
             }
             labelText = entryPoint
         }
+
+
 
         var instruction: Instruction = instr.run {
             when (this) {
@@ -92,6 +92,11 @@ class MethodVisitor(var appDomain: IlAppDomain, var method: IlMethod) : Cil.CilB
                 }
             }
         }
+
+        val split = instruction.instruction.split(".")
+
+        instruction.instructionArgs.addAll(split.drop(1))
+        instruction.instruction = split[0]
 
         method.instructions.add(instruction)
 

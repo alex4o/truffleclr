@@ -23,49 +23,6 @@ fun String.runCommand() {
  Tell what does not work
 */
 
-//
-//fun PolyglotContextImpl.myeval(languageId: String?, sourceImpl: Any): Value? {
-//
-//    val language: PolyglotLanguage = this.requirePublicLanguage(languageId)
-//    val prev: Any = engine.enterIfNeeded(this)
-//    val languageContext: PolyglotLanguageContext = getContext(language)
-//        languageContext.checkAccess(null)
-//        languageContext.ensureInitialized(null)
-//        val source = sourceImpl as com.oracle.truffle.api.source.Source
-//        val target = languageContext.parseCached(null, source, null)
-//        val result = target.call(*PolyglotImpl.EMPTY_ARGS)
-//        val hostValue: Value
-//        hostValue = try {
-//            languageContext.asValue(result)
-//        } catch (e: NullPointerException) {
-//            throw AssertionError(
-//                String.format(
-//                    "Language %s returned an invalid return value %s. Must be an interop value.",
-//                    languageId,
-//                    result
-//                ), e
-//            )
-//        } catch (e: ClassCastException) {
-//            throw AssertionError(
-//                String.format(
-//                    "Language %s returned an invalid return value %s. Must be an interop value.",
-//                    languageId,
-//                    result
-//                ), e
-//            )
-//        }
-//        if (source.isInteractive) {
-//            PolyglotContextImpl.printResult(languageContext, result)
-//        }
-//        hostValue
-//    } catch (e: Throwable) {
-//        throw PolyglotImpl.wrapGuestException(languageContext, e)
-//    } finally {
-//        engine.leaveIfNeeded(prev, this)
-//    }
-//}
-
-
 fun main() {
     val out = ByteArrayOutputStream()
 
@@ -93,7 +50,7 @@ fun main() {
         var execution = context.eval(
             Source.newBuilder(
                 "clr",
-                File("./test/loop.il")
+                File("./test/car_simple.il")
             ).build()
         )
 
@@ -103,6 +60,8 @@ fun main() {
 
     val bindings = context.getBindings("clr")
     val ProgramClass = bindings.getMember("HelloWorld.Program")
+    println(bindings.getMember("HelloWorld.Car").memberKeys)
+
     val mainMethod = ProgramClass.memberKeys.find { it.contains("Main(") }
     val main = ProgramClass.getMember(mainMethod)
 

@@ -6,17 +6,26 @@ import com.oracle.truffle.api.interop.TruffleObject
 import com.oracle.truffle.api.library.ExportLibrary
 import com.oracle.truffle.api.library.ExportMessage
 import runtime.util.Keys
+import sun.reflect.generics.tree.BaseType
 import types.CTSNull
+import util.iterate
+import util.mutableLazy
 
 @ExportLibrary(InteropLibrary::class)
-class Type: TruffleObject {
-    // TODO: Change to methods, fields, etc...
+class Type(val name: String, val baseType: Type?): TruffleObject {
+    // TODO: a single field will be a single type you wont be able to have two fields with the same names and different types
     @JvmField
-    val members: MutableMap<String, Method> = mutableMapOf()
-    var name: String = ""
+    val members: MutableMap<String, TruffleObject> = mutableMapOf()
 
-    lateinit var info: TypeInfo
-    lateinit var baseType: Type
+    val info: TypeInfo by lazy {
+        if (CoreTypeInfo.typeByName.contains(name)) {
+            // Dealing with a core type, use type table
+            CoreTypeInfo.typeByName.getValue(name)
+        } else {
+            // This goes down the type tree to find the base TypeInfo
+            baseType!!.info
+        }
+    }
 
     @ExportMessage
     fun hasMembers(): Boolean {
@@ -25,7 +34,7 @@ class Type: TruffleObject {
 
     @ExportMessage
     @CompilerDirectives.TruffleBoundary
-    fun readMember(member: String): Method {
+    fun readMember(member: String): TruffleObject {
         return members.getValue(member)
     }
 

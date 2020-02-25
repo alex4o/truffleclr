@@ -1,3 +1,3 @@
-package parser.generic
+package metadata
 
 data class IlModule(val name: String)

@@ -15,6 +15,8 @@ import runtime.Method
 @NodeInfo(shortName = "callvirt")
 class CallVirtual(var methodName: String, @Children var args: Array<ExpressionNode>): ExpressionNode() {
 
+    // TODO: Add type checking
+
     @Child var callNode: IndirectCallNode = Truffle.getRuntime().createIndirectCallNode()
 //    @Child var callNode: DirectCallNode = Truffle.getRuntime().createDirectCallNode(callTarget)
     @Child var interopLib = InteropLibrary.getFactory().createDispatched(5)
