@@ -9,6 +9,7 @@ class IlType(var name: String, val type: CorElementType) {
     var fields: MutableMap<String, IlField> = mutableMapOf()
     var attribtes: Set<String> = setOf()
     var extends: IlType? = null
+    var polyglot: Boolean = false
 
     var rank: Int = 0
     lateinit var elementClass: IlType

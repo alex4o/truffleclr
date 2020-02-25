@@ -29,6 +29,18 @@ import java.nio.charset.Charset
 class TEEST {
     @JvmField
     var hello: Int = 33
+
+    companion object {
+        @JvmStatic
+        fun test() {
+            println("test")
+        }
+    }
+
+
+    fun run() {
+        println("lolo")
+    }
 }
 
 @NodeInfo(language = "TestLang", description = "expression", shortName = "")

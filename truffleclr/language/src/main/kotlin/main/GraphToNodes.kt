@@ -992,12 +992,12 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>, d: Int = 0): Block {
                     val node = if (compileNode.method.memberOf == null) {
                         error("Expression 'compileNode.method.memberOf' must not be null")
                     } else {
-//                    val callee = compileNode.method.memberOf!!.compileNode.methods.getValue("${it.method.name}(${it.method.arguments.joinToString(",")})")
-//                    val clr = language as Clr
-//                    val method = clr.methods.functions.getValue(it.method.toString())
+                        val method = context.types.getValue(it.method.memberOf!!.fullName).members.getValue(
+                            it.method.toString()
+                        )
                         CallVirtual(
-                            compileNode.method.toString(),
-                            args.map { it.second }.toTypedArray()
+                            method,
+                            (listOf(thisValue) + args.map { it.second }.reversed()).toTypedArray()
                         )
                     }
 

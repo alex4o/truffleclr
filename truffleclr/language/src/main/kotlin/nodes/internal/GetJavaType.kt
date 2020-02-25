@@ -2,6 +2,7 @@ package nodes.internal
 
 import com.oracle.truffle.api.CompilerDirectives
 import com.oracle.truffle.api.frame.VirtualFrame
+import com.oracle.truffle.api.interop.InteropLibrary
 import com.oracle.truffle.api.nodes.NodeInfo
 import main.Clr
 import nodes.ExpressionNode
@@ -17,7 +18,8 @@ class GetJavaType() :
     }
 
     override fun execute(env: VirtualFrame): Any? {
-        run(env.arguments[0] as String)
+        
+        return run(env.arguments[0] as String)
     }
 
     @CompilerDirectives.TruffleBoundary

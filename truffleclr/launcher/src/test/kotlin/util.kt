@@ -5,7 +5,7 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 
 var builder =  Context.newBuilder().allowAllAccess(true)
-fun testRunProgram(file: String, klass: String, method: String, args: Array<String> = arrayOf()): List<String> {
+fun testRunProgram(file: String, klass: String, args: Array<String> = arrayOf()): List<String> {
     val out = ByteArrayOutputStream()
 
     val context = builder.out(out).build()
@@ -19,7 +19,9 @@ fun testRunProgram(file: String, klass: String, method: String, args: Array<Stri
 
     val bindings = context.getBindings("clr")
     val ProgramClass = bindings.getMember(klass)
-    val main = ProgramClass.getMember(method)
+
+    val mainMethod = ProgramClass.memberKeys.find { it.contains("Main(") }
+    val main = ProgramClass.getMember(mainMethod)
 
     main.execute(args)
     context.close()

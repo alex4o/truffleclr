@@ -15,6 +15,7 @@ import com.oracle.truffle.api.instrumentation.StandardTags
 import com.oracle.truffle.api.interop.InteropLibrary
 import org.graalvm.polyglot.Value
 import java.util.*
+import kotlin.system.exitProcess
 
 @TruffleLanguage.Registration(
     id = "test",
@@ -80,12 +81,19 @@ class Language : TruffleLanguage<Context>() {
 
 
         val t = Context.envg.lookupHostSymbol(TEEST::class.java.name)
+
         val aho = Context.envg.asGuestValue(TEEST())
 
-        Context.envg.
+        println(interopLibrary.getMembers(interopLibrary.instantiate(t)))
 
-        println(aho)
+        val mems = interopLibrary.getMembers(t)
+        for(i in 0 until interopLibrary.getArraySize(mems)) {
+            println( interopLibrary.readArrayElement(mems, i)  )
 
+        }
+
+        println(interopLibrary.execute(interopLibrary.readMember(t, "test")))
+        exitProcess(0)
         println( interopLibrary.readMember(aho, "hello") )
 
 

@@ -25,6 +25,12 @@ class ClassVisitor(var appDomain: IlAppDomain, var type: IlType) : Cil.CilBaseVi
         }
     }
 
+    override fun visitCustomAttrDecl(ctx: CilParser.CustomAttrDeclContext) {
+        if(ctx.text.contains("Polyglot")) {
+            type.polyglot = true
+        }
+    }
+
     override fun visitClass_method(ctx: CilParser.Class_methodContext): Any {
         val name: String = match(ctx.methodHead().methodName()) {
             case(this.dottedName()) {
