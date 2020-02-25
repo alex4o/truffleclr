@@ -165,11 +165,12 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>, d: Int = 0): Block {
                 if (it.instruction == "newobj" && it is InstructionMethod) {
                     val args = it.method.arguments.map { stack.pop() }
 
-                    val ctor = context.types.getValue(it.method.memberOf!!.fullName).members.getValue(
+                    val type = context.types.getValue(it.method.memberOf!!.fullName)
+                    val ctor = type.members.getValue(
                         it.method.toString()
                     )
 
-                    val node = NewObject(args.map { it.second }.toTypedArray(), ctor)
+                    val node = NewObject(args.map { it.second }.toTypedArray(), ctor, type.shape)
                     stack.push(Pair("Ref", node))
                 }
                 if (it.instruction == "isinst" && it is InstructionType) {

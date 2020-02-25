@@ -3,6 +3,7 @@ package main.compilationNodes
 import com.oracle.truffle.api.CompilerDirectives
 import com.oracle.truffle.api.Truffle
 import com.oracle.truffle.api.TruffleLanguage
+import com.oracle.truffle.api.`object`.Property
 import com.oracle.truffle.api.frame.FrameDescriptor
 import com.oracle.truffle.api.frame.FrameSlot
 import com.oracle.truffle.api.frame.VirtualFrame
@@ -18,10 +19,8 @@ import nodes.statements.StoreLocalNodeGen
 import metadata.IlAppDomain
 import metadata.IlMethod
 import metadata.IlType
-import runtime.ClrContext
-import runtime.Field
-import runtime.Method
-import runtime.Type
+import runtime.*
+import sun.security.provider.SHA
 import java.util.*
 
 class Initialize(
@@ -52,10 +51,41 @@ class Initialize(
 
                 val type = context.types.getValue(v.fullName)
 
+                type.shape = if(type.baseType != null) {
+                    type.baseType.shape.createSeparateShape(null)
+                }else{
+                    context.baseObject
+                }
+
+                val allocator = type.shape.layout.createAllocator()
+
                 for(field in v.fields.values) {
-                    // TODO: Setup the shape for each type here, by recursively going through parents and adding all of their fields to it.
+                    val location = if(field.type.isPrimiteive) {
+                        allocator.locationForType(when(field.type.type) {
+                            CorElementType.BOOLEAN -> Boolean::class.java
+                            CorElementType.U1 -> Byte::class.java
+                            CorElementType.CHAR -> Short::class.java
+                            CorElementType.I4 -> Int::class.java
+                            CorElementType.U4 -> Int::class.java
+                            CorElementType.I8 -> Long::class.java
+                            CorElementType.U8 -> Long::class.java
+                            CorElementType.R4 -> Float::class.java
+                            CorElementType.R8 -> Double::class.java
+                            CorElementType.STRING -> String::class.java
+                            else -> error("Unexpected type: ${field.type.type}")
+                        })
+                    }else{
+                        allocator.locationForType(Any::class.java)
+                    }
+
+                    type.shape = type.shape.addProperty(Property.create(field.name, location, 0))
+
                     type.members[field.name] = Field(field, context)
                 }
+
+
+
+
 
                 methodQueue.addAll(v.methods.values)
 

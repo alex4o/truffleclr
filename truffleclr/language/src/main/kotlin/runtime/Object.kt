@@ -6,6 +6,7 @@ import com.oracle.truffle.api.`object`.DynamicObject
 import com.oracle.truffle.api.`object`.Location
 import com.oracle.truffle.api.`object`.ObjectType
 import com.oracle.truffle.api.`object`.Shape
+import com.oracle.truffle.api.dsl.Cached
 import com.oracle.truffle.api.dsl.Specialization
 import com.oracle.truffle.api.interop.InteropLibrary
 import com.oracle.truffle.api.interop.UnknownIdentifierException
@@ -66,20 +67,35 @@ class ClrObject : ObjectType() {
     @ExportMessage()
     abstract class WriteMember {
         companion object {
-            @Specialization
+            @Specialization(
+                limit = "5",
+                guards = [
+                    "cachedKey.equals(key)",
+                    "shapeCheck(shape, receiver)",
+                    "location != null"
+                ], assumptions = [
+                "shape.getValidAssumption()"
+            ])
             @JvmStatic
-            fun write(receiver: DynamicObject, key: String, value: Any) {
-                val location = lookupLocation(receiver.shape, key)
-                if (location == null) {
-                    val prop = receiver.shape.defineProperty(key, value, 0);
-                    receiver.setShapeAndGrow(receiver.shape, prop)
-                    receiver.set(key, value)
-
-                } else {
-                    location.set(receiver, value)
-                }
+            fun doCached(receiver: DynamicObject, key: String, value: Any,
+                         @Cached("key") cachedKey: String,
+                         @Cached("receiver.getShape()") shape: Shape,
+                         @Cached("lookupLocation(shape, key)") location: Location) {
+                location.set(receiver, value)
             }
 
+            @Specialization(replaces = [ "doCached" ])
+            @JvmStatic
+            fun doUncached(receiver: DynamicObject, key: String, value: Any) {
+                lookupLocation(receiver.shape, key)!!.set(receiver, value)
+            }
+
+            @JvmStatic
+            fun shapeCheck(shape: Shape?, receiver: DynamicObject?): Boolean {
+                return shape != null && shape.check(receiver)
+            }
+
+            @JvmStatic
             fun lookupLocation(
                 shape: Shape,
                 name: String?

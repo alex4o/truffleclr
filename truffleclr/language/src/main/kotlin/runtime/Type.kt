@@ -1,6 +1,7 @@
 package runtime
 
 import com.oracle.truffle.api.CompilerDirectives
+import com.oracle.truffle.api.`object`.Shape
 import com.oracle.truffle.api.interop.InteropLibrary
 import com.oracle.truffle.api.interop.TruffleObject
 import com.oracle.truffle.api.library.ExportLibrary
@@ -26,6 +27,8 @@ class Type(val name: String, val baseType: Type?): TruffleObject {
             baseType!!.info
         }
     }
+
+    lateinit var shape: Shape
 
     @ExportMessage
     fun hasMembers(): Boolean {
