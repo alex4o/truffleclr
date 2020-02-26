@@ -42,7 +42,15 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>, d: Int = 0): Block {
                 }
                 if (it.instruction == "dup" && it is InstructionNone) {
                     val s0 = stack.pop()
-                    val slot = compileNode.genDupSlot()
+
+                    val slot = compileNode.genDupSlot(
+                        if (s0.first == "System.Int32") {
+                            FrameSlotKind.Int
+                        } else {
+                            FrameSlotKind.Object
+                        }
+                    )
+
 
                     res.add(StoreLocalNodeGen.create(s0.second, slot))
                     stack.push(Pair(s0.first, LoadLocalNodeGen.create(slot)))
@@ -98,11 +106,10 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>, d: Int = 0): Block {
                     stack.push(Pair(s0.first, node))
                 }
                 if (it.instruction == "div" && it is InstructionNone) {
-                    TODO("not implemented")
                     val s0 = stack.pop()
                     val s1 = stack.pop()
-                    //val node = null
-                    //stack.push(Pair(s0.first, node))
+                    val node = DivideNodeGen.create(s1.second, s0.second)
+                    stack.push(Pair(s0.first, node))
                 }
                 if (it.instruction == "rem" && it is InstructionNone) {
                     val s0 = stack.pop()
@@ -151,10 +158,9 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>, d: Int = 0): Block {
                     //stack.push(Pair(s0.first, node))
                 }
                 if (it.instruction == "neg" && it is InstructionNone) {
-                    TODO("not implemented")
                     val s0 = stack.pop()
-                    //val node = null
-                    //stack.push(Pair(s0.first, node))
+                    val node = NegativeNodeGen.create(s0.second)
+                    stack.push(Pair(s0.first, node))
                 }
                 if (it.instruction == "not" && it is InstructionNone) {
                     TODO("not implemented")
@@ -374,7 +380,7 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>, d: Int = 0): Block {
                         it.value
                     } else if (it is InstructionVarS) {
                         it.id.drop(2).toInt()
-                    } else{
+                    } else {
                         error("Wrong instruction type")
                     }
 
@@ -430,28 +436,30 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>, d: Int = 0): Block {
                     var number = if (arg == "m1") {
                         -1
                     } else {
-                        arg.toLong()
+                        arg.toInt()
                     }
 
-                    val node = LoadConst(number, Int::class)
+                    val node = LoadConst(number)
                     stack.push(Pair("System.Int32", node))
                 }
 //types: "ldc.i4.s","ldc.i4"
                 if (it.instruction == "ldc" && it is InstructionI) {
-                    val node = LoadConst(it.arg.toLong(), Int::class)
+                    val node = LoadConst(it.arg)
                     stack.push(Pair("System.Int32", node))
                 }
 //types: "ldc.i8"
                 if (it.instruction == "ldc" && it is InstructionI8) {
-                    val node = LoadConst(it.arg, Long::class)
-                    stack.push(Pair("System.Int32", node))
+                    val node = LoadConst(it.arg)
+                    stack.push(Pair("System.Int64", node))
                 }
 //types: "ldc.r4","ldc.r8"
                 if (it.instruction == "ldc" && it is InstructionR) {
-                    TODO("not implemented")
-
-                    //val node = null
-                    //stack.push(Pair("float32", node))
+                    val node = LoadConst(it.arg)
+                    stack.push(Pair("System.Float", node))
+                }
+                if (it.instruction == "ldc" && it is InstructionR8) {
+                    val node = LoadConst(it.arg)
+                    stack.push(Pair("System.Double", node))
                 }
 //types: "ldind.i1","ldind.u1","ldind.i2","ldind.u2","ldind.i4","ldind.u4","ldind.i8","ldind.i","ldind.r4","ldind.r8","ldind.ref"
                 if (it.instruction == "ldind" && it is InstructionNone) {
@@ -605,9 +613,9 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>, d: Int = 0): Block {
                     val arg = it.instructionArgs[0]
                     val number = if (it is InstructionNone) {
                         arg.toInt()
-                    } else if(it is InstructionVar) {
+                    } else if (it is InstructionVar) {
                         it.value
-                    } else if(it is InstructionVarS) {
+                    } else if (it is InstructionVarS) {
                         it.id.drop(2).toInt()
                     } else {
                         error("")
@@ -701,11 +709,12 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>, d: Int = 0): Block {
                         "i1" -> "System.Byte"
                         "i4" -> "System.Int32"
                         "i" -> "System.Int32"
+                        "ref" -> "System.Object"
                         else -> error("Unkown type detectd")
                     }
                     val s2 = stack.pop()
                     if (s2.first != suffix) {
-                        error("")
+//                        error("")
                     }
                     val s1 = stack.pop()
                     if (s1.first != "System.Int32") {
@@ -923,7 +932,7 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>, d: Int = 0): Block {
                     val args = it.method.arguments.map { stack.pop() }
 
                     val thisValue = if (it.method.static) {
-                        LoadConst(0, Long::class)
+                        LoadConst(0)
                     } else {
                         stack.pop().second
                     }
@@ -984,7 +993,7 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>, d: Int = 0): Block {
                     val args = it.method.arguments.map { stack.pop() }
 
                     val thisValue = if (it.method.static) {
-                        LoadConst(0, Long::class)
+                        LoadConst(0)
                     } else {
                         stack.pop().second
                     }
@@ -1123,7 +1132,7 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>, d: Int = 0): Block {
 //            error("Stack should be empty at the end of a block")
         }
 
-        if(!stack.empty()) {
+        if (!stack.empty()) {
             error("Stack not empty and doesn't finish with a jump")
         }
 

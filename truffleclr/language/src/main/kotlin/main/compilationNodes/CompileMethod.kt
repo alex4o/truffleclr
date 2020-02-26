@@ -79,9 +79,9 @@ class CompileMethod(val method: IlMethod, val initialize: Initialize, val langua
     }.filter { it.kind != FrameSlotKind.Illegal }
 
     var dupCount = 0
-    fun genDupSlot(): FrameSlot {
+    fun genDupSlot(kind: FrameSlotKind): FrameSlot {
 //        return frameDescriptor.findOrAddFrameSlot("dup$dupCount", FrameSlotKind.Object)
-        return frameDescriptor.findOrAddFrameSlot("dup$dupCount", FrameSlotKind.Object)
+        return frameDescriptor.findOrAddFrameSlot("dup${dupCount++}", kind)
     }
 
     private fun body(dispatchNode: DispatchNode): MethodBody {

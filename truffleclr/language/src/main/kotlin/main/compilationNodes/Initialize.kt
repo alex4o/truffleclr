@@ -51,30 +51,52 @@ class Initialize(
 
                 val type = context.types.getValue(v.fullName)
 
-                type.shape = if(type.baseType != null) {
+                type.shape = if (type.baseType != null) {
                     type.baseType.shape.createSeparateShape(null)
-                }else{
+                } else {
                     context.baseObject
                 }
 
                 val allocator = type.shape.layout.createAllocator()
 
-                for(field in v.fields.values) {
-                    val location = if(field.type.isPrimiteive) {
-                        allocator.locationForType(when(field.type.type) {
-                            CorElementType.BOOLEAN -> Boolean::class.java
-                            CorElementType.U1 -> Byte::class.java
-                            CorElementType.CHAR -> Short::class.java
-                            CorElementType.I4 -> Int::class.java
-                            CorElementType.U4 -> Int::class.java
-                            CorElementType.I8 -> Long::class.java
-                            CorElementType.U8 -> Long::class.java
-                            CorElementType.R4 -> Float::class.java
-                            CorElementType.R8 -> Double::class.java
-                            CorElementType.STRING -> String::class.java
-                            else -> error("Unexpected type: ${field.type.type}")
-                        })
-                    }else{
+                for (field in v.fields.values) {
+                    val location = if (field.type.isPrimiteive) {
+                        allocator.locationForType(
+                            when (field.type.type) {
+                                CorElementType.BOOLEAN -> Boolean::class.java
+                                CorElementType.U1 -> Byte::class.java
+                                CorElementType.CHAR -> Short::class.java
+                                CorElementType.I4 -> Int::class.java
+                                CorElementType.U4 -> Int::class.java
+                                CorElementType.I8 -> Long::class.java
+                                CorElementType.U8 -> Long::class.java
+                                CorElementType.R4 -> Float::class.java
+                                CorElementType.R8 -> Double::class.java
+                                CorElementType.STRING -> String::class.java
+                                else -> error("Unexpected type: ${field.type.type}")
+                            }
+                        )
+                    } else if (field.type.isArray) {
+                        if (field.type.elementClass.isPrimiteive) {
+                            allocator.locationForType(
+                                when (field.type.elementClass.type) {
+                                    CorElementType.BOOLEAN -> BooleanArray::class.java
+                                    CorElementType.U1 -> ByteArray::class.java
+                                    CorElementType.CHAR -> ShortArray::class.java
+                                    CorElementType.I4 -> IntArray::class.java
+                                    CorElementType.U4 -> IntArray::class.java
+                                    CorElementType.I8 -> LongArray::class.java
+                                    CorElementType.U8 -> LongArray::class.java
+                                    CorElementType.R4 -> FloatArray::class.java
+                                    CorElementType.R8 -> DoubleArray::class.java
+                                    CorElementType.STRING -> Array<String>::class.java
+                                    else -> error("Unexpected array type: ${field.type.type}")
+                                }
+                            )
+                        } else {
+                            allocator.locationForType(Array<Any>::class.java)
+                        }
+                    } else {
                         allocator.locationForType(Any::class.java)
                     }
 
@@ -91,7 +113,7 @@ class Initialize(
 
                 compileChildren.addAll(v.methods.values
                     .map {
-                        type.members[it.toString()] = Method(it,null)
+                        type.members[it.toString()] = Method(it, null)
                         CompileMethod(it, this, language, type)
                     })
             }

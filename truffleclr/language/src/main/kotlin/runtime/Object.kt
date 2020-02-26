@@ -84,7 +84,9 @@ class ClrObject : ObjectType() {
                 location.set(receiver, value)
             }
 
-            @Specialization(replaces = [ "doCached" ])
+            @Specialization(
+                replaces = [ "doCached" ]
+            )
             @JvmStatic
             fun doUncached(receiver: DynamicObject, key: String, value: Any) {
                 lookupLocation(receiver.shape, key)!!.set(receiver, value)

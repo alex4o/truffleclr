@@ -9,6 +9,7 @@ import runtime.ClrContext
 import java.io.File
 
 fun main() {
+    println("test")
     val clr = Clr()
 
     val appDomain = IlAppDomain()
@@ -17,7 +18,7 @@ fun main() {
             File("./language/src/main/resources/System.Private.CoreLib.il").toPath()
         )
     )
-    clr.parseFile(appDomain, CharStreams.fromFileName("./test/loop.il"))
+    clr.parseFile(appDomain, CharStreams.fromFileName("./test/n_body.il"))
 
     val context = ClrContext()
     clr.tmp = context

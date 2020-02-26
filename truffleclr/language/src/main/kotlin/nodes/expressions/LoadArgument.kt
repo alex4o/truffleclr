@@ -9,6 +9,7 @@ import com.oracle.truffle.api.frame.VirtualFrame
 import com.oracle.truffle.api.nodes.NodeInfo
 import nodes.ExpressionNode
 
+//TODO: Spliting the arguments and locals is a bad design decsion
 @NodeInfo(shortName = "ldarg")
 @NodeField(name = "slot", type = FrameSlot::class)
 abstract class LoadArgument(@CompilationFinal val index: Int) : ExpressionNode() {
@@ -24,6 +25,16 @@ abstract class LoadArgument(@CompilationFinal val index: Int) : ExpressionNode()
     @Specialization(guards = ["isBoolean(env)"])
     override fun executeBool(env: VirtualFrame): Boolean {
         return env.getBoolean(slot)
+    }
+
+    @Specialization(guards = ["isFloat(env)"])
+    override fun executeFloat(env: VirtualFrame): Float {
+        return env.getFloat(slot)
+    }
+
+    @Specialization(guards = ["isDouble(env)"])
+    override fun executeDouble(env: VirtualFrame): Double {
+        return env.getDouble(slot)
     }
 
     @Specialization(guards = ["isObject(env)"])

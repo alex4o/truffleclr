@@ -25,7 +25,17 @@ abstract class LoadLocal : ExpressionNode() {
         return env.getBoolean(slot)
     }
 
-    @Specialization(guards = ["isObject(env)"], replaces = ["executeInt", "executeBool"])
+    @Specialization(guards = ["isFloat(env)"])
+    override fun executeFloat(env: VirtualFrame): Float {
+        return env.getFloat(slot)
+    }
+
+    @Specialization(guards = ["isDouble(env)"])
+    override fun executeDouble(env: VirtualFrame): Double {
+        return env.getDouble(slot)
+    }
+
+    @Specialization(guards = ["isObject(env)"], replaces = ["executeInt", "executeFloat", "executeDouble", "executeBool"])
     fun executeObject(env: VirtualFrame): Any? {
         return env.getObject(slot)
     }
@@ -55,6 +65,6 @@ abstract class LoadLocal : ExpressionNode() {
     }
 
     override fun toString(): String {
-        return "(ldloc ${slot?.identifier}})"
+        return "(ldloc ${slot?.identifier} ${slot?.kind})"
     }
 }

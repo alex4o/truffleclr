@@ -27,13 +27,13 @@
   .ver 1:0:0:0
 }
 .module System.Private.CoreLib.dll
-// MVID: {37c6d96a-5624-4cdd-8ec9-2b13f81bd8d8}
+// MVID: {3df74045-f678-4cca-abfc-01d0562c6e04}
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x00007F143C77C000
+// Image base: 0x00007F0B95F70000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -686,6 +686,14 @@
 
 } // end of class System.Char
 
+.class public sequential ansi sealed beforefieldinit System.Double
+       extends System.ValueType
+{
+  .custom instance void System.Runtime.CompilerServices.IsReadOnlyAttribute::.ctor()
+           = {}
+  .field private initonly float64 m_value
+} // end of class System.Double
+
 .class public abstract auto ansi beforefieldinit System.Enum
        extends System.ValueType
 {
@@ -937,6 +945,27 @@
 
 } // end of class System.Int32
 
+.class private auto ansi beforefieldinit System.Math
+       extends System.Object
+{
+  .method public hidebysig static float64 
+          Sqrt(float64 o) cil managed internalcall
+  {
+  } // end of method Math::Sqrt
+
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor() cil managed
+  {
+    // Code size       8 (0x8)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  call       instance void System.Object::.ctor()
+    IL_0006:  nop
+    IL_0007:  ret
+  } // end of method Math::.ctor
+
+} // end of class System.Math
+
 .class private auto ansi beforefieldinit System.Console
        extends System.Object
 {
@@ -969,6 +998,10 @@
   } // end of method Console::WriteLine
 
   .method public hidebysig static void  WriteLine(bool b) cil managed internalcall
+  {
+  } // end of method Console::WriteLine
+
+  .method public hidebysig static void  WriteLine(float64 b) cil managed internalcall
   {
   } // end of method Console::WriteLine
 

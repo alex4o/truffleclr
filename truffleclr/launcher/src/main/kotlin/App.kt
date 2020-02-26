@@ -51,7 +51,7 @@ fun main() {
         var execution = context.eval(
             Source.newBuilder(
                 "clr",
-                File("./test/vehicale_simple.il")
+                File("./test/n_body.il")
             ).build()
         )
 
@@ -61,7 +61,7 @@ fun main() {
 
     val bindings = context.getBindings("clr")
     val ProgramClass = bindings.getMember("HelloWorld.Program")
-    println(bindings.getMember("HelloWorld.Car").memberKeys)
+//    println(bindings.getMember("HelloWorld.Car").memberKeys)
 
     val mainMethod = ProgramClass.memberKeys.find { it.contains("Main(") }
     val main = ProgramClass.getMember(mainMethod)
@@ -74,13 +74,15 @@ fun main() {
 //        println("Step #$i completed in: ${time}ms")
 //    }
 //    println()
-
-        val time = measureTimeMillis {
-            main.execute(0)
-            println(out.toString("utf-8"))
+        try {
+            val time = measureTimeMillis {
+                main.execute(0)
+                println(out.toString("utf-8"))
+            }
+            println("Final completed in: ${time}ms")
+        }catch (e: FrameSlotTypeException) {
+            e.printStackTrace()
         }
-        println("Final completed in: ${time}ms")
-
 
 }
 

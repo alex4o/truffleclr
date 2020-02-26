@@ -14,6 +14,11 @@ import nodes.StatementNode
 )
 abstract class StoreElement() : StatementNode() {
     @Specialization
+    fun store(array: Array<Any>, index: Int, value: Any) {
+        array[index] = value
+    }
+
+    @Specialization
     fun store(array: IntArray, index: Int, value: Int) {
         array[index] = value
     }

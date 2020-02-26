@@ -46,6 +46,19 @@ abstract class StoreLocal: ExpressionNode() {
         return value;
     }
 
+    @Specialization(guards = ["isFloat(env)"])
+    protected fun writeFloat(env: VirtualFrame, value: Float): Any? {
+        env.setFloat(slot, value);
+        return value;
+    }
+
+
+    @Specialization(guards = ["isDouble(env)"])
+    protected fun writeDouble(env: VirtualFrame, value: Double): Any? {
+        env.setDouble(slot, value);
+        return value;
+    }
+
     @Specialization(guards = ["isObject(env)"])
     protected fun writeObject(env: VirtualFrame, value: Any): Any? {
         env.setObject(slot, value);
@@ -67,13 +80,23 @@ abstract class StoreLocal: ExpressionNode() {
         return kind == FrameSlotKind.Boolean
     }
 
+    protected fun isFloat(env: VirtualFrame): Boolean {
+        val kind = env.frameDescriptor.getFrameSlotKind(slot)
+        return kind == FrameSlotKind.Float
+    }
+
+    protected fun isDouble(env: VirtualFrame): Boolean {
+        val kind = env.frameDescriptor.getFrameSlotKind(slot)
+        return kind == FrameSlotKind.Double
+    }
+
     protected fun isObject(env: VirtualFrame): Boolean {
         val kind = env.frameDescriptor.getFrameSlotKind(slot)
         return kind == FrameSlotKind.Object
     }
 
     override fun toString(): String {
-        return "(stloc ${slot!!.identifier} ${this.children.joinToString(" ")})"
+        return "(stloc ${slot!!.kind} ${slot!!.identifier} ${this.children.joinToString(" ")})"
     }
 
 }

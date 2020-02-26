@@ -12,6 +12,7 @@ object InternalTable {
         "System.Void System.Console::WriteLine(System.Int32)" to ConsoleWriteLine(),
         "System.Void System.Console::WriteLine(System.Boolean)" to ConsoleWriteLine(),
         "System.Void System.Console::WriteLine(System.String)" to ConsoleWriteLine(),
+        "System.Void System.Console::WriteLine(System.Double)" to ConsoleWriteLine(),
         "System.Void System.Console::WriteLine(System.Object)" to ConsoleWriteLine(),
         "System.Void System.Console::WriteLine()" to ConsoleWriteLine0(),
         "System.Boolean System.Convert::ToBoolean(System.Int32)" to ToBoolean(),
@@ -19,7 +20,8 @@ object InternalTable {
         "System.Byte[] System.IO.File::ReadAllBytes(System.String)" to ReadAllBytes(),
         "System.Boolean System.ValueType::CanCompareBits(System.Object)" to CanCompareBits(),
         "System.Boolean System.ValueType::FastEqualsCheck(System.Object,System.Object)" to FastEqualsCheck(),
-        "System.Int32 System.ValueType::GetHashCode()" to GetHashCode()
+        "System.Int32 System.ValueType::GetHashCode()" to GetHashCode(),
+        "System.Double System.Math::Sqrt(System.Double)" to Sqrt()
     )
 
 }

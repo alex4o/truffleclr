@@ -27,6 +27,10 @@ namespace System
         [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern void WriteLine(Boolean b);
 
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern void WriteLine(Double b);
+
         [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern void WriteLine();
 

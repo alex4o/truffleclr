@@ -87,6 +87,21 @@ class MethodVisitor(var appDomain: IlAppDomain, var method: IlMethod) : Cil.CilB
                         InstructionVar(INSTR_VAR().text, int32().text.toInt())
                     }
                 }
+                is CilParser.Instr_rContext -> {
+                    if(INSTR_R().text.endsWith(".r8")) {
+                        InstructionR8(INSTR_R().text, if(f != null) {
+                            f.text.toDouble()
+                        }else{
+                            error("")
+                        })
+                    }else{
+                        InstructionR(INSTR_R().text, if(f != null) {
+                            f.text.toFloat()
+                        }else{
+                            error("")
+                        })
+                    }
+                }
                 else -> {
                     throw Exception("Unknown instruction detected: ${instr.text}")
                 }

@@ -82,16 +82,18 @@ fun TypeContext.toClassName(): String {
             "System.Object"
         }
         is TypePrimitiveContext -> {
-            when (this.text) {
+            when (text.trim()) {
                 "bool" -> "System.Boolean"
                 "uint8" -> "System.Byte"
                 "char" -> "System.Char"
                 "int32" -> "System.Int32"
                 "uint32" -> "System.UInt32"
-                "float" -> "System.Float"
-                "double" -> "System.Double"
+                "float32" -> "System.Float"
+                "float64" -> "System.Double"
                 "string" -> "System.String"
-                else -> error("Encountered unknown primitive type: ${this.text}")
+                else -> {
+                    error("Encountered unknown primitive type: ${this.text}")
+                }
             }
         }
         is TypeValueTypeContext -> {

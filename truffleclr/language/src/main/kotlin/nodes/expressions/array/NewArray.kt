@@ -25,8 +25,8 @@ abstract class NewArray(@CompilerDirectives.CompilationFinal @JvmField val type:
         U8 -> ({ ULongArray(it) })
         R4 -> ({ FloatArray(it) })
         R8 -> ({ DoubleArray(it) })
-        STRING -> ({ emptyArray<String>() })
-        PTR -> ({ emptyArray<Any>() })
+        STRING -> ({ arrayOfNulls<String>(it) })
+        PTR -> ({ arrayOfNulls<Any>(it) })
         BYREF -> TODO()
         VALUETYPE -> TODO()
         CLASS -> TODO()
@@ -39,7 +39,7 @@ abstract class NewArray(@CompilerDirectives.CompilationFinal @JvmField val type:
         U -> TODO()
         R_UNSUPPORTED -> TODO()
         FNPTR -> TODO()
-        OBJECT -> TODO()
+        OBJECT -> ({ arrayOfNulls<Any>(it) })
         SZARRAY -> TODO()
         MVAR -> TODO()
         CMOD_REQD -> TODO()
@@ -54,6 +54,6 @@ abstract class NewArray(@CompilerDirectives.CompilationFinal @JvmField val type:
     }
 
     override fun toString(): String {
-        return "(newarr int32 ${this.children.joinToString(" ")})"
+        return "(newarr $type ${this.children.joinToString(" ")})"
     }
 }

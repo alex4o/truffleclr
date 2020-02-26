@@ -19,8 +19,6 @@ abstract class StoreArgument(val index: Int): ExpressionNode() {
 
     @Specialization(guards = ["isLong(env)"])
     protected fun writeLong(env: VirtualFrame): Long {
-//        env.frameDescriptor.setFrameSlotKind(slot, FrameSlotKind.Long);
-
         val value = env.arguments[index] as Long
         env.setLong(slot, value);
         return value;
@@ -28,7 +26,6 @@ abstract class StoreArgument(val index: Int): ExpressionNode() {
 
     @Specialization(guards = ["isBoolean(env)"])
     protected fun writeBoolean(env: VirtualFrame): Boolean {
-//        env.frameDescriptor.setFrameSlotKind(slot, FrameSlotKind.Long);
         val value =  TypeSystemGen.expectBoolean(env.arguments[index])
         env.setBoolean(slot, value);
         return value;
@@ -36,15 +33,28 @@ abstract class StoreArgument(val index: Int): ExpressionNode() {
 
     @Specialization(guards = ["isInt(env)"])
     protected fun writeInt(env: VirtualFrame): Int {
-//        env.frameDescriptor.setFrameSlotKind(slot, FrameSlotKind.Long);
         val value = TypeSystemGen.expectInteger(env.arguments[index])
         env.setInt(slot, value);
         return value;
     }
 
+    @Specialization(guards = ["isFloat(env)"])
+    protected fun writeFloat(env: VirtualFrame): Any? {
+        val value = TypeSystemGen.expectFloat(env.arguments[index])
+        env.setFloat(slot, value);
+        return value;
+    }
+
+
+    @Specialization(guards = ["isDouble(env)"])
+    protected fun writeDouble(env: VirtualFrame): Any? {
+        val value = TypeSystemGen.expectDouble(env.arguments[index])
+        env.setDouble(slot, value);
+        return value;
+    }
+
     @Specialization(guards = ["isObject(env)"])
     protected fun writeObject(env: VirtualFrame): Any {
-//        env.frameDescriptor.setFrameSlotKind(slot, FrameSlotKind.Long);
         val value = env.arguments[index]
         env.setObject(slot, value);
         return value;
@@ -64,6 +74,17 @@ abstract class StoreArgument(val index: Int): ExpressionNode() {
         val kind = env.frameDescriptor.getFrameSlotKind(slot)
         return kind == FrameSlotKind.Boolean
     }
+
+    protected fun isFloat(env: VirtualFrame): Boolean {
+        val kind = env.frameDescriptor.getFrameSlotKind(slot)
+        return kind == FrameSlotKind.Float
+    }
+
+    protected fun isDouble(env: VirtualFrame): Boolean {
+        val kind = env.frameDescriptor.getFrameSlotKind(slot)
+        return kind == FrameSlotKind.Double
+    }
+
 
     protected fun isObject(env: VirtualFrame): Boolean {
         val kind = env.frameDescriptor.getFrameSlotKind(slot)
