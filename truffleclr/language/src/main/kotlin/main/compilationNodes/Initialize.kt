@@ -3,10 +3,13 @@ package main.compilationNodes
 import com.oracle.truffle.api.CompilerDirectives
 import com.oracle.truffle.api.Truffle
 import com.oracle.truffle.api.TruffleLanguage
+import com.oracle.truffle.api.TruffleOptions
+import com.oracle.truffle.api.`object`.Layout
 import com.oracle.truffle.api.`object`.Property
 import com.oracle.truffle.api.frame.FrameDescriptor
 import com.oracle.truffle.api.frame.FrameSlot
 import com.oracle.truffle.api.frame.VirtualFrame
+import com.oracle.truffle.api.interop.TruffleObject
 import com.oracle.truffle.api.nodes.Node
 import com.oracle.truffle.api.nodes.RepeatingNode
 import com.oracle.truffle.api.nodes.RootNode
@@ -41,7 +44,7 @@ class Initialize(
     }
 
     init {
-        val methodQueue = LinkedList<IlMethod>()
+//        val methodQueue = LinkedList<IlMethod>()
 
         for (assembly in appDomain.assemblies) {
             assembly.types.forEach { k, v ->
@@ -51,13 +54,38 @@ class Initialize(
 
                 val type = context.types.getValue(v.fullName)
 
+                compileChildren.addAll(v.methods.values
+                    .map {
+                        type.members[it.toString()] = Method(it, null)
+                        CompileMethod(it, this, language, type)
+                    })
+
                 type.shape = if (type.baseType != null) {
-                    type.baseType.shape.createSeparateShape(null)
+                    val objectType = ClrObject(type.name)
+                    val virtualTable = mutableListOf(*(type.baseType.shape.objectType as ClrObject).virtualTable)
+
+                    for(method in type.members.map { it.value as Method }) {
+                        val index =
+                            virtualTable.indexOfFirst { it.metadata.toString(false) == method.metadata.toString(false) }
+                        if (index == -1) {
+                            virtualTable.add(method)
+                        } else {
+                            virtualTable[index] = method
+                        }
+                    }
+                    objectType.virtualTable = virtualTable.toTypedArray()
+                    type.baseType.shape.createSeparateShape(null).changeType(objectType)
                 } else {
-                    context.baseObject
+                    val objectType = ClrObject(type.name)
+                    objectType.virtualTable = type.members.map { it.value as Method }.toTypedArray()
+                    context.baseObject.createSeparateShape(null).changeType(objectType)
                 }
 
-                val allocator = type.shape.layout.createAllocator()
+
+
+                val allocator = type.shape.allocator()
+//                val name = allocator.locationForValue(0)
+//                type.shape = type.shape.addProperty(Property.create(type.name, name, 0))
 
                 for (field in v.fields.values) {
                     val location = if (field.type.isPrimiteive) {
@@ -105,17 +133,9 @@ class Initialize(
                     type.members[field.name] = Field(field, context)
                 }
 
+//                methodQueue.addAll(v.methods.values)
 
 
-
-
-                methodQueue.addAll(v.methods.values)
-
-                compileChildren.addAll(v.methods.values
-                    .map {
-                        type.members[it.toString()] = Method(it, null)
-                        CompileMethod(it, this, language, type)
-                    })
             }
         }
     }

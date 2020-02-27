@@ -40,10 +40,10 @@ class ClassVisitor(var appDomain: IlAppDomain, var type: IlType) : Cil.CilBaseVi
             case(this.D_CTOR()) { ".ctor" }
         }
 
-        var arguments = listOf<IlType>()
+        var arguments = listOf<Pair<String, IlType>>()
 
         if (ctx.methodHead().sigArgs0().sigArgs1() != null) {
-            arguments = ctx.methodHead().sigArgs0().sigArgs1().sigArg().map { it.type().getType(appDomain) }
+            arguments = ctx.methodHead().sigArgs0().sigArgs1().sigArg().map { Pair(it.id().text, it.type().getType(appDomain)) }
         }
 
         val method = IlMethod(
@@ -52,6 +52,7 @@ class ClassVisitor(var appDomain: IlAppDomain, var type: IlType) : Cil.CilBaseVi
         )
 
         method.static = ctx.methodHead().methAttr().map { it.text }.toSet().contains("static")
+        method.abstract = ctx.methodHead().methAttr().map { it.text }.toSet().contains("abstract")
         method.internal = ctx.methodHead().implAttr().map { it.text }.toSet().contains("internalcall")
         method.memberOf = type
         method.returnType = ctx.methodHead().type().getType(appDomain)

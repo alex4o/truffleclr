@@ -21,7 +21,9 @@ object InternalTable {
         "System.Boolean System.ValueType::CanCompareBits(System.Object)" to CanCompareBits(),
         "System.Boolean System.ValueType::FastEqualsCheck(System.Object,System.Object)" to FastEqualsCheck(),
         "System.Int32 System.ValueType::GetHashCode()" to GetHashCode(),
-        "System.Double System.Math::Sqrt(System.Double)" to Sqrt()
+        "System.Double System.Math::Sqrt(System.Double)" to Sqrt(),
+        "System.String System.String::Concat(System.String[])" to StringConcat(),
+        "System.String System.Int32::ToString()" to ToString()
     )
 
 }

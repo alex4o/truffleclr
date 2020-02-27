@@ -119,12 +119,21 @@ fun MethodVisitor.extractFromMethodRefTest(methodRef: MethodRefContext): IlMetho
         }
     }, "$1")
 
+
     val className: String = methodRef.typeSpec().toClassName()
 
     val arguments = if (methodRef.sigArgs0().sigArgs1() != null) {
-        methodRef.sigArgs0().sigArgs1().sigArg().map { it.type().getType(appDomain) }
+        methodRef.sigArgs0().sigArgs1().sigArg().map {
+            Pair(
+                if (it.id() == null) {
+                    ""
+                } else {
+                    it.id().text
+                }, it.type().getType(appDomain)
+            )
+        }
     } else {
-        listOf<IlType>()
+        listOf<Pair<String, IlType>>()
     }
 
     val method = IlMethod(methodName, arguments)

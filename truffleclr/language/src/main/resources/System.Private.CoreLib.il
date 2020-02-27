@@ -27,13 +27,13 @@
   .ver 1:0:0:0
 }
 .module System.Private.CoreLib.dll
-// MVID: {3df74045-f678-4cca-abfc-01d0562c6e04}
+// MVID: {e2851e0f-ccc3-4e92-be06-b3db9eaf0b68}
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x00007F0B95F70000
+// Image base: 0x00007EFCF9CF6000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -929,18 +929,8 @@
   } // end of method Int32::GetHashCode
 
   .method public hidebysig virtual instance string 
-          ToString() cil managed
+          ToString() cil managed internalcall
   {
-    // Code size       11 (0xb)
-    .maxstack  1
-    .locals init (string V_0)
-    IL_0000:  nop
-    IL_0001:  ldstr      ""
-    IL_0006:  stloc.0
-    IL_0007:  br.s       IL_0009
-
-    IL_0009:  ldloc.0
-    IL_000a:  ret
   } // end of method Int32::ToString
 
 } // end of class System.Int32
@@ -1165,6 +1155,11 @@
 .class public auto ansi beforefieldinit System.String
        extends System.Object
 {
+  .method public hidebysig static string 
+          Concat(string[] args) cil managed internalcall
+  {
+  } // end of method String::Concat
+
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
   {

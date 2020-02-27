@@ -19,7 +19,12 @@ import runtime.Type
 import java.lang.Exception
 import java.util.*
 
-class CompileMethod(val method: IlMethod, val initialize: Initialize, val language: TruffleLanguage<*>, val type: Type) :
+class CompileMethod(
+    val method: IlMethod,
+    val initialize: Initialize,
+    val language: TruffleLanguage<*>,
+    val type: Type
+) :
     StatementNode() {
     val frameDescriptor = FrameDescriptor();
 
@@ -27,7 +32,7 @@ class CompileMethod(val method: IlMethod, val initialize: Initialize, val langua
 
     // TODO: Type parser
     val frameSlots = method.locals.mapIndexed { index, local ->
-        if(local.isPrimiteive) {
+        if (local.isPrimiteive) {
             val kind = when (local.type) {
                 CorElementType.BOOLEAN -> FrameSlotKind.Boolean
                 CorElementType.CHAR -> FrameSlotKind.Int
@@ -45,17 +50,22 @@ class CompileMethod(val method: IlMethod, val initialize: Initialize, val langua
                 else -> error("Unknown local type encountered: ${local.type}")
             }
             frameDescriptor.addFrameSlot("local$index", kind)
-        }else{
+        } else {
             frameDescriptor.addFrameSlot("local$index", FrameSlotKind.Object)
         }
     }
 
+    val argumentSlotMap: Map<String, Int>
+        get() {
+            return argumentsSlots.mapIndexed { index, it -> Pair(it.identifier.toString(), index) }.toMap()
+        }
+
     val argumentsSlots = if (method.static) {
         method.arguments
     } else {
-        listOf(method.memberOf!!) + method.arguments
-    }.mapIndexed { index, local ->
-        if(local.isPrimiteive) {
+        listOf(Pair("this", method.memberOf!!)) + method.arguments
+    }.mapIndexed { index, (name, local) ->
+        if (local.isPrimiteive) {
             val kind = when (local.type) {
                 CorElementType.BOOLEAN -> FrameSlotKind.Boolean
                 CorElementType.CHAR -> FrameSlotKind.Int
@@ -72,9 +82,9 @@ class CompileMethod(val method: IlMethod, val initialize: Initialize, val langua
 //                CorElementType.VALUETYPE -> TODO()
                 else -> error("Unknown local type encountered: ${local.type}")
             }
-            frameDescriptor.addFrameSlot("argument$index", kind)
-        }else{
-            frameDescriptor.addFrameSlot("argument$index", FrameSlotKind.Object)
+            frameDescriptor.addFrameSlot(name, kind)
+        } else {
+            frameDescriptor.addFrameSlot(name, FrameSlotKind.Object)
         }
     }.filter { it.kind != FrameSlotKind.Illegal }
 
@@ -94,9 +104,9 @@ class CompileMethod(val method: IlMethod, val initialize: Initialize, val langua
         try {
             val methodBody = InternalMethod(initialize.internalMethods[method.toString()]!!, frameDescriptor, language)
             val member = type.members.getValue(method.toString())
-            if(member is Method) {
-                    member.callTarget = runtime.createCallTarget(methodBody)
-            }else{
+            if (member is Method) {
+                member.callTarget = runtime.createCallTarget(methodBody)
+            } else {
                 error("Trying to compile a non method as a method")
             }
         } catch (exception: Exception) {
@@ -109,6 +119,7 @@ class CompileMethod(val method: IlMethod, val initialize: Initialize, val langua
 //        println(method.name)
         val queue = ArrayDeque<Int>()
         val visited = mutableSetOf<Int>()
+        if(graph.nodes.size == 0) return
 
         queue.add(graph.root)
         while (queue.isNotEmpty()) {
@@ -135,9 +146,9 @@ class CompileMethod(val method: IlMethod, val initialize: Initialize, val langua
 
         val methodBody = body(dispatchNode)
         val member = type.members.getValue(method.toString())
-        if(member is Method) {
+        if (member is Method) {
             member.callTarget = runtime.createCallTarget(methodBody)
-        }else{
+        } else {
             error("Trying to compile a non method as a method")
         }
     }

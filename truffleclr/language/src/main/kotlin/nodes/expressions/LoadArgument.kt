@@ -69,7 +69,7 @@ abstract class LoadArgument(@CompilationFinal val index: Int) : ExpressionNode()
 
 
     override fun toString(): String {
-        return "(ldarg $index)"
+        return "(ldarg ${slot?.identifier})"
     }
 
     val label = this.toString()

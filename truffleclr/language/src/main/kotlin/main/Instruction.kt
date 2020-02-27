@@ -18,7 +18,7 @@ data class InstructionI8(override var instruction: String, var arg: Long) : Inst
 data class InstructionR(override var instruction: String, var arg: Float) : Instruction()
 data class InstructionR8(override var instruction: String, var arg: Double) : Instruction()
 data class InstructionBrTarget(override var instruction: String, var target: String) : Instruction()
-data class InstructionMethod(override var instruction: String, var method: IlMethod) : Instruction()
+data class InstructionMethod(override var instruction: String, var method: IlMethod, var callConv: Set<String>) : Instruction()
 data class InstructionField(override var instruction: String, var type: String, var member: String, var name: String) :
     Instruction()
 

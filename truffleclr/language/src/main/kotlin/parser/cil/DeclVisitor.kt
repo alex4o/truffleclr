@@ -20,7 +20,7 @@ class DeclVisitor(var appDomain: IlAppDomain) : Cil.CilBaseVisitor<Unit>() {
 
     val lateClasses: Queue<CilParser.ClassContext> = LinkedList()
 
-    val decl_children: Queue<Pair<CilBaseVisitor<*>, ParserRuleContext>> = LinkedList()
+    val decl_children: Queue<Pair<ClassVisitor, ParserRuleContext>> = LinkedList()
 
     fun layerVisit() {
         while (lateClasses.isNotEmpty()) {
@@ -54,6 +54,7 @@ class DeclVisitor(var appDomain: IlAppDomain) : Cil.CilBaseVisitor<Unit>() {
     }
 
     override fun visitClass(ctx: CilParser.ClassContext) = transformClass(ctx)
+
     private fun transformClass(ctx: CilParser.ClassContext) {
         var head = ctx.classHead()
         val name = if (namespaces.isNotEmpty()) {
@@ -85,9 +86,40 @@ class DeclVisitor(var appDomain: IlAppDomain) : Cil.CilBaseVisitor<Unit>() {
         type.extends = extendsType
         type.attribtes = head.classHeadBegin().classAttr().map { it.text }.toSet()
 
+
+        assembly.types.put(name, type)
+        decl_children.add(Pair(ClassVisitor(appDomain, type), ctx.classDecls()))
+        this.visit(ctx.classDecls())
+    }
+
+    override fun visitClass_class(ctx: CilParser.Class_classContext) {
+        var head = ctx.classHead()
+        val name = decl_children.last().first.type.name + "/" + head.classHeadBegin().dottedName().text
+
+        val extends: String? = head.extendsClause().typeSpec()?.toClassName()
+
+        val extendsType = if (extends == null) {
+            null
+        } else if (assembly.types.contains(extends)) {
+            assembly.types.getValue(extends)
+        } else if (appDomain.assemblies.map { it.types }.any { it.contains(extends) }) { // Very bad code but I don't have a global table of types
+            appDomain.assemblies.map { it.types }.first { it.contains(extends) }.getValue(extends)
+        } else {
+            // TODO: add to the queue too
+            error("Internal classes can't inherit from non initialized classes")
+        }
+
+        val corType = extendsType!!.type
+
+        val type = IlType(name, corType)
+
+        type.extends = extendsType
+        type.attribtes = head.classHeadBegin().classAttr().map { it.text }.toSet()
+
         assembly.types.put(name, type)
         decl_children.add(Pair(ClassVisitor(appDomain, type), ctx.classDecls()))
     }
+
 
     override fun visitMethod(ctx: CilParser.MethodContext) {
         TODO("Implement methods outside of classes")

@@ -79,12 +79,9 @@ namespace System
             return m_value;
         }
 
-        public override string ToString()
-        {
-            return "";
-            // return Number.FormatInt32(m_value, null, null);
-        }
-
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public override extern string ToString();
+        
         // public string ToString(string? format)
         // {
         //     return Number.FormatInt32(m_value, format, null);

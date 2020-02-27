@@ -23,6 +23,7 @@ class FullOutputTest {
         val output = testRunProgram("./test/$file.il", "HelloWorld.Program")
         val expected = Files.readAllLines(Paths.get("./test/out/$file.out"))
 
+        println(output.joinToString("\n"))
         assertLinesEquals(expected, output)
     }
 

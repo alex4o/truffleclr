@@ -18,6 +18,7 @@ class Graph(var nodes: List<InstructionBlock>, var compileNode: CompileMethod) {
 
     fun visualise(language: TruffleLanguage<*>) {
         if(compileNode.method.internal) { return }
+        if(compileNode.compiled.size == 0) { return }
         val g = mutGraph(compileNode.method.name).setDirected(true)
 
         val nodes = compileNode.compiled.map { (index, node)  -> Pair(index, mutNode(node.name)) }.toMap()

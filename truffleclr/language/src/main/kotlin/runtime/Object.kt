@@ -16,7 +16,9 @@ import com.oracle.truffle.api.library.ExportMessage
 import runtime.util.Keys
 
 @ExportLibrary(value = InteropLibrary::class, receiverType = DynamicObject::class)
-class ClrObject : ObjectType() {
+class ClrObject(val name: String) : ObjectType() {
+
+    lateinit var virtualTable: Array<Method>
 
     override fun dispatch(): Class<*>? {
         return ClrObject::class.java
@@ -81,6 +83,8 @@ class ClrObject : ObjectType() {
                          @Cached("key") cachedKey: String,
                          @Cached("receiver.getShape()") shape: Shape,
                          @Cached("lookupLocation(shape, key)") location: Location) {
+//                println("set_field: $key ${receiver.shape.keyList} ${if(value is DynamicObject) { value.shape.keyList } else { value }}")
+
                 location.set(receiver, value)
             }
 
@@ -89,6 +93,7 @@ class ClrObject : ObjectType() {
             )
             @JvmStatic
             fun doUncached(receiver: DynamicObject, key: String, value: Any) {
+//                println("set_field_u: $key ${receiver.shape.keyList} $value")
                 lookupLocation(receiver.shape, key)!!.set(receiver, value)
             }
 
@@ -170,5 +175,9 @@ class ClrObject : ObjectType() {
                 return false
             }
         }
+    }
+
+    override fun toString(): String {
+        return name
     }
 }

@@ -64,6 +64,6 @@ class Method(val metadata: IlMethod, @CompilerDirectives.CompilationFinal var ca
     }
 
     override fun toString(): String {
-        return name
+        return metadata.toString()
     }
 }

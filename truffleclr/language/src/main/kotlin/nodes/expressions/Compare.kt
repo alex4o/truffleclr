@@ -14,6 +14,7 @@ import java.util.concurrent.Callable
 
 
 enum class CompareCondition {
+    NE,
     EQ
 //    {
 //        override fun toString(): String {
@@ -102,21 +103,36 @@ abstract class Compare(
         return compare(left.compareTo(right))
     }
 
+    @Specialization
+    protected open fun op(left: Any, right: Any): Boolean {
+        // TODO: Unsafe and Unsigned types can be used to compare objects is dotnet
+        return if(condition == EQ) {
+            left.equals(right)
+        }else if(condition == GT){
+            !left.equals(right)
+        }else{
+            false
+        }
+    }
+
     private inline fun genCompare(): (Int) -> Boolean = when (condition) {
+        NE -> {
+            { comparison -> comparison != 0 }
+        }
         EQ -> {
-            { a -> a == 0 }
+            { comparison -> comparison == 0 }
         }
         LT -> {
-            { a -> a < 0 }
+            { comparison -> comparison < 0 }
         }
         GT -> {
-            { a -> a > 0 }
+            { comparison -> comparison > 0 }
         }
         GE -> {
-            { a -> a >= 0 }
+            { comparison -> comparison >= 0 }
         }
         LE -> {
-            { a -> a <= 0 }
+            { comparison -> comparison <= 0 }
         }
     }
 

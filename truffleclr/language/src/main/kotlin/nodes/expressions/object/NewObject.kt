@@ -1,6 +1,8 @@
 package nodes.expressions.`object`
 
+import com.oracle.truffle.`object`.DynamicObjectImpl
 import com.oracle.truffle.api.CompilerDirectives
+import com.oracle.truffle.api.`object`.DynamicObject
 import com.oracle.truffle.api.`object`.Shape
 import com.oracle.truffle.api.frame.VirtualFrame
 import com.oracle.truffle.api.interop.InteropLibrary
@@ -32,12 +34,15 @@ class NewObject(@Children var arguments: Array<ExpressionNode>, val ctor: Truffl
 //        if(CompilerDirectives.inInterpreter()) {
 //            println("${ctor} (${arguments.joinToString(",")})")
 //        }
+
+//        println("$this, ${argumentArray.contentToString()}")
         interopLib.execute(ctor, *argumentArray)
+//        println( (createdObject as DynamicObjectImpl).debugDump(0) )
         return createdObject
     }
 
 
     override fun toString(): String {
-        return "(newobj $ctor ${arguments.joinToString(",") })"
+        return "(newobj $ctor ${arguments.joinToString(" ") })"
     }
 }

@@ -17,7 +17,7 @@ class ClrContext(): TruffleObject {
     val scopes = mutableListOf(Scope.newBuilder("global", this).build())
 
     val layout = Layout.createLayout()
-    val baseObject = layout.createShape(ClrObject())
+    val baseObject = layout.createShape(ClrObject("System.Object"))
 
 
     @ExportMessage

@@ -51,7 +51,7 @@ fun main() {
         var execution = context.eval(
             Source.newBuilder(
                 "clr",
-                File("./test/n_body.il")
+                File("./test/richards.il")
             ).build()
         )
 

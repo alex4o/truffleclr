@@ -69,7 +69,15 @@ class MethodVisitor(var appDomain: IlAppDomain, var method: IlMethod) : Cil.CilB
                     val methodRef = methodRef();
 
                     val method = extractFromMethodRefTest(methodRef)
-                    InstructionMethod(INSTR_METHOD().text, method)
+                    var callConv = setOf<String>()
+                    if(methodRef.callConv().K_INSTANCE().size != 0) {
+                        callConv += setOf("instance")
+                    }
+                    if(methodRef.callConv().K_EXPLICIT().size != 0) {
+                        callConv += setOf("explicit")
+                    }
+
+                    InstructionMethod(INSTR_METHOD().text, method, callConv)
                 }
                 is CilParser.Instr_stringContext -> {
                     InstructionString(INSTR_STRING().toString(), compQstring().text)
