@@ -530,7 +530,7 @@ fun Graph.getNodes(root: Int, language: TruffleLanguage<*>, d: Int = 0): Block {
                 if (it.instruction == "ldlen" && it is InstructionNone) {
                     val s0 = stack.pop()
                     if (s0.first != "Ref") {
-                        error("")
+//                        error("")
                     }
 
                     val node = LoadLengthNodeGen.create(s0.second)
