@@ -10,7 +10,7 @@ import com.oracle.truffle.api.nodes.ExplodeLoop
 import main.getNodes
 import nodes.*
 import nodes.internal.InternalMethod
-import main.Graph
+import main.ControlFlowGraph
 import metadata.IlMethod
 import main.InstructionBlock
 import metadata.instruction.InstructionBrTarget
@@ -190,7 +190,7 @@ class CompileMethod(
     /**
      * This is where Basic Blocks are created and the Control Flow Graph build.
      */
-    val graph: Graph by lazy() @CompilerDirectives.TruffleBoundary
+    val graph: ControlFlowGraph by lazy() @CompilerDirectives.TruffleBoundary
     {
         val indexLabels = method.labels.map { Pair(it.value, it.key) }.toMap()
         val jumpLabelsLocations = method.jumpLabels.map { Pair(method.labels[it]!!, it) }.toMap()
@@ -242,9 +242,9 @@ class CompileMethod(
                 block.targets = LinkedHashSet(block.targetLabels.map { method.blockByLabel.getValue(it).index })
             }
 
-            Graph(blocks, this)
+            ControlFlowGraph(blocks, this)
         } else {
-            Graph(blocks, this)
+            ControlFlowGraph(blocks, this)
         }
     }
 

@@ -13,7 +13,6 @@ import nodes.statements.*
 import metadata.instruction.*
 import runtime.ClrObject
 import runtime.CorElementType
-import runtime.Field
 import runtime.Method
 import java.util.*
 
@@ -29,7 +28,7 @@ import java.util.*
  */
 @Suppress("UNREACHABLE_CODE")
 @CompilerDirectives.TruffleBoundary
-fun Graph.getNodes(
+fun ControlFlowGraph.getNodes(
     root: Int,
     language: TruffleLanguage<*>,
     d: Int = 0,

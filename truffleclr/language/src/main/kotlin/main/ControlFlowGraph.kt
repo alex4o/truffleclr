@@ -16,7 +16,7 @@ import java.util.*
 /**
  * Control Flow Graph class, contain all the instruction nodes.
  */
-class Graph(var nodes: List<InstructionBlock>, var compileNode: CompileMethod) {
+class ControlFlowGraph(var nodes: List<InstructionBlock>, var compileNode: CompileMethod) {
     var root = 0
 
     /**
@@ -127,7 +127,7 @@ class Graph(var nodes: List<InstructionBlock>, var compileNode: CompileMethod) {
 
 }
 
-class LengauerTarjan(val graph: Graph) {
+class LengauerTarjan(val graph: ControlFlowGraph) {
     var tree = mutableMapOf<String, MutableSet<String>>()
 
     val bucket = mutableMapOf<InstructionBlock, MutableSet<InstructionBlock>>()
