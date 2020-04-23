@@ -8,6 +8,9 @@ import metadata.IlAppDomain
 import runtime.ClrContext
 import java.io.File
 
+/**
+ * A main class used to debug the system while being able to break on exception.
+ */
 fun main() {
     println("test")
     val clr = Clr()
@@ -18,7 +21,7 @@ fun main() {
             File("./language/src/main/resources/System.Private.CoreLib.il").toPath()
         )
     )
-    clr.parseFile(appDomain, CharStreams.fromFileName("./test/richards.il"))
+    clr.parseFile(appDomain, CharStreams.fromFileName("./test/spectralnorm.il"))
 
     val context = ClrContext()
     clr.tmp = context

@@ -1,13 +1,14 @@
 package nodes
 
 import com.oracle.truffle.api.CompilerAsserts
-import com.oracle.truffle.api.TruffleContext
-import com.oracle.truffle.api.TruffleOptions
 import com.oracle.truffle.api.frame.VirtualFrame
 import com.oracle.truffle.api.nodes.ExplodeLoop
-import com.oracle.truffle.api.nodes.Node
 import com.oracle.truffle.api.nodes.NodeInfo
 
+/**
+ * Contains the list of nodes, executing this is just a flat list of nodes, branching is performaed by the
+ * DispatchNode.
+ */
 @NodeInfo(shortName = "block")
 class Block(var id: Int,var name: String) : StatementNode() {
     @Children lateinit var nodes: Array<StatementNode>
@@ -20,6 +21,8 @@ class Block(var id: Int,var name: String) : StatementNode() {
             node.executeVoid(env)
         }
     }
+
+    val label = "Block $id"
 
     override fun toString(): String {
         return (nodes).joinToString("\n", postfix = "\n") + controlFlowNode.toString();

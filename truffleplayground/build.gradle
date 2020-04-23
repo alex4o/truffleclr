@@ -23,9 +23,9 @@ repositories {
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     compile group: 'org.antlr', name: 'antlr4-runtime', version: '4.7.2'
-    compile group: 'org.graalvm.truffle', name: 'truffle-api', version: '19.2.0.1'
+    compile group: 'org.graalvm.truffle', name: 'truffle-api', version: '20.0.0'
 
-    kapt group: 'org.graalvm.truffle', name: 'truffle-dsl-processor', version: '19.2.0.1'
+    kapt group: 'org.graalvm.truffle', name: 'truffle-dsl-processor', version: '20.0.0'
 
 }
 

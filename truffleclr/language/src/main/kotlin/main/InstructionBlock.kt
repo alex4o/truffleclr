@@ -2,6 +2,10 @@ package main
 
 import metadata.instruction.Instruction
 
+
+/**
+ * The class the holds the raw list of instruction in the Control Flow Graph.
+ */
 class InstructionBlock(var label: String = "", var index: Int = -1) {
 
     constructor(instructions: MutableList<Instruction>) : this() {

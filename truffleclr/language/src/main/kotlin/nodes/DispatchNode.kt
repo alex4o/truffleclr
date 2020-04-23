@@ -13,6 +13,10 @@ import nodes.controlflow.Branch
 import nodes.controlflow.Return
 import nodes.controlflow.ReturnValue
 
+/**
+ * Dispatches basic blocks the same way that sulong does.
+ * There are no profiling and probabilities for branches.
+ */
 @NodeInfo(shortName = "dispatch")
 class DispatchNode(@Children var blocks: Array<Block>) : ExpressionNode() {
 
@@ -34,7 +38,7 @@ class DispatchNode(@Children var blocks: Array<Block>) : ExpressionNode() {
             if (block.controlFlowNode is BoolBranch) {
                 val br = block.controlFlowNode as BoolBranch
                 if (br.executeInt(env) == 0) {
-                    var successor = block.controlFlowNode.successors[0]
+                    val successor = block.controlFlowNode.successors[0]
                     if (CompilerDirectives.inInterpreter() && successor <= basicBlockIndex) {
                         backEdgeCount += 1
                     }
@@ -65,7 +69,7 @@ class DispatchNode(@Children var blocks: Array<Block>) : ExpressionNode() {
         }
 
         LoopNode.reportLoopCount(this, backEdgeCount)
-        return returnValue;
+        return returnValue
 
     }
 

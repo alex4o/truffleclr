@@ -12,8 +12,10 @@ namespace HelloWorld
     {
         static void Main(string[] args)
         {
-            var richards = new Richards.Richards();
-            richards.run();
+            for(int i = 0; i < 100; i++) {
+                var richards = new Richards.Richards();
+                richards.run();
+            }
         }
     }
 }

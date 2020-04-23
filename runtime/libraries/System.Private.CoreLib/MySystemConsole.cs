@@ -11,8 +11,12 @@ namespace System
         public static extern void Write(char i);
 
         [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern void Write(Double d);
+
+       [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern void Write(String s);
-        [MethodImpl(MethodImplOptions.InternalCall)]
+
+	[MethodImpl(MethodImplOptions.InternalCall)]
         public static extern void Write(Object o);
 
         [MethodImpl(MethodImplOptions.InternalCall)]

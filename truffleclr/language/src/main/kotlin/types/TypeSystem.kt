@@ -3,6 +3,9 @@ package types
 import com.oracle.truffle.api.dsl.TypeCheck
 import com.oracle.truffle.api.dsl.TypeSystem
 
+/**
+ * Allows checking for type correctness while executing nodes.
+ */
 @ExperimentalUnsignedTypes
 @TypeSystem(
     Int::class,

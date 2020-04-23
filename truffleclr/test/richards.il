@@ -37,13 +37,13 @@
   .ver 1:0:0:0
 }
 .module Richards.dll
-// MVID: {3da0592f-467b-4e77-9b3d-9b3574df342c}
+// MVID: {7e677180-0737-4338-8210-cf5b8055531c}
 .imagebase 0x00400000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x00007FB930FB2000
+// Image base: 0x00007F0358E5A000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -54,16 +54,35 @@
   .method private hidebysig static void  Main(string[] args) cil managed
   {
     .entrypoint
-    // Code size       15 (0xf)
-    .maxstack  1
-    .locals init (class Richards.Richards V_0)
+    // Code size       34 (0x22)
+    .maxstack  2
+    .locals init (int32 V_0,
+             class Richards.Richards V_1,
+             bool V_2)
     IL_0000:  nop
-    IL_0001:  newobj     instance void Richards.Richards::.ctor()
-    IL_0006:  stloc.0
-    IL_0007:  ldloc.0
-    IL_0008:  callvirt   instance void Richards.Richards::run()
-    IL_000d:  nop
-    IL_000e:  ret
+    IL_0001:  ldc.i4.0
+    IL_0002:  stloc.0
+    IL_0003:  br.s       IL_0018
+
+    IL_0005:  nop
+    IL_0006:  newobj     instance void Richards.Richards::.ctor()
+    IL_000b:  stloc.1
+    IL_000c:  ldloc.1
+    IL_000d:  callvirt   instance void Richards.Richards::run()
+    IL_0012:  nop
+    IL_0013:  nop
+    IL_0014:  ldloc.0
+    IL_0015:  ldc.i4.1
+    IL_0016:  add
+    IL_0017:  stloc.0
+    IL_0018:  ldloc.0
+    IL_0019:  ldc.i4.s   100
+    IL_001b:  clt
+    IL_001d:  stloc.2
+    IL_001e:  ldloc.2
+    IL_001f:  brtrue.s   IL_0005
+
+    IL_0021:  ret
   } // end of method Program::Main
 
   .method public hidebysig specialname rtspecialname 

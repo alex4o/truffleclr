@@ -2,10 +2,9 @@ package nodes.expressions.math
 
 import com.oracle.truffle.api.dsl.Specialization
 import com.oracle.truffle.api.nodes.NodeInfo
-import nodes.BinaryNode
 
 @NodeInfo(shortName = "add")
-abstract class Add(): BinaryNode() {
+abstract class Add(): BinaryExpression() {
 
     @Specialization
     fun add(left: Char, right: Char): Char {

@@ -16,6 +16,11 @@ import nodes.statements.StoreArgumentNodeGen
 import nodes.statements.StoreLocal
 import nodes.statements.StoreLocalNodeGen
 
+/**
+ * RootNode for all the methods.
+ * Writes the arguments into the VirtualFrame and executes the startBlock. Which doesn't have to be
+ * a DispatchNode but it most likely is.
+ */
 @NodeInfo(shortName = "method")
 class MethodBody(private val id: String, @Child var startBlock: ExpressionNode, @CompilerDirectives.CompilationFinal(dimensions = 1) val arguments: Array<FrameSlot>, frameDescriptor: FrameDescriptor, language: TruffleLanguage<*>): RootNode(null, frameDescriptor) {
 

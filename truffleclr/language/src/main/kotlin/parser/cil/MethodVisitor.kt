@@ -5,6 +5,10 @@ import metadata.IlAppDomain
 import metadata.IlMethod
 import metadata.instruction.*
 
+/**
+ * Visits the declarations inside of a method.
+ * Collects all the instructions and useful method attributes.
+ */
 class MethodVisitor(var appDomain: IlAppDomain, var method: IlMethod) : Cil.CilBaseVisitor<Any>() {
 
     var instructions = mutableListOf<Pair<String, Instruction>>()
@@ -26,6 +30,9 @@ class MethodVisitor(var appDomain: IlAppDomain, var method: IlMethod) : Cil.CilB
         return method.maxstack
     }
 
+    /**
+     * Parse the instruction into the Instruction Class
+     */
     override fun visitMethod_instruction(ctx: CilParser.Method_instructionContext): Any {
         val label = ctx.id()
         var labelText = if (ctx.id() != null) {
@@ -33,7 +40,6 @@ class MethodVisitor(var appDomain: IlAppDomain, var method: IlMethod) : Cil.CilB
         } else {
             ""
         }
-
 
         val instr = ctx.instr().getChild(0);
 
@@ -80,7 +86,7 @@ class MethodVisitor(var appDomain: IlAppDomain, var method: IlMethod) : Cil.CilB
                     InstructionMethod(INSTR_METHOD().text, method, callConv)
                 }
                 is CilParser.Instr_stringContext -> {
-                    InstructionString(INSTR_STRING().toString(), compQstring().text)
+                    InstructionString(INSTR_STRING().toString(), compQstring().text.replace("\\t", "\t"))
                 }
                 is CilParser.Instr_typeContext -> {
                     InstructionType(INSTR_TYPE().text, typeSpec().toClassName())
@@ -99,6 +105,8 @@ class MethodVisitor(var appDomain: IlAppDomain, var method: IlMethod) : Cil.CilB
                     if(INSTR_R().text.endsWith(".r8")) {
                         InstructionR8(INSTR_R().text, if(f != null) {
                             f.text.toDouble()
+                        }else if(i != null) {
+                            i.text.toDouble()
                         }else{
                             error("")
                         })

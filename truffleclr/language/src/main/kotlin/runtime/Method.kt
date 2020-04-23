@@ -3,6 +3,7 @@ package runtime
 import com.oracle.truffle.api.CompilerDirectives
 import com.oracle.truffle.api.RootCallTarget
 import com.oracle.truffle.api.dsl.Cached
+import com.oracle.truffle.api.dsl.Fallback
 import com.oracle.truffle.api.dsl.Specialization
 import com.oracle.truffle.api.interop.InteropLibrary
 import com.oracle.truffle.api.interop.TruffleObject
@@ -12,8 +13,13 @@ import com.oracle.truffle.api.nodes.DirectCallNode
 import com.oracle.truffle.api.nodes.IndirectCallNode
 import metadata.IlMethod
 
+
+/**
+ * Used to allow methods to be called using the Polyglot API.
+ */
 @ExportLibrary(InteropLibrary::class)
-class Method(val metadata: IlMethod, @CompilerDirectives.CompilationFinal var callTarget: RootCallTarget?): TruffleObject {
+class Method(val metadata: IlMethod, @CompilerDirectives.CompilationFinal var callNode: DirectCallNode?) :
+    TruffleObject {
 
     val memberType = MemberType.Method
 
@@ -34,32 +40,30 @@ class Method(val metadata: IlMethod, @CompilerDirectives.CompilationFinal var ca
         companion object {
             @Specialization(
                 limit = "1",
-                guards = ["method.getCallTarget() == cachedTarget"]
+                guards = [
+                    "method == cachedMethod"
+                ]
             )
             @JvmStatic
-            fun doDirect(
+            fun call(
                 method: Method, arguments: Array<Any?>,
-                @Cached("method.getCallTarget()") cachedTarget: RootCallTarget?,
-//                @Cached callNode: IndirectCallNode
-                @Cached("create(cachedTarget)") callNode: DirectCallNode
-            ): Any { /* Inline cache hit, we are safe to execute the cached call target. */
-//                return callNode.call(method.callTarget, *arguments)
+                @Cached("method") cachedMethod: Method,
+                @Cached(
+                    "method.getCallNode()",
+                    uncached = "method.getCallNode()"
+                ) callNode: DirectCallNode
+            ): Any {
                 return callNode.call(*arguments)
             }
 
-            /**
-             * Slow-path code for a call, used when the polymorphic inline cache exceeded its maximum
-             * size specified in `INLINE_CACHE_SIZE`. Such calls are not optimized any
-             * further, e.g., no method inlining is performed.
-             */
-            @Specialization(replaces = ["doDirect"])
+            @Fallback
             @JvmStatic
-            fun doIndirect(
-                method: Method, arguments: Array<Any?>,
-                @Cached callNode: IndirectCallNode
+            fun callSlower(
+                method: Method, arguments: Array<Any?>
             ): Any {
-                return callNode.call(method.callTarget, *arguments)
+                return method.callNode!!.callTarget.call(*arguments)
             }
+
         }
     }
 

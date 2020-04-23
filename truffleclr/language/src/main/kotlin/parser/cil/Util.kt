@@ -8,11 +8,14 @@ import metadata.IlMethod
 import metadata.IlType
 import java.util.*
 
-
 fun <T : ParseTree> ParserRuleContext.case(any: T?): Boolean {
     return any != null
 }
 
+
+/**
+ * Simulates a switch case matching similar to the `when` in kotlin but for parse trees.
+ */
 fun <K : ParseTree> ParserRuleContext.case(context: K?, returnMethod: K.() -> Any) {
     if (context != null) {
         if (result.peek() != null) error("Multiple match should be impossible")
@@ -21,6 +24,9 @@ fun <K : ParseTree> ParserRuleContext.case(context: K?, returnMethod: K.() -> An
     }
 }
 
+/**
+ * The dfault case
+ */
 fun default(returnMethod: () -> Any) {
     if (result.peek() == null) {
         result.pop()
@@ -31,6 +37,9 @@ fun default(returnMethod: () -> Any) {
 //
 var result = Stack<Any?>()
 
+/**
+ * The starting expression for the match
+ */
 inline fun <reified T, R : ParseTree> match(rule: R, method: R.() -> Unit): T {
     result.push(null)
     method(rule)
@@ -51,6 +60,9 @@ fun test(methodRef: MethodRefContext) {
     }
 }
 
+/**
+ * Get the class name for a TypeSpec
+ */
 fun TypeSpecContext.toClassName(): String {
     return match(this) {
         case(type()) {
@@ -65,6 +77,9 @@ fun TypeSpecContext.toClassName(): String {
     }
 }
 
+/**
+ * Get the metadata of a already parsed class from a TypeContext.
+ */
 fun TypeContext.getType(appDomain: IlAppDomain): IlType {
     return if (this is TypeArrayContext) {
         appDomain.getType(this.type().toClassName()).makeArray(1)
@@ -73,6 +88,9 @@ fun TypeContext.getType(appDomain: IlAppDomain): IlType {
     }
 }
 
+/**
+ * Parse the class name from a TypeContext
+ */
 fun TypeContext.toClassName(): String {
     return when (this) {
         is TypeClassContext -> {
@@ -106,6 +124,9 @@ fun TypeContext.toClassName(): String {
     }
 }
 
+/**
+ * Extract the method method reference from method instructions.
+ */
 fun MethodVisitor.extractFromMethodRefTest(methodRef: MethodRefContext): IlMethod {
     val methodName: String = Regex("'(.*?)'").replace(match(methodRef.methodName()) {
         case(dottedName()) {
@@ -133,7 +154,7 @@ fun MethodVisitor.extractFromMethodRefTest(methodRef: MethodRefContext): IlMetho
             )
         }
     } else {
-        listOf<Pair<String, IlType>>()
+        mutableListOf<Pair<String, IlType>>()
     }
 
     val method = IlMethod(methodName, arguments)
@@ -149,6 +170,10 @@ class ParsedType() {
 
 }
 
+/**
+ * Transforms cil types to be CTS type names.
+ * I don't understand why the need for 3 different type systems in the CLI.
+ */
 fun TypeContext.toParsedType(): String {
     return when (this) {
         is TypeClassContext -> {

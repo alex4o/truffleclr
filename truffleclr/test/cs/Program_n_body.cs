@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 
 namespace HelloWorld
 {
@@ -6,11 +7,12 @@ namespace HelloWorld
     {
         public static void Main(String[] args)
         {
-            int n = 10000;
+            int n = 100000;
             NBodySystem bodies = new NBodySystem();
             Console.WriteLine(bodies.Energy());
             for (int i = 0; i < n; i++) bodies.Advance(0.01);
             Console.WriteLine(bodies.Energy());
+
         }
     }
 

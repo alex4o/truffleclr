@@ -1,5 +1,9 @@
 package runtime
 
+/**
+ * The core types described the CLI and their meta-data, this meta-data is in the code as
+ * it is not contained anywhere else. This means it needs to be merged with the types parsed from the runtime.
+ */
 enum class CorElementType {
     VOID,
     BOOLEAN,

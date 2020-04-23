@@ -10,6 +10,9 @@ import com.oracle.truffle.api.nodes.Node
 import nodes.ExpressionNode
 import types.TypeSystemGen
 
+/**
+ * Stores an argument inside of a VirtualFrame, can be replaced by StoreLocal
+ */
 @NodeField(name = "slot", type = FrameSlot::class)
 abstract class StoreArgument(val index: Int): ExpressionNode() {
 

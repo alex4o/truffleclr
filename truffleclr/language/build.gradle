@@ -1,7 +1,8 @@
 plugins {
     id 'java'
     id 'org.jetbrains.kotlin.jvm'
-    id "org.jetbrains.kotlin.kapt"
+    id 'org.jetbrains.kotlin.kapt'
+//    id 'org.jetbrains.kotlin.plugin.serialization'
 }
 
 group 'truffleclr'
@@ -11,16 +12,19 @@ sourceCompatibility = 1.8
 
 repositories {
     mavenCentral()
+    jcenter()
 }
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     implementation group: 'org.antlr', name: 'antlr4-runtime', version: '4.7.2'
-    implementation group: 'org.graalvm.truffle', name: 'truffle-api', version: '19.3.0.2'
+    implementation group: 'org.graalvm.truffle', name: 'truffle-api', version: '20.0.0'
+//    implementation 'org.graalvm.compiler:compiler:20.0.0'
     implementation group: 'guru.nidi', name: 'graphviz-java', version: '0.11.0'
     implementation "org.jetbrains.kotlin:kotlin-reflect"
+//    classpath "org.jetbrains.kotlin:kotlin-serialization"
 
-    kapt group: 'org.graalvm.truffle', name: 'truffle-dsl-processor', version: '19.3.0.2'
+    kapt group: 'org.graalvm.truffle', name: 'truffle-dsl-processor', version: '20.0.0'
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
@@ -31,6 +35,11 @@ task fatJar(type: Jar) {
     from { configurations.runtimeClasspath.collect {
         it.isDirectory() ? it : zipTree(it) } }
     with jar
+}
+
+task copyJar(type: Copy, dependsOn: [ fatJar ]) {
+    from fatJar
+    into "../build/libs"
 }
 
 kapt {

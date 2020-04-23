@@ -2,10 +2,9 @@ package nodes.expressions.math
 
 import com.oracle.truffle.api.dsl.Specialization
 import com.oracle.truffle.api.nodes.NodeInfo
-import nodes.BinaryNode
 
 @NodeInfo(shortName = "rem")
-abstract class Reminder(): BinaryNode() {
+abstract class Reminder(): BinaryExpression() {
         
     @Specialization
     fun rem(left: Byte, right: Byte): Int {

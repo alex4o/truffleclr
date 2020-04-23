@@ -2,12 +2,16 @@ package nodes.internal
 
 import com.sun.org.apache.xpath.internal.ExpressionNode
 
+/**
+ * All the internal methods are implemented as nodes, this allows them to also use specializations.
+ */
 object InternalTable {
     fun staticMethods() = mutableMapOf(
         "System.Int32 System.Console::Read()" to ConsoleRead(),
         "System.Void System.Console::Write(System.Int32)" to ConsoleWrite(),
         "System.Void System.Console::Write(System.Object)" to ConsoleWrite(),
         "System.Void System.Console::Write(System.String)" to ConsoleWrite(),
+        "System.Void System.Console::Write(System.Double)" to ConsoleWrite(),
         "System.Void System.Console::Write(System.Char)" to ConsoleWrite(),
         "System.Void System.Console::WriteLine(System.Int32)" to ConsoleWriteLine(),
         "System.Void System.Console::WriteLine(System.Boolean)" to ConsoleWriteLine(),

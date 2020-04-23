@@ -27,13 +27,13 @@
   .ver 1:0:0:0
 }
 .module System.Private.CoreLib.dll
-// MVID: {e2851e0f-ccc3-4e92-be06-b3db9eaf0b68}
+// MVID: {7b4ecbca-bb51-4696-b0a4-dbbf4c54e2ee}
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x00007EFCF9CF6000
+// Image base: 0x00007F799521F000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -964,6 +964,10 @@
   } // end of method Console::Write
 
   .method public hidebysig static void  Write(char i) cil managed internalcall
+  {
+  } // end of method Console::Write
+
+  .method public hidebysig static void  Write(float64 d) cil managed internalcall
   {
   } // end of method Console::Write
 

@@ -1,7 +1,12 @@
 package nodes.expressions.`object`
 
+import com.oracle.truffle.`object`.DynamicObjectImpl
 import com.oracle.truffle.api.CompilerDirectives
+import com.oracle.truffle.api.Truffle
+import com.oracle.truffle.api.TruffleRuntime
 import com.oracle.truffle.api.`object`.DynamicObject
+import com.oracle.truffle.api.`object`.Location
+import com.oracle.truffle.api.`object`.Property
 import com.oracle.truffle.api.dsl.Cached
 import com.oracle.truffle.api.dsl.NodeChild
 import com.oracle.truffle.api.dsl.NodeChildren
@@ -13,29 +18,28 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException
 import com.oracle.truffle.api.interop.UnsupportedTypeException
 import com.oracle.truffle.api.library.CachedLibrary
 import nodes.ExpressionNode
+import types.CTSNull
 
-//@NodeChildren(
-//    NodeChild("receiver")
-//)
-//abstract
-class LoadField(@CompilerDirectives.CompilationFinal val fieldName: String, @Child var receiverNode: ExpressionNode) : ExpressionNode() {
-    @Child var interopLib = InteropLibrary.getFactory().createDispatched(5)
+/**
+ * Load a value from a property.
+ */
+@NodeChildren(
+    NodeChild("receiver")
+)
+abstract class LoadField(@CompilerDirectives.CompilationFinal val property: Property) : ExpressionNode() {
+    @CompilerDirectives.CompilationFinal
+    val location = property.location
 
     // TODO: Add type checking
 
-    override fun execute(env: VirtualFrame): Any? {
-//    @Specialization
-//    fun load(
-//        receiver: Any
-//             ,@CachedLibrary("receiver") interopLib: InteropLibrary
-        val r = receiverNode.execute(env)
-        if(r is DynamicObject) {
-//            println("ldfld: ${r.shape.keyList}")
-        }
-        return interopLib.readMember(r, fieldName)
+    @Specialization
+    fun load(receiver: DynamicObject): Any? {
+        return location.get(receiver)
     }
 
+    val label = "(ldfld  ${property.key} ... )"
+
     override fun toString(): String {
-        return "(ldfld $fieldName ${children.joinToString(" ")})"
+        return "(ldfld ${property.key} ${children.joinToString(" ")})"
     }
 }

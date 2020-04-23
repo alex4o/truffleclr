@@ -9,6 +9,10 @@ import com.oracle.truffle.api.frame.VirtualFrame
 import com.oracle.truffle.api.nodes.Node
 import nodes.ExpressionNode
 
+/**
+ * Stores a value inside of a frame slot.
+ * Contains the specializations fro each type.
+ */
 @NodeField(name = "slot", type = FrameSlot::class)
 @NodeChild("expressionNode")
 abstract class StoreLocal: ExpressionNode() {
@@ -19,31 +23,20 @@ abstract class StoreLocal: ExpressionNode() {
 
     @Specialization(guards = ["isLong(env)"])
     protected fun writeLong(env: VirtualFrame, value: Long): Long {
-//        frame.frameDescriptor.setFrameSlotKind(slot, FrameSlotKind.Long);
         env.setLong(slot, value);
         return value;
     }
 
     @Specialization(guards = ["isBoolean(env)"])
     protected fun writeBoolean(env: VirtualFrame, value: Boolean): Boolean {
-//        frame.frameDescriptor.setFrameSlotKind(slot, FrameSlotKind.Long);
         env.setBoolean(slot, value);
         return value;
     }
 
     @Specialization(guards = ["isBoolean(env)"])
     protected fun writeBoolean(env: VirtualFrame, value: Int): Boolean {
-//        frame.frameDescriptor.setFrameSlotKind(slot, FrameSlotKind.Long);
         env.setBoolean(slot, value != 0);
         return value != 0;
-    }
-
-
-    @Specialization(guards = ["isInt(env)"])
-    protected fun writeInt(env: VirtualFrame, value: Int): Int {
-//        frame.frameDescriptor.setFrameSlotKind(slot, FrameSlotKind.Long);
-        env.setInt(slot, value);
-        return value;
     }
 
     @Specialization(guards = ["isFloat(env)"])
@@ -56,6 +49,12 @@ abstract class StoreLocal: ExpressionNode() {
     @Specialization(guards = ["isDouble(env)"])
     protected fun writeDouble(env: VirtualFrame, value: Double): Any? {
         env.setDouble(slot, value);
+        return value;
+    }
+
+    @Specialization(guards = ["isInt(env)"])
+    protected fun writeInt(env: VirtualFrame, value: Int): Int {
+        env.setInt(slot, value);
         return value;
     }
 

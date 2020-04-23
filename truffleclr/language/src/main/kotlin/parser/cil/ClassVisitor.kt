@@ -11,6 +11,10 @@ import org.omg.CORBA.CTX_RESTRICT_SCOPE
 import types.CTSNull
 import java.util.*
 
+
+/**
+ * Visits classes and is able to properly obtain the fields, methods of a class.
+ */
 @kotlin.ExperimentalUnsignedTypes
 class ClassVisitor(var appDomain: IlAppDomain, var type: IlType) : Cil.CilBaseVisitor<Any>() {
 
@@ -25,12 +29,18 @@ class ClassVisitor(var appDomain: IlAppDomain, var type: IlType) : Cil.CilBaseVi
         }
     }
 
+    /**
+     * Used to get the custom attribute that will be used for the Polyglot class.
+     */
     override fun visitCustomAttrDecl(ctx: CilParser.CustomAttrDeclContext) {
         if(ctx.text.contains("Polyglot")) {
             type.polyglot = true
         }
     }
 
+    /**
+     * Gathers the basic method information and store the method to be further visited.
+     */
     override fun visitClass_method(ctx: CilParser.Class_methodContext): Any {
         val name: String = match(ctx.methodHead().methodName()) {
             case(this.dottedName()) {
@@ -40,7 +50,7 @@ class ClassVisitor(var appDomain: IlAppDomain, var type: IlType) : Cil.CilBaseVi
             case(this.D_CTOR()) { ".ctor" }
         }
 
-        var arguments = listOf<Pair<String, IlType>>()
+        var arguments: List<Pair<String, IlType>> = mutableListOf<Pair<String, IlType>>()
 
         if (ctx.methodHead().sigArgs0().sigArgs1() != null) {
             arguments = ctx.methodHead().sigArgs0().sigArgs1().sigArg().map { Pair(it.id().text, it.type().getType(appDomain)) }
@@ -63,6 +73,9 @@ class ClassVisitor(var appDomain: IlAppDomain, var type: IlType) : Cil.CilBaseVi
         return method
     }
 
+    /**
+     * Decodes the type of a field and its initial value.
+     */
     override fun visitClass_field(ctx: CilParser.Class_fieldContext): Any {
         var name = ctx.fieldDecl().dottedName().text
 

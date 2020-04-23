@@ -6,7 +6,7 @@ import nodes.StatementNode
 
 class StoreStaticField(var fieldName: String, @Child var valueNode: ExpressionNode) : StatementNode() {
     override fun executeVoid(env: VirtualFrame) {
-
+        TODO("Not implemented")
     }
 
     override fun toString(): String {

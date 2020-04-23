@@ -11,6 +11,11 @@ import metadata.IlType
 import runtime.CoreTypeInfo
 import java.util.*
 
+
+/**
+ * The top level visitor, used to collect the available classes and metadata about the assembly, the module and namespaces.
+ *
+ */
 @kotlin.ExperimentalUnsignedTypes
 class DeclVisitor(var appDomain: IlAppDomain) : Cil.CilBaseVisitor<Unit>() {
     lateinit var module: IlModule
@@ -53,8 +58,17 @@ class DeclVisitor(var appDomain: IlAppDomain) : Cil.CilBaseVisitor<Unit>() {
         namespaces.pop()
     }
 
+    /**
+     * When visiting a class inside of a namespace.
+     */
     override fun visitClass(ctx: CilParser.ClassContext) = transformClass(ctx)
 
+    /**
+     * Used to visit the class's sub classes this way classes can be all visited in this visitor.
+     * Also resolves the dependency tree created form inheritance.
+     * It stores classes that don't have their parent parsed already to be parsed later when it is available.
+     * Instead of resolving dependencies it just parses all the available classes and then retries.
+     */
     private fun transformClass(ctx: CilParser.ClassContext) {
         var head = ctx.classHead()
         val name = if (namespaces.isNotEmpty()) {
@@ -92,6 +106,10 @@ class DeclVisitor(var appDomain: IlAppDomain) : Cil.CilBaseVisitor<Unit>() {
         this.visit(ctx.classDecls())
     }
 
+
+    /**
+     * When visiting a class inside of another class.
+     */
     override fun visitClass_class(ctx: CilParser.Class_classContext) {
         var head = ctx.classHead()
         val name = decl_children.last().first.type.name + "/" + head.classHeadBegin().dottedName().text

@@ -7,6 +7,7 @@ import main.Clr
 import nodes.ExpressionNode
 import types.CTSNull
 import java.io.PrintStream
+import java.text.DecimalFormat
 
 @NodeInfo(description = "WriteLine")
 class ConsoleWriteLine() :
@@ -28,7 +29,21 @@ class ConsoleWriteLine() :
     @CompilerDirectives.TruffleBoundary
     fun writeLine(any: Any?) {
         if(any is Boolean) {
-            stream.println(if(any) { "True" } else { "False" })
+            stream.println(
+                if (any) {
+                    "True"
+                } else {
+                    "False"
+                }
+            )
+        } else if(any is Double) {
+            val formater = DecimalFormat.getInstance()
+            formater.maximumFractionDigits = 15
+            stream.println(formater.format(any))
+        } else if(any is Float) {
+            val formater = DecimalFormat.getInstance()
+            formater.maximumFractionDigits = 15
+            stream.println(formater.format(any))
         }else {
             stream.println(any)
         }

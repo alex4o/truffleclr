@@ -2,10 +2,9 @@ package nodes.expressions.math
 
 import com.oracle.truffle.api.dsl.Specialization
 import com.oracle.truffle.api.nodes.NodeInfo
-import nodes.BinaryNode
 
 @NodeInfo(shortName = "mul")
-abstract class Multiply(): BinaryNode() {
+abstract class Multiply(): BinaryExpression() {
     @Specialization
     fun mul(left: Char, right: Char): Int {
         return left.toInt() * right.toInt()

@@ -23,12 +23,7 @@ class IlMethod(var name: String, var arguments: List<Pair<String, IlType>>) {
     val blockByLabel = mutableMapOf<String, InstructionBlock>()
 
     override fun toString(): String {
-//        return
-//        if (memberOf == null) {
           return "$returnType $memberOf::$name(${arguments.map { it.second }.joinToString(",")})"
-//        } else {
-//            "$memberOf::$name(${arguments.joinToString(",")})"
-//        }
     }
 
     fun toString(memberOf: Boolean = false) : String {

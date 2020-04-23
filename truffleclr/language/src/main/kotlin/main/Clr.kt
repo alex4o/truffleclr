@@ -11,14 +11,16 @@ import com.oracle.truffle.api.frame.FrameDescriptor
 import com.oracle.truffle.api.instrumentation.ProvidedTags
 import com.oracle.truffle.api.instrumentation.StandardTags
 import main.compilationNodes.Initialize
+import metadata.*
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import parser.cil.ClassVisitor
 import parser.cil.DeclVisitor
-import metadata.IlAppDomain
 import runtime.ClrContext
 import java.io.File
+import kotlin.collections.MutableIterable
+
 
 @kotlin.ExperimentalUnsignedTypes
 @TruffleLanguage.Registration(
@@ -39,6 +41,7 @@ import java.io.File
 )
 class Clr : TruffleLanguage<ClrContext>() {
     // TODO: Remove without breaking debug
+    // it is a bad idea to store the context globally
     lateinit var tmp: ClrContext
 
     override fun createContext(env: Env): ClrContext {
@@ -51,10 +54,15 @@ class Clr : TruffleLanguage<ClrContext>() {
         return false; // We don's support objects yet.
     }
 
+
+    /**
+     * Helper method used to parse a file.
+     * It first visits all the root nodes.
+     * Then after all the classes are collected they are visited.
+     */
     fun parseFile(appDomain: IlAppDomain, stream: CharStream) {
         val lexer = CilLexer(stream)
         val tokenStream = CommonTokenStream(lexer);
-
 
         val parser = CilParser(tokenStream)
         val tree = parser.decls()
@@ -67,7 +75,13 @@ class Clr : TruffleLanguage<ClrContext>() {
         ClassVisitor.layerVisit()
     }
 
+    /**
+     * This is the method called when `Context.eval` is used.
+     * It first parses the runtime and then parses the user provided source file.
+     * In the end it uses Truffle nodes to transform all the methods and classes.
+     */
     override fun parse(request: ParsingRequest): CallTarget {
+
         val appDomain = IlAppDomain()
 
         parseFile(
@@ -75,6 +89,8 @@ class Clr : TruffleLanguage<ClrContext>() {
                 File("./language/src/main/resources/System.Private.CoreLib.il").toPath()
             )
         )
+
+
 
         parseFile(appDomain, CharStreams.fromReader(request.source.reader))
         val context = getCurrentContext(Clr::class.java)
@@ -86,6 +102,9 @@ class Clr : TruffleLanguage<ClrContext>() {
         )
     }
 
+    /**
+     * Returns the scopes that are obtained through `context.getBindings`
+     */
     override fun findTopScopes(context: ClrContext): MutableIterable<Scope> {
         return context.scopes
     }

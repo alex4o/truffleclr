@@ -2,10 +2,9 @@ package nodes.expressions.math
 
 import com.oracle.truffle.api.dsl.Specialization
 import com.oracle.truffle.api.nodes.NodeInfo
-import nodes.BinaryNode
 
 @NodeInfo(shortName = "div")
-abstract class Divide(): BinaryNode() {
+abstract class Divide(): BinaryExpression() {
         
     @Specialization
     fun div(left: Byte, right: Byte): Int {

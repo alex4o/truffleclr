@@ -2,10 +2,9 @@ package nodes.expressions.math
 
 import com.oracle.truffle.api.dsl.Specialization
 import com.oracle.truffle.api.nodes.NodeInfo
-import nodes.BinaryNode
 
 @NodeInfo(shortName = "shl")
-abstract class ShiftLeft(): BinaryNode() {
+abstract class ShiftLeft(): BinaryExpression() {
     @Specialization
     fun shl(left: Int, right: Int): Int {
         return left shl right

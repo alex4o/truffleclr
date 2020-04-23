@@ -1,16 +1,10 @@
 package nodes.expressions
 
 import com.oracle.truffle.api.CompilerDirectives
-import com.oracle.truffle.api.dsl.NodeField
 import com.oracle.truffle.api.dsl.Specialization
-import com.oracle.truffle.api.frame.FrameSlot
 import com.oracle.truffle.api.nodes.NodeInfo
-import com.sun.org.apache.xpath.internal.compiler.Compiler
-import com.sun.org.apache.xpath.internal.operations.Bool
-import nodes.BinaryNode
-import nodes.ExpressionNode
+import nodes.expressions.math.BinaryExpression
 import nodes.expressions.CompareCondition.*
-import java.util.concurrent.Callable
 
 
 enum class CompareCondition {
@@ -54,9 +48,9 @@ enum class CompareCondition {
 @ExperimentalUnsignedTypes
 @NodeInfo(shortName = "cmp")
 abstract class Compare(
-    @CompilerDirectives.CompilationFinal @JvmField private val condition: CompareCondition,
+    @CompilerDirectives.CompilationFinal @JvmField val condition: CompareCondition,
     @CompilerDirectives.CompilationFinal @JvmField val unsigned: Boolean = false):
-    BinaryNode() {
+    BinaryExpression() {
 
     val compare: (Int) -> Boolean = genCompare()
 
@@ -105,13 +99,11 @@ abstract class Compare(
 
     @Specialization
     protected open fun op(left: Any, right: Any): Boolean {
-        // TODO: Unsafe and Unsigned types can be used to compare objects is dotnet
+        // TODO: Unsafe and Unsigned types can be used to compare objects in dotnet
         return if(condition == EQ) {
-            left.equals(right)
-        }else if(condition == GT){
-            !left.equals(right)
+            left == right
         }else{
-            false
+            left != right
         }
     }
 

@@ -13,9 +13,16 @@ import main.compilationNodes.CompileMethod
 import java.io.File
 import java.util.*
 
+/**
+ * Control Flow Graph class, contain all the instruction nodes.
+ */
 class Graph(var nodes: List<InstructionBlock>, var compileNode: CompileMethod) {
     var root = 0
 
+    /**
+     * Visualises the graph using GraphViz
+     * It is just using a simple BFS to traverse the graph.
+     */
     fun visualise(language: TruffleLanguage<*>) {
         if(compileNode.method.internal) { return }
         if(compileNode.compiled.size == 0) { return }
@@ -101,9 +108,6 @@ class Graph(var nodes: List<InstructionBlock>, var compileNode: CompileMethod) {
         }
 
         nodes.values.forEach { g.add(it) }
-        // Basic block
-
-
         Graphviz.fromGraph(g).render(Format.XDOT).toFile(File("./xdot/${compileNode.method}.xdot"))
     }
 

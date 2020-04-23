@@ -15,6 +15,9 @@ import com.oracle.truffle.api.library.ExportLibrary
 import com.oracle.truffle.api.library.ExportMessage
 import runtime.util.Keys
 
+/**
+ * Allows objects to be accessed through the Polyglot API.
+ */
 @ExportLibrary(value = InteropLibrary::class, receiverType = DynamicObject::class)
 class ClrObject(val name: String) : ObjectType() {
 

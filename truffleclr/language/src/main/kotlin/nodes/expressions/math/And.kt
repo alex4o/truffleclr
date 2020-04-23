@@ -2,10 +2,9 @@ package nodes.expressions.math
 
 import com.oracle.truffle.api.dsl.Specialization
 import com.oracle.truffle.api.nodes.NodeInfo
-import nodes.BinaryNode
 
 @NodeInfo(shortName = "and")
-abstract class And(): BinaryNode() {
+abstract class And(): BinaryExpression() {
     @Specialization
     fun or(left: Int, right: Int): Int {
         return left and right

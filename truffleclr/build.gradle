@@ -26,9 +26,3 @@ test {
         test
     }
 }
-
-task fatJar {
-    subprojects {
-        fatJar
-    }
-}

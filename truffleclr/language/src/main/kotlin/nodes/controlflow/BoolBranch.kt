@@ -12,9 +12,9 @@ import nodes.ExpressionNode
 @NodeChild("value", type = ExpressionNode::class)
 abstract class BoolBranch(
     @CompilerDirectives.CompilationFinal @JvmField val cond: Boolean,
-    @CompilerDirectives.CompilationFinal var same: Int,
-    @CompilerDirectives.CompilationFinal var diff: Int,
-    var label: String
+    @CompilerDirectives.CompilationFinal val same: Int,
+    @CompilerDirectives.CompilationFinal val diff: Int,
+    val l: String
 ) : ControlFlowNode() {
 
     @Specialization
@@ -40,7 +40,9 @@ abstract class BoolBranch(
         }
     }
 
+    val label = "BoolBranch $cond $same $diff"
+
     override fun toString(): String {
-    return "(br$cond ${this.children.joinToString("")} $label)" // (same: $same, diff: $diff)
+        return "(br$cond ${this.children.joinToString("")} $l)" // (same: $same, diff: $diff)
     }
 }

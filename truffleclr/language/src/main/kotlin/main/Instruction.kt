@@ -2,13 +2,22 @@ package metadata.instruction
 
 import metadata.IlMethod
 
-
+/**
+ *  Base instruction type as all instructions have a name and arguments.
+ */
 abstract class Instruction() {
     abstract var instruction: String
+
+    /**
+     * The arguments are the things after the dot.
+     * For example in ldc.i4 `i4` is an argument.
+     */
     val instructionArgs = mutableListOf<String>()
 }
 
-
+/**
+ * Subclasses for all the types of instructions.
+ */
 
 data class InstructionNone(override var instruction: String) : Instruction()
 data class InstructionVar(override var instruction: String, var value: Int) : Instruction()

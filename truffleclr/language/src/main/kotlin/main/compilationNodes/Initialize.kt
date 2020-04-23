@@ -1,50 +1,36 @@
 package main.compilationNodes
 
-import com.oracle.truffle.api.CompilerDirectives
+import com.oracle.truffle.`object`.LocationImpl
 import com.oracle.truffle.api.Truffle
 import com.oracle.truffle.api.TruffleLanguage
-import com.oracle.truffle.api.TruffleOptions
-import com.oracle.truffle.api.`object`.Layout
 import com.oracle.truffle.api.`object`.Property
 import com.oracle.truffle.api.frame.FrameDescriptor
-import com.oracle.truffle.api.frame.FrameSlot
 import com.oracle.truffle.api.frame.VirtualFrame
-import com.oracle.truffle.api.interop.TruffleObject
-import com.oracle.truffle.api.nodes.Node
-import com.oracle.truffle.api.nodes.RepeatingNode
 import com.oracle.truffle.api.nodes.RootNode
-import nodes.ExpressionNode
-import nodes.expressions.LoadConst
-import nodes.expressions.LoadLocalNodeGen
-import nodes.expressions.math.SubtractNodeGen
 import nodes.internal.InternalTable
-import nodes.statements.StoreLocalNodeGen
 import metadata.IlAppDomain
-import metadata.IlMethod
 import metadata.IlType
 import runtime.*
-import sun.security.provider.SHA
-import java.util.*
 
 class Initialize(
     appDomain: IlAppDomain,
     var context: ClrContext,
     frameDescriptor: FrameDescriptor,
     val language: TruffleLanguage<*>
-) :
-    RootNode(
-//        language, frameDescriptor
-        null, null
-    ) {
+) : RootNode(language, frameDescriptor) {
 
+    @Children
     var compileChildren = mutableListOf<CompileMethod>()
 
     val internalMethods by lazy() {
         InternalTable.staticMethods()
     }
 
+    /**
+     * In this constructor the assemblies are iterated to gather all the methods and types.
+     * After this the types are prepared. Methods are transformed inside of the CompileMethod class.
+     */
     init {
-//        val methodQueue = LinkedList<IlMethod>()
 
         for (assembly in appDomain.assemblies) {
             assembly.types.forEach { k, v ->
@@ -54,17 +40,20 @@ class Initialize(
 
                 val type = context.types.getValue(v.fullName)
 
+
+                // Iterate the available methods and create their CompileMethods.
                 compileChildren.addAll(v.methods.values
                     .map {
                         type.members[it.toString()] = Method(it, null)
                         CompileMethod(it, this, language, type)
                     })
 
+                // Setup a shape and a virtual table
                 type.shape = if (type.baseType != null) {
                     val objectType = ClrObject(type.name)
                     val virtualTable = mutableListOf(*(type.baseType.shape.objectType as ClrObject).virtualTable)
 
-                    for(method in type.members.map { it.value as Method }) {
+                    for (method in type.members.map { it.value as Method }) {
                         val index =
                             virtualTable.indexOfFirst { it.metadata.toString(false) == method.metadata.toString(false) }
                         if (index == -1) {
@@ -81,61 +70,58 @@ class Initialize(
                     context.baseObject.createSeparateShape(null).changeType(objectType)
                 }
 
-
-
                 val allocator = type.shape.allocator()
-//                val name = allocator.locationForValue(0)
-//                type.shape = type.shape.addProperty(Property.create(type.name, name, 0))
 
+                // Use the fields to create all the properties.
                 for (field in v.fields.values) {
-                    val location = if (field.type.isPrimiteive) {
-                        allocator.locationForType(
-                            when (field.type.type) {
-                                CorElementType.BOOLEAN -> Boolean::class.java
-                                CorElementType.U1 -> Byte::class.java
-                                CorElementType.CHAR -> Short::class.java
-                                CorElementType.I4 -> Int::class.java
-                                CorElementType.U4 -> Int::class.java
-                                CorElementType.I8 -> Long::class.java
-                                CorElementType.U8 -> Long::class.java
-                                CorElementType.R4 -> Float::class.java
-                                CorElementType.R8 -> Double::class.java
-                                CorElementType.STRING -> String::class.java
-                                else -> error("Unexpected type: ${field.type.type}")
-                            }
-                        )
+                    val locationType = if (field.type.isPrimiteive) {
+
+                        // TODO: CorElementType to java Class object conversion
+                        when (field.type.type) {
+                            CorElementType.BOOLEAN -> Boolean::class.java
+                            CorElementType.U1 -> Byte::class.java
+                            CorElementType.CHAR -> Short::class.java
+                            CorElementType.I4 -> Int::class.java
+                            CorElementType.U4 -> Int::class.java
+                            CorElementType.I8 -> Long::class.java
+                            CorElementType.U8 -> Long::class.java
+                            CorElementType.R4 -> Float::class.java
+                            CorElementType.R8 -> Double::class.java
+                            CorElementType.STRING -> String::class.java
+                            else -> error("Unexpected type: ${field.type.type}")
+                        }
+
                     } else if (field.type.isArray) {
                         if (field.type.elementClass.isPrimiteive) {
-                            allocator.locationForType(
-                                when (field.type.elementClass.type) {
-                                    CorElementType.BOOLEAN -> BooleanArray::class.java
-                                    CorElementType.U1 -> ByteArray::class.java
-                                    CorElementType.CHAR -> ShortArray::class.java
-                                    CorElementType.I4 -> IntArray::class.java
-                                    CorElementType.U4 -> IntArray::class.java
-                                    CorElementType.I8 -> LongArray::class.java
-                                    CorElementType.U8 -> LongArray::class.java
-                                    CorElementType.R4 -> FloatArray::class.java
-                                    CorElementType.R8 -> DoubleArray::class.java
-                                    CorElementType.STRING -> Array<String>::class.java
-                                    else -> error("Unexpected array type: ${field.type.type}")
-                                }
-                            )
+
+                            when (field.type.elementClass.type) {
+                                CorElementType.BOOLEAN -> BooleanArray::class.java
+                                CorElementType.U1 -> ByteArray::class.java
+                                CorElementType.CHAR -> ShortArray::class.java
+                                CorElementType.I4 -> IntArray::class.java
+                                CorElementType.U4 -> IntArray::class.java
+                                CorElementType.I8 -> LongArray::class.java
+                                CorElementType.U8 -> LongArray::class.java
+                                CorElementType.R4 -> FloatArray::class.java
+                                CorElementType.R8 -> DoubleArray::class.java
+                                CorElementType.STRING -> Array<String>::class.java
+                                else -> error("Unexpected array type: ${field.type.type}")
+                            }
+
                         } else {
-                            allocator.locationForType(Array<Any>::class.java)
+                            Array<Any>::class.java
                         }
                     } else {
-                        allocator.locationForType(Any::class.java)
+                        Any::class.java
                     }
 
-                    type.shape = type.shape.addProperty(Property.create(field.name, location, 0))
+                    val location = allocator.locationForType(locationType)
+                    val property = Property.create(field.name, location, if(locationType.isPrimitive) { 0 } else { 1 })
+
+                    type.shape = type.shape.addProperty(property)
 
                     type.members[field.name] = Field(field, context)
                 }
-
-//                methodQueue.addAll(v.methods.values)
-
-
             }
         }
     }
@@ -168,7 +154,7 @@ class Initialize(
         return 0
     }
 
-    override fun getName() = "Compile"
+    override fun getName() = "Initialize"
 
     override fun toString(): String {
         return name

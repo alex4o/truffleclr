@@ -1,13 +1,13 @@
-import com.oracle.truffle.api.TruffleException
+import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.parameters.arguments.argument
+import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.options.prompt
+import com.github.ajalt.clikt.parameters.types.*
 import com.oracle.truffle.api.frame.FrameSlotTypeException
 import org.graalvm.polyglot.Context
 import org.graalvm.polyglot.Source
-import org.graalvm.polyglot.Value
-import org.graalvm.polyglot.impl.AbstractPolyglotImpl.AbstractContextImpl
 import java.io.ByteArrayOutputStream
 import java.io.File
-import java.lang.Exception
-import kotlin.reflect.KCallable
 import kotlin.system.measureTimeMillis
 
 fun String.runCommand() {
@@ -24,66 +24,44 @@ fun String.runCommand() {
 */
 
 // TODO: Show the strange behaviour of mono
-fun main() {
-    val out = ByteArrayOutputStream()
 
-    val context = Context.newBuilder().allowAllAccess(true).out(out).build()
-//    for(member in context::class.members) {
-//        if(member.name.contains("requirePublicLanguage")) {
-//            requirePublicLanguage = member
-//        }
-//
-//        if(member.name.contains("getContext")) {
-//
-//        }
-//    }
+class App : CliktCommand(printHelpOnEmptyArgs = true) {
+    private val file: File? by argument(help="The file to run").file(mustExist = true)
+    private val `class`: String by option(help="The class containing the Main method").prompt("Class with Main method")
 
-//    val cpart = context.eval(
-//        Source.newBuilder(
-//            "llvm",
-//            File("./test.bc")
-//        ).build()
-//    )
-//
-//    println(cpart.getMember("fac").execute(10));
-//    exitProcess(0)
+    override fun run() {
+        val out = ByteArrayOutputStream()
 
-        var execution = context.eval(
+        val context = Context.newBuilder().allowAllAccess(true).out(out).build()
+
+        context.eval(
             Source.newBuilder(
                 "clr",
-                File("./test/richards.il")
+                file
             ).build()
         )
 
-        println(
-            execution
-        )
+        val bindings = context.getBindings("clr")
+        val programClass = bindings.getMember(`class`)
 
-    val bindings = context.getBindings("clr")
-    val ProgramClass = bindings.getMember("HelloWorld.Program")
-//    println(bindings.getMember("HelloWorld.Car").memberKeys)
+        val mainMethod = programClass.memberKeys.find { it.contains("Main(") }
+        val world = programClass.getMember(mainMethod)
+        val me = arrayOf<String>()
 
-    val mainMethod = ProgramClass.memberKeys.find { it.contains("Main(") }
-    val main = ProgramClass.getMember(mainMethod)
-
-//    for(i in 0..2) {
-//        val time = measureTimeMillis {
-//            main.execute(0)
-//            out.reset()
-//        }
-//        println("Step #$i completed in: ${time}ms")
-//    }
-//    println()
         try {
             val time = measureTimeMillis {
-                main.execute(0)
+                world.execute(me)
                 println(out.toString("utf-8"))
             }
-            println("Final completed in: ${time}ms")
+            println("Completed in: ${time}ms")
         }catch (e: FrameSlotTypeException) {
             e.printStackTrace()
         }
+    }
+}
 
+fun main(args: Array<String>) {
+    App().main(args)
 }
 
 /*

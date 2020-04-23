@@ -2,6 +2,7 @@
 <project version="4">
   <component name="CompilerConfiguration">
     <bytecodeTargetLevel>
+      <module name="kcl" target="1.8" />
       <module name="kcl.main" target="1.8" />
       <module name="kcl.test" target="1.8" />
       <module name="kcl_main" target="1.8" />
@@ -9,6 +10,9 @@
     </bytecodeTargetLevel>
   </component>
   <component name="ExternalStorageConfigurationManager" enabled="true" />
+  <component name="FrameworkDetectionExcludesConfiguration">
+    <file type="web" url="file://$PROJECT_DIR$" />
+  </component>
   <component name="GradleMigrationSettings" migrationVersion="1" />
   <component name="GradleSettings">
     <option name="linkedExternalProjectsSettings">
@@ -23,7 +27,6 @@
             <option value="$PROJECT_DIR$" />
           </set>
         </option>
-        <option name="useAutoImport" value="true" />
         <option name="useQualifiedModuleNames" value="true" />
       </GradleProjectSettings>
     </option>
@@ -102,6 +105,15 @@
         <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.graalvm.sdk/graal-sdk/19.2.0.1/9c9ba7d6b4a26cdaee693815b85c273f7dbfe138/graal-sdk-19.2.0.1-sources.jar!/" />
       </SOURCES>
     </library>
+    <library name="Gradle: org.graalvm.sdk:graal-sdk:20.0.0">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.graalvm.sdk/graal-sdk/20.0.0/8ad38d2054bf7c56d1b0286c821117ddbfd5c4a4/graal-sdk-20.0.0.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.graalvm.sdk/graal-sdk/20.0.0/fbb5ab15f9ef7e27e62cefbb3cb9e39190a7d1fc/graal-sdk-20.0.0-sources.jar!/" />
+      </SOURCES>
+    </library>
     <library name="Gradle: org.graalvm.truffle:truffle-api:19.2.0.1">
       <CLASSES>
         <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.graalvm.truffle/truffle-api/19.2.0.1/9d9793bc4c6a81a070169cec5c12b1c722993b47/truffle-api-19.2.0.1.jar!/" />
@@ -109,6 +121,15 @@
       <JAVADOC />
       <SOURCES>
         <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.graalvm.truffle/truffle-api/19.2.0.1/ee7053549d7bad990da85294ba5f2fba7be98348/truffle-api-19.2.0.1-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Gradle: org.graalvm.truffle:truffle-api:20.0.0">
+      <CLASSES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.graalvm.truffle/truffle-api/20.0.0/babdf30d5bc62bcce62dee85bd85f42e03841693/truffle-api-20.0.0.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES>
+        <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.graalvm.truffle/truffle-api/20.0.0/e423d16343b16beaf665b05280dd0e9c38c53278/truffle-api-20.0.0-sources.jar!/" />
       </SOURCES>
     </library>
     <library name="Gradle: org.graalvm.truffle:truffle-dsl-processor:19.2.0.1">

@@ -5,6 +5,7 @@ import com.oracle.truffle.api.frame.FrameDescriptor
 import com.oracle.truffle.api.frame.FrameSlot
 import com.oracle.truffle.api.frame.FrameSlotKind
 import com.oracle.truffle.api.frame.VirtualFrame
+import com.oracle.truffle.api.nodes.DirectCallNode
 import com.oracle.truffle.api.nodes.ExplodeLoop
 import main.getNodes
 import nodes.*
@@ -31,6 +32,7 @@ class CompileMethod(
     var compiled = sortedMapOf<Int, Block>()
 
     // TODO: Type parser
+    // Prepare the local values of the method that is compiled.
     val frameSlots = method.locals.mapIndexed { index, local ->
         if (local.isPrimiteive) {
             val kind = when (local.type) {
@@ -55,11 +57,15 @@ class CompileMethod(
         }
     }
 
+
     val argumentSlotMap: Map<String, Int>
         get() {
             return argumentsSlots.mapIndexed { index, it -> Pair(it.identifier.toString(), index) }.toMap()
         }
 
+    /**
+     * Arguments are also stored inside of the VirtualFrame
+     */
     val argumentsSlots = if (method.static) {
         method.arguments
     } else {
@@ -88,33 +94,50 @@ class CompileMethod(
         }
     }.filter { it.kind != FrameSlotKind.Illegal }
 
+    /**
+     * Duplicate instructions also use the virtual frame.
+     */
     var dupCount = 0
     fun genDupSlot(kind: FrameSlotKind): FrameSlot {
 //        return frameDescriptor.findOrAddFrameSlot("dup$dupCount", FrameSlotKind.Object)
         return frameDescriptor.findOrAddFrameSlot("dup${dupCount++}", kind)
     }
 
+    /**
+     * Create the MethodBody that will be the RootNode of this method.
+     */
     private fun body(dispatchNode: DispatchNode): MethodBody {
         return MethodBody(method.name, dispatchNode, argumentsSlots.toTypedArray(), frameDescriptor, language)
     }
 
     val runtime = Truffle.getRuntime()
 
+    /**
+     * Used if this method is internal, as internal methods don't need any transformations.
+     */
     fun compileInternal() {
         try {
             val methodBody = InternalMethod(initialize.internalMethods[method.toString()]!!, frameDescriptor, language)
             val member = type.members.getValue(method.toString())
             if (member is Method) {
-                member.callTarget = runtime.createCallTarget(methodBody)
+                member.callNode = DirectCallNode.create(runtime.createCallTarget(methodBody))
             } else {
+                CompilerDirectives.transferToInterpreter()
                 error("Trying to compile a non method as a method")
             }
         } catch (exception: Exception) {
+            CompilerDirectives.transferToInterpreter()
             println("Internal: ${method}")
             exception.printStackTrace()
         }
     }
 
+    /**
+     * This transforms the instructions inside of the method.
+     * First it creates all the basic blocks.
+     * Then using the `Graph` class, it obtains the node tree.
+     */
+    @CompilerDirectives.TruffleBoundary
     fun compileDefault() {
 //        println(method.name)
         val queue = ArrayDeque<Int>()
@@ -147,7 +170,7 @@ class CompileMethod(
         val methodBody = body(dispatchNode)
         val member = type.members.getValue(method.toString())
         if (member is Method) {
-            member.callTarget = runtime.createCallTarget(methodBody)
+            member.callNode = DirectCallNode.create(runtime.createCallTarget(methodBody))
         } else {
             error("Trying to compile a non method as a method")
         }
@@ -164,6 +187,9 @@ class CompileMethod(
         compile()
     }
 
+    /**
+     * This is where Basic Blocks are created and the Control Flow Graph build.
+     */
     val graph: Graph by lazy() @CompilerDirectives.TruffleBoundary
     {
         val indexLabels = method.labels.map { Pair(it.value, it.key) }.toMap()

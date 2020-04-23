@@ -2,10 +2,9 @@ package nodes.expressions.math
 
 import com.oracle.truffle.api.dsl.Specialization
 import com.oracle.truffle.api.nodes.NodeInfo
-import nodes.BinaryNode
 
 @NodeInfo(shortName = "sub")
-abstract class Subtract(): BinaryNode() {
+abstract class Subtract(): BinaryExpression() {
     @Specialization
     fun sub(left: Char, right: Char): Char {
         return left - right.toInt()
@@ -42,6 +41,6 @@ abstract class Subtract(): BinaryNode() {
     }
 
     override fun toString(): String {
-        return "(sun ${this.children.joinToString(" ")})"
+        return "(sub ${this.children.joinToString(" ")})"
     }
 }
