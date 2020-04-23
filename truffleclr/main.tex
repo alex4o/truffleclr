@@ -1,0 +1,613 @@
+\documentclass[a4paper, 11pt]{report}
+\usepackage[a4paper, total={8in, 10in}]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{minted}
+\usepackage{listings}
+\usepackage{hyperref}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan,
+}
+
+\begin{document}
+    \tableofcontents
+
+
+    \chapter{Listings}
+
+
+    \section{\lstinline{./launcher/src/main/kotlin/App.kt}}
+    \inputminted{kotlin}{./launcher/src/main/kotlin/App.kt}
+
+
+    \section{\lstinline{./launcher/src/test/kotlin/FullOutputTest.kt}}
+    \inputminted{kotlin}{./launcher/src/test/kotlin/FullOutputTest.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/metadata/IlType.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/metadata/IlType.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/metadata/IlModule.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/metadata/IlModule.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/metadata/IlMethod.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/metadata/IlMethod.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/metadata/IlField.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/metadata/IlField.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/metadata/IlAssembly.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/metadata/IlAssembly.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/metadata/IlAppDomain.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/metadata/IlAppDomain.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/main/GraphToNodes.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/main/GraphToNodes.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/main/ControlFlowGraph.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/main/ControlFlowGraph.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/main/Instruction.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/main/Instruction.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/main/compilationNodes/CompileMethod.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/main/compilationNodes/CompileMethod.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/main/compilationNodes/Initialize.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/main/compilationNodes/Initialize.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/main/InstructionBlock.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/main/InstructionBlock.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/main/ClrIlFileDetector.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/main/ClrIlFileDetector.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/main/Clr.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/main/Clr.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/main/Launcher.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/main/Launcher.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/main/App.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/main/App.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/types/MSCoreLib.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/types/MSCoreLib.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/types/TypeSystem.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/types/TypeSystem.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/types/CTSNull.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/types/CTSNull.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/runtime/MemberType.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/runtime/MemberType.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/runtime/Type.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/runtime/Type.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/runtime/CoreTypeInfo.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/runtime/CoreTypeInfo.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/runtime/ClrContext.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/runtime/ClrContext.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/runtime/Field.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/runtime/Field.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/runtime/Method.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/runtime/Method.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/runtime/Object.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/runtime/Object.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/runtime/util/Keys.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/runtime/util/Keys.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/runtime/Property.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/runtime/Property.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/parser/cil/DeclVisitor.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/parser/cil/DeclVisitor.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/parser/cil/ClassVisitor.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/parser/cil/ClassVisitor.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/parser/cil/MethodVisitor.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/parser/cil/MethodVisitor.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/parser/cil/Util.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/parser/cil/Util.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/ControlFlowNode.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/ControlFlowNode.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/controlflow/Return.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/controlflow/Return.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/controlflow/Branch.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/controlflow/Branch.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/controlflow/CondBranch.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/controlflow/CondBranch.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/controlflow/BoolBranch.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/controlflow/BoolBranch.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/controlflow/ReturnValue.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/controlflow/ReturnValue.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/BreakPoint.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/BreakPoint.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/ExpressionNode.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/ExpressionNode.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/Block.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/Block.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/statements/StoreLocal.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/statements/StoreLocal.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/statements/StoreArgument.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/statements/StoreArgument.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/StatementNode.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/StatementNode.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/expressions/array/LoadElement.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/expressions/array/LoadElement.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/expressions/array/StoreElement.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/expressions/array/StoreElement.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/expressions/array/LoadLength.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/expressions/array/LoadLength.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/expressions/array/NewArray.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/expressions/array/NewArray.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/expressions/LoadConst.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/expressions/LoadConst.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/expressions/CallVirtual.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/expressions/CallVirtual.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/expressions/LoadArgument.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/expressions/LoadArgument.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/expressions/Box.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/expressions/Box.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/expressions/Call.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/expressions/Call.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/expressions/LoadLocal.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/expressions/LoadLocal.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/expressions/LoadString.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/expressions/LoadString.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/expressions/Compare.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/expressions/Compare.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/expressions/math/And.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/expressions/math/And.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/expressions/math/BinaryExpression.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/expressions/math/BinaryExpression.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/expressions/math/Reminder.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/expressions/math/Reminder.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/expressions/math/Add.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/expressions/math/Add.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/expressions/math/Divide.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/expressions/math/Divide.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/expressions/math/Xor.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/expressions/math/Xor.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/expressions/math/Or.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/expressions/math/Or.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/expressions/math/Negative.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/expressions/math/Negative.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/expressions/math/ShiftLeft.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/expressions/math/ShiftLeft.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/expressions/math/Subtract.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/expressions/math/Subtract.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/expressions/math/Multiply.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/expressions/math/Multiply.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/expressions/math/ShiftRight.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/expressions/math/ShiftRight.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/expressions/object/LoadIndirect.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/expressions/object/LoadIndirect.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/expressions/object/LoadNull.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/expressions/object/LoadNull.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/expressions/object/Unbox.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/expressions/object/Unbox.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/expressions/object/IsInstance.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/expressions/object/IsInstance.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/expressions/object/NewObject.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/expressions/object/NewObject.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/expressions/object/StoreStaticField.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/expressions/object/StoreStaticField.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/expressions/object/StoreField.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/expressions/object/StoreField.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/expressions/object/LoadField.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/expressions/object/LoadField.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/MethodBody.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/MethodBody.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/test/Loop.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/test/Loop.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/test/Block.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/test/Block.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/DispatchNode.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/DispatchNode.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/internal/NewJavaType.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/internal/NewJavaType.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/internal/CallJavaMethod.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/internal/CallJavaMethod.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/internal/InternalTable.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/internal/InternalTable.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/internal/GetJavaType.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/internal/GetJavaType.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/internal/InternalMethod.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/internal/InternalMethod.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/internal/ToString.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/internal/ToString.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/internal/ConsoleWrite.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/internal/ConsoleWrite.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/internal/FastEqualsCheck.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/internal/FastEqualsCheck.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/internal/ConsoleWriteLine.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/internal/ConsoleWriteLine.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/internal/ToChar.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/internal/ToChar.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/internal/StringConcat.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/internal/StringConcat.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/internal/ToBoolean.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/internal/ToBoolean.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/internal/GetHashCode.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/internal/GetHashCode.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/internal/ReadAllBytes.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/internal/ReadAllBytes.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/internal/ConsoleRead.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/internal/ConsoleRead.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/internal/CanCompareBits.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/internal/CanCompareBits.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/nodes/internal/Sqrt.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/nodes/internal/Sqrt.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/util/mutableLazy.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/util/mutableLazy.kt}
+
+
+    \section{\lstinline{./language/src/main/kotlin/util/iterate.kt}}
+    \inputminted{kotlin}{./language/src/main/kotlin/util/iterate.kt}
+
+
+    \section{\lstinline{./Cil.g4}}
+    \inputminted{antlr}{./Cil.g4}
+
+
+    \section{\lstinline{./language/src/main/resources/System.Private.CoreLib.il}}
+    \inputminted{text}{./language/src/main/resources/System.Private.CoreLib.il}
+
+
+    \section{\lstinline{./test/vehicale_simple.il}}
+    \inputminted{text}{./test/vehicale_simple.il}
+
+
+    \section{\lstinline{./test/cond.il}}
+    \inputminted{text}{./test/cond.il}
+
+
+    \section{\lstinline{./test/read_p.il}}
+    \inputminted{text}{./test/read_p.il}
+
+
+    \section{\lstinline{./test/nqueen.il}}
+    \inputminted{text}{./test/nqueen.il}
+
+
+    \section{\lstinline{./test/car_simple.il}}
+    \inputminted{text}{./test/car_simple.il}
+
+
+    \section{\lstinline{./test/break_continue.il}}
+    \inputminted{text}{./test/break_continue.il}
+
+
+    \section{\lstinline{./test/while.il}}
+    \inputminted{text}{./test/while.il}
+
+
+    \section{\lstinline{./test/Pfannkuchen.il}}
+    \inputminted{text}{./test/Pfannkuchen.il}
+
+
+    \section{\lstinline{./test/func_fac_new.il}}
+    \inputminted{text}{./test/func_fac_new.il}
+
+
+    \section{\lstinline{./test/n_body.il}}
+    \inputminted{text}{./test/n_body.il}
+
+
+    \section{\lstinline{./test/loop2.il}}
+    \inputminted{text}{./test/loop2.il}
+
+
+    \section{\lstinline{./test/car_simple_callvirt.il}}
+    \inputminted{text}{./test/car_simple_callvirt.il}
+
+
+    \section{\lstinline{./test/spectralnorm.il}}
+    \inputminted{text}{./test/spectralnorm.il}
+
+
+    \section{\lstinline{./test/binary_trees.il}}
+    \inputminted{text}{./test/binary_trees.il}
+
+
+    \section{\lstinline{./test/array.il}}
+    \inputminted{text}{./test/array.il}
+
+
+    \section{\lstinline{./test/do_while.il}}
+    \inputminted{text}{./test/do_while.il}
+
+
+    \section{\lstinline{./test/loop.il}}
+    \inputminted{text}{./test/loop.il}
+
+
+    \section{\lstinline{./test/op_clt.il}}
+    \inputminted{text}{./test/op_clt.il}
+
+
+    \section{\lstinline{./test/func_fib.il}}
+    \inputminted{text}{./test/func_fib.il}
+
+
+    \section{\lstinline{./test/cs/Richards/richards.il}}
+    \inputminted{text}{./test/cs/Richards/richards.il}
+
+
+    \section{\lstinline{./test/richards.il}}
+    \inputminted{text}{./test/richards.il}
+
+
+    \section{\lstinline{./test/loop_p.il}}
+    \inputminted{text}{./test/loop_p.il}
+
+
+    \section{\lstinline{./test/while_if.il}}
+    \inputminted{text}{./test/while_if.il}
+
+
+    \section{\lstinline{./test/func.il}}
+    \inputminted{text}{./test/func.il}
+
+
+    \section{\lstinline{./test/cs/Program_nqueen.cs}}
+    \inputminted{csharp}{./test/cs/Program_nqueen.cs}
+
+
+    \section{\lstinline{./test/cs/Richards/DeviceTask.cs}}
+    \inputminted{csharp}{./test/cs/Richards/DeviceTask.cs}
+
+
+    \section{\lstinline{./test/cs/Richards/Task.cs}}
+    \inputminted{csharp}{./test/cs/Richards/Task.cs}
+
+
+    \section{\lstinline{./test/cs/Richards/Program.cs}}
+    \inputminted{csharp}{./test/cs/Richards/Program.cs}
+
+
+    \section{\lstinline{./test/cs/Richards/HandlerTask.cs}}
+    \inputminted{csharp}{./test/cs/Richards/HandlerTask.cs}
+
+
+    \section{\lstinline{./test/cs/Richards/TaskControlBlock.cs}}
+    \inputminted{csharp}{./test/cs/Richards/TaskControlBlock.cs}
+
+
+    \section{\lstinline{./test/cs/Richards/IdleTask.cs}}
+    \inputminted{csharp}{./test/cs/Richards/IdleTask.cs}
+
+
+    \section{\lstinline{./test/cs/Richards/WorkerTask.cs}}
+    \inputminted{csharp}{./test/cs/Richards/WorkerTask.cs}
+
+
+    \section{\lstinline{./test/cs/Richards/Packet.cs}}
+    \inputminted{csharp}{./test/cs/Richards/Packet.cs}
+
+
+    \section{\lstinline{./test/cs/Richards/Scheduler.cs}}
+    \inputminted{csharp}{./test/cs/Richards/Scheduler.cs}
+
+
+    \section{\lstinline{./test/cs/Program_car_simple_callvirt.cs}}
+    \inputminted{csharp}{./test/cs/Program_car_simple_callvirt.cs}
+
+
+    \section{\lstinline{./test/cs/Ptrogram_vehicale_simple.cs}}
+    \inputminted{csharp}{./test/cs/Ptrogram_vehicale_simple.cs}
+
+
+    \section{\lstinline{./test/cs/Program_n_body.cs}}
+    \inputminted{csharp}{./test/cs/Program_n_body.cs}
+
+
+    \section{\lstinline{./test/cs/Program_func_fib.cs}}
+    \inputminted{csharp}{./test/cs/Program_func_fib.cs}
+
+
+    \section{\lstinline{./test/cs/Program_binarytrees.cs}}
+    \inputminted{csharp}{./test/cs/Program_binarytrees.cs}
+
+
+    \section{\lstinline{./test/cs/Program_arr_simple.cs}}
+    \inputminted{csharp}{./test/cs/Program_arr_simple.cs}
+
+
+    \section{\lstinline{./test/cs/Program_break_continue.cs}}
+    \inputminted{csharp}{./test/cs/Program_break_continue.cs}
+
+
+    \section{\lstinline{./test/cs/Program_func_fac.cs}}
+    \inputminted{csharp}{./test/cs/Program_func_fac.cs}
+
+
+    \section{\lstinline{./test/cs/Program_car_simple.cs}}
+    \inputminted{csharp}{./test/cs/Program_car_simple.cs}
+
+
+    \section{\lstinline{./test/cs/Program_spectralnorm.cs}}
+    \inputminted{csharp}{./test/cs/Program_spectralnorm.cs}
+
+
+    \section{\lstinline{./test/cs/Program_pfannkuchen.cs}}
+    \inputminted{csharp}{./test/cs/Program_pfannkuchen.cs}
+\end{document}

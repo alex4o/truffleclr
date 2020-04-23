@@ -19,7 +19,6 @@ class Initialize(
     val language: TruffleLanguage<*>
 ) : RootNode(language, frameDescriptor) {
 
-    @Children
     var compileChildren = mutableListOf<CompileMethod>()
 
     val internalMethods by lazy() {
