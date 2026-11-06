@@ -4,5 +4,6 @@ namespace System {
     public struct UInt16 { }
     public struct Int64 { }
     public struct UInt64 { }
+    public struct UIntPtr { }
     public struct Single { }
 }

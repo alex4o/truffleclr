@@ -51,11 +51,11 @@ class DeclVisitor(val appDomain: IlAppDomain) : CilBaseVisitor<Unit>() {
 
     fun layerVisit() {
         for ((type, head, _) in classes) {
-            val base = head.extendsClause().typeSpec()?.toClassName()
+            val base = head.extendsClause().typeSpec()?.toClassName(appDomain)
                 ?: if (type.name != "System.Object") "System.Object" else null
-            type.extends = base?.let { appDomain.getType(it.normalizeParameters(type.genericParameters)) }
+            type.extends = base?.let { appDomain.getType(it.normalizeParameters(appDomain, type.genericParameters)) }
             fun interfaces(list: CilParser.ImplListContext?): List<IlType> = if (list == null) emptyList() else
-                interfaces(list.implList()) + appDomain.getType(list.typeSpec().toClassName().normalizeParameters(type.genericParameters))
+                interfaces(list.implList()) + appDomain.getType(list.typeSpec().toClassName(appDomain).normalizeParameters(appDomain, type.genericParameters))
             type.interfaces = interfaces(head.implClause().implList())
         }
         for ((type, _, body) in classes) body.accept(ClassVisitor(appDomain, type))

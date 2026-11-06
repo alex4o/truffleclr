@@ -38,7 +38,7 @@ namespace System
             }
             if (!(value is byte))
             {
-                // throw new ArgumentException(SR.Arg_MustBeByte);
+                throw new ArgumentException("Object must be of type Byte.");
             }
 
             return m_value - (((byte)value).m_value);

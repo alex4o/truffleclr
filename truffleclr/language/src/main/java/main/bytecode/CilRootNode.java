@@ -270,7 +270,12 @@ public abstract class CilRootNode extends RootNode implements BytecodeRootNode {
         @Specialization static Object execute(VirtualFrame frame, CorElementType type, Object size,
                 @Cached(value = "createPrimitive(type)", neverDefault = true) NewArray node) {
             if (((Number) size).longValue() < 0) throw ClrException.create("OverflowException", "Array dimensions exceeded supported range.");
-            return node.executeOperands(frame, size);
+            Object array = node.executeOperands(frame, size);
+            if (type == CorElementType.I1) Clr.contextReference.get(null).recordArrayType(array, "System.SByte[]");
+            if (type == CorElementType.U2) Clr.contextReference.get(null).recordArrayType(array, "System.UInt16[]");
+            if (type == CorElementType.U4) Clr.contextReference.get(null).recordArrayType(array, "System.UInt32[]");
+            if (type == CorElementType.U8) Clr.contextReference.get(null).recordArrayType(array, "System.UInt64[]");
+            return array;
         }
     }
     @Operation @ConstantOperand(type = Method.class)

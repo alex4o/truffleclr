@@ -7,8 +7,11 @@ namespace System
         [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern bool ToBoolean(int i);
 
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern char ToChar(int i);
+        public static char ToChar(int i)
+        {
+            if (i < 0 || i > 65535) throw new OverflowException();
+            return (char)i;
+        }
 
     }
 }

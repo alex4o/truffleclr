@@ -2,54 +2,51 @@ using System.Runtime.CompilerServices;
 
 namespace System
 {
-    class Console
+    public static class Console
     {
         [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern void Write(Int32 i);
-
+        public static extern void Write(int value);
         [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern void Write(char i);
-
+        public static extern void Write(long value);
         [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern void Write(Double d);
-
-       [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern void Write(String s);
-
-	[MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern void Write(Object o);
-
+        public static extern void Write(char value);
         [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern void WriteLine(Int32 i);
+        public static extern void Write(bool value);
         [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern void WriteLine(char value);
+        public static extern void Write(float value);
         [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern void WriteLine(uint value);
+        public static extern void Write(double value);
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern void Write(uint value);
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern void Write(ulong value);
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern void Write(string value);
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern void Write(object value);
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern void WriteLine(int value);
         [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern void WriteLine(long value);
         [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern void WriteLine(ulong value);
+        public static extern void WriteLine(char value);
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern void WriteLine(bool value);
         [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern void WriteLine(float value);
         [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern void WriteLine(String s);
-
+        public static extern void WriteLine(double value);
         [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern void WriteLine(Object o);
-
-
+        public static extern void WriteLine(uint value);
         [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern void WriteLine(Boolean b);
-
-
+        public static extern void WriteLine(ulong value);
         [MethodImpl(MethodImplOptions.InternalCall)]
-        public static extern void WriteLine(Double b);
-
+        public static extern void WriteLine(string value);
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern void WriteLine(object value);
         [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern void WriteLine();
-
         [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern int Read();
-
     }
 }

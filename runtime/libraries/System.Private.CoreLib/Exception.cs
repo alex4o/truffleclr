@@ -71,6 +71,10 @@ namespace System
         public ArgumentException(string message) : base(message) { }
         public ArgumentException(string message, Exception innerException) : base(message, innerException) { }
     }
+    public class ArgumentOutOfRangeException : ArgumentException
+    {
+        public ArgumentOutOfRangeException() : base("Argument out of range.") { }
+    }
     public class ArgumentNullException : ArgumentException
     {
         public ArgumentNullException() : base("Exception of type 'System.ArgumentNullException' was thrown.") { }

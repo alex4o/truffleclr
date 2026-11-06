@@ -13,37 +13,37 @@ class Specialize(private val domain: IlAppDomain) {
     private val methods = mutableMapOf<Triple<IlMethod, IlType, List<IlType>>, IlMethod>()
 
     private fun substitute(name: String, typeArgs: List<IlType>, methodArgs: List<IlType>): String =
-        Regex("(!!?)([0-9]+)").replace(name) {
-            val args = if (it.groupValues[1] == "!!") methodArgs else typeArgs
-            args.getOrNull(it.groupValues[2].toInt())?.fullName
-                ?: error("Unbound generic parameter "+it.value+" in $name")
+        domain.mapTypeName(name) { text ->
+            Regex("(!!?)([0-9]+)").replace(text) {
+                val args = if (it.groupValues[1] == "!!") methodArgs else typeArgs
+                args.getOrNull(it.groupValues[2].toInt())?.fullName
+                    ?: error("Unbound generic parameter "+it.value+" in $name")
+            }
         }
-
-    private fun arguments(text: String): List<String> {
-        var depth = 0
-        var start = 0
-        val result = mutableListOf<String>()
-        for (index in text.indices) when (text[index]) {
-            '<' -> depth++
-            '>' -> depth--
-            ',' -> if (depth == 0) { result.add(text.substring(start, index)); start = index + 1 }
-        }
-        result.add(text.substring(start))
-        return result
-    }
 
     private fun type(name: String, typeArgs: List<IlType> = emptyList(), methodArgs: List<IlType> = emptyList()): IlType {
         val closedName = substitute(name, typeArgs, methodArgs)
+        if (closedName.startsWith("System.Func`") || closedName.startsWith("System.Action`")) {
+            throw UnsupportedOperationException("Delegates are unsupported: $closedName")
+        }
+        if (closedName.startsWith("System.Threading.Tasks.ValueTask") ||
+            closedName.startsWith("System.Threading.CancellationToken") ||
+            closedName == "System.Threading.Thread" ||
+            closedName.startsWith("System.Runtime.CompilerServices.Configured") ||
+            closedName == "System.Runtime.CompilerServices.AsyncVoidMethodBuilder") {
+            throw UnsupportedOperationException("Unsupported async/threading API: $closedName; only single-threaded Task awaiters are supported")
+        }
         if (closedName.endsWith("&")) return type(closedName.dropLast(1)).makeByRef()
         if (closedName.endsWith("[]")) return type(closedName.dropLast(2)).makeArray(1)
         types[closedName]?.let { return it }
-        val bracket = closedName.indexOf('<')
-        val definitionName = if (bracket < 0) closedName else closedName.substring(0, bracket)
+        val instance = domain.getType(closedName).genericInstance
+        val definitionName = instance?.definition ?: closedName
         val definition = definitions[definitionName] ?: error("Unknown type $definitionName")
-        val args = if (bracket < 0) emptyList() else arguments(closedName.substring(bracket + 1, closedName.lastIndex)).map { type(it) }
+        val args = instance?.arguments?.map { type(it) } ?: emptyList()
         require(args.size == definition.genericParameters.size) { "Generic arity mismatch: $closedName" }
         check(types.size < 10000) { "Generic specialization exceeded 10000 types (expanding recursive instantiation): $closedName" }
         val closed = IlType(closedName, definition.type)
+        closed.genericInstance = instance
         types[closedName] = closed
         origins[closed] = definition to args
         closed.attribtes = definition.attribtes
@@ -117,11 +117,12 @@ class Specialize(private val domain: IlAppDomain) {
         var parameters = current.genericParameters.indices.map { domain.getType("!$it") }
         var closedBase = owner.extends
         while (closedBase != null) {
-            val baseName = substitute(current.extends!!.name, parameters, emptyList())
-            val bracket = baseName.indexOf('<')
-            current = definitions.getValue(baseName.substringBefore('<'))
-            parameters = if (bracket < 0) emptyList() else
-                arguments(baseName.substring(bracket + 1, baseName.lastIndex)).map { domain.getType(it) }
+            val base = current.extends!!
+            val instance = base.genericInstance
+            current = definitions.getValue(instance?.definition ?: base.name)
+            parameters = instance?.arguments?.map {
+                domain.getType(substitute(it, parameters, emptyList()))
+            } ?: emptyList()
             val matches = current.methods.values.filter {
                 it.virtual && !it.static && it.genericParameters.isEmpty() &&
                     substitute(it.toString(false), parameters, emptyList()) == implementation.toString(false)
@@ -134,6 +135,10 @@ class Specialize(private val domain: IlAppDomain) {
     }
 
     private fun resolve(reference: IlMethod, typeArgs: List<IlType>, methodArgs: List<IlType>): IlMethod {
+        if (reference.memberOf!!.name.startsWith("System.Threading.Tasks.Task") &&
+            reference.name in listOf("Run", "ContinueWith", "ConfigureAwait")) {
+            throw UnsupportedOperationException("Unsupported Task API: " + reference.name + "; delegates and configured awaiters are not supported")
+        }
         var owner: IlType? = type(reference.memberOf!!.name, typeArgs, methodArgs)
         val args = reference.genericArguments.map { type(it.name, typeArgs, methodArgs) }
         while (owner != null) {

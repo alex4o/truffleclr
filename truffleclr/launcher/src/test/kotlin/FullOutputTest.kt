@@ -56,7 +56,8 @@ fun testRunProgram(file: String, klass: String, args: Array<String> = arrayOf())
     builder.out(out).build().use { context ->
         context.eval(Source.newBuilder("clr", File(file)).build())
         val ProgramClass = context.getBindings("clr").getMember(klass)
-        val mainMethod = ProgramClass.memberKeys.find { it.contains("Main(") }
+        val mainMethod = ProgramClass.memberKeys.find { it.contains("<Main>(") }
+            ?: ProgramClass.memberKeys.find { it.contains("Main(") }
         ProgramClass.getMember(mainMethod).execute(args)
     }
     return out.toString("utf-8").removeSuffix("\n").lines()

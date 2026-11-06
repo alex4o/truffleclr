@@ -58,7 +58,8 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
         }
         code.forEachIndexed { index, i ->
             if (i is InstructionBrTarget) starts.add(target(i))
-            if ((i is InstructionBrTarget || i.instruction in terminals) && index + 1 < code.size) starts.add(index + 1)
+            if (i is InstructionSwitch) starts.addAll(i.targets.map { method.labels.getValue(it) })
+            if ((i is InstructionBrTarget || i is InstructionSwitch || i.instruction in terminals) && index + 1 < code.size) starts.add(index + 1)
         }
         val orderedStarts = starts.toList()
         return orderedStarts.mapIndexed { n, start ->
@@ -67,6 +68,7 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
             val successors = when {
                 last is InstructionBrTarget && last.instruction in listOf("br", "leave") -> listOf(target(last))
                 last is InstructionBrTarget -> listOf(target(last), end)
+                last is InstructionSwitch -> last.targets.map { method.labels.getValue(it) } + end
                 last.instruction in terminals -> emptyList()
                 else -> listOf(end)
             }
@@ -78,13 +80,14 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
         "nop", "break", "br", "readonly", "constrained", "leave", "rethrow", "endfinally", "endfault" -> 0 to 0
         "throw", "endfilter" -> 1 to 0
         "dup" -> 1 to 2
-        "pop", "stloc", "starg", "stsfld", "initobj", "brtrue", "brfalse" -> 1 to 0
+        "pop", "stloc", "starg", "stsfld", "initobj", "brtrue", "brfalse", "switch" -> 1 to 0
         "ret" -> (if (method.returnType.type == CorElementType.VOID) 0 else 1) to 0
         "ldarg", "ldarga", "ldloc", "ldloca", "ldnull", "ldc", "ldstr", "ldsfld", "ldsflda" -> 0 to 1
         "add", "sub", "mul", "div", "rem", "and", "or", "xor", "shl", "shr", "ceq", "clt", "cgt", "ldelem", "ldelema" -> 2 to 1
         "neg", "newarr", "isinst", "unbox", "ldind", "ldobj", "ldfld", "ldflda", "ldlen", "box", "conv", "castclass" -> 1 to 1
         "stfld", "stind", "stobj", "cpobj", "beq", "bne", "bge", "bgt", "ble", "blt" -> 2 to 0
         "stelem" -> 3 to 0
+        "ldftn", "ldvirtftn", "calli" -> throw UnsupportedOperationException("Delegates and indirect calls are unsupported: " + i.instruction)
         "localloc" -> throw UnsupportedOperationException("localloc: unmanaged stack allocation is unsupported")
         "call", "callvirt", "newobj" -> {
             val callee = (i as InstructionMethod).method
@@ -362,6 +365,20 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
                     for (instructionIndex in block.start until block.end) {
                         val i = code[instructionIndex]
                         when {
+                            i is InstructionSwitch -> {
+                                materialize()
+                                val selector = pop()
+                                spill()
+                                for ((case, label) in i.targets.withIndex()) {
+                                    b.beginIfThen()
+                                    b.beginTruth()
+                                    b.beginCmp(CompareCondition.EQ, false); load(selector); b.emitLoadConstant(case); b.endCmp()
+                                    b.endTruth()
+                                    b.beginBlock(); edge(index, indices.getValue(method.labels.getValue(label)), scope); b.endBlock()
+                                    b.endIfThen()
+                                }
+                                edge(index, indices.getValue(block.end), scope)
+                            }
                             i is InstructionBrTarget -> {
                                 val condition = when (i.instruction) {
                                     "br", "leave" -> null
@@ -405,7 +422,7 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
                         }
                     }
                     val tail = code[block.end - 1]
-                    if (tail !is InstructionBrTarget && tail.instruction !in terminals) {
+                    if (tail !is InstructionBrTarget && tail !is InstructionSwitch && tail.instruction !in terminals) {
                         spill(); edge(index, indices.getValue(block.successors.single()), scope)
                     }
                     index++

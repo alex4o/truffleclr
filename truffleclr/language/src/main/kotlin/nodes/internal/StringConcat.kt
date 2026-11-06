@@ -1,14 +1,15 @@
 package nodes.internal
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary
 import com.oracle.truffle.api.frame.VirtualFrame
-import com.oracle.truffle.api.nodes.NodeInfo
+import main.bytecode.ClrException
 import nodes.ExpressionNode
 
-@NodeInfo(description = "String.Concat")
-class StringConcat() :
-    ExpressionNode() {
-
-    override fun execute(env: VirtualFrame): Any? {
-        return (env.arguments[0] as Array<String>).joinToString()
+class StringConcat : ExpressionNode() {
+    override fun execute(env: VirtualFrame): Any = concat(env.arguments[0])
+    @TruffleBoundary
+    private fun concat(value: Any?): String {
+        val strings = value as? Array<*> ?: throw ClrException.create("ArgumentNullException", "args")
+        return strings.joinToString("") { it?.toString() ?: "" }
     }
 }

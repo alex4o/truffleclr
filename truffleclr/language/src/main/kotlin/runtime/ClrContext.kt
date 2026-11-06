@@ -14,6 +14,11 @@ class ClrContext(): TruffleObject {
     lateinit var env: TruffleLanguage.Env
     val output by lazy { java.io.PrintStream(env.out()) }
     val types: MutableMap<String, Type> = mutableMapOf()
+    // Only array kinds whose signedness is erased by JVM storage need an override.
+    val arrayTypeNames = java.util.WeakHashMap<Any, String>()
+
+    @CompilerDirectives.TruffleBoundary
+    fun recordArrayType(array: Any, name: String) { arrayTypeNames[array] = name }
 
 
 

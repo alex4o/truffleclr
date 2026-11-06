@@ -10,7 +10,7 @@ import metadata.IlAppDomain
 import metadata.IlType
 import runtime.*
 
-class Initialize(appDomain: IlAppDomain, val context: ClrContext, val language: TruffleLanguage<*>) {
+class Initialize(private val appDomain: IlAppDomain, val context: ClrContext, val language: TruffleLanguage<*>) {
     private val compileChildren = mutableListOf<CompileMethod>()
     val internalMethods by lazy { InternalTable.staticMethods() }
     private val metadataByType = linkedMapOf<Type, IlType>()
@@ -94,7 +94,7 @@ class Initialize(appDomain: IlAppDomain, val context: ClrContext, val language: 
     private fun processType(metadata: IlType): Type {
         context.types[metadata.fullName]?.let { return it }
         val base = metadata.extends?.let { processType(it) }
-        val type = Type(metadata.fullName, base)
+        val type = Type(metadata.fullName, base, appDomain.displayTypeName(metadata.fullName))
         context.types[metadata.fullName] = type
         metadataByType[type] = metadata
         type.isInterface = metadata.isInterface
