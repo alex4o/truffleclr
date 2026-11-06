@@ -1,5 +1,5 @@
 
-//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.5.30319.0
+//  .NET IL Disassembler.  Version 10.0.14
 
 
 
@@ -9,31 +9,35 @@
 // Metadata version: 
 .assembly System.Private.CoreLib
 {
-  .custom instance void System.Runtime.Versioning.TargetFrameworkAttribute::.ctor(string)
-           = {string('.NETStandard,Version=v2.0')
-              property string 'FrameworkDisplayName' = string('')}
-  .custom instance void System.Reflection.AssemblyCompanyAttribute::.ctor(string)
-           = {string('System.Private.CoreLib')}
-  .custom instance void System.Reflection.AssemblyConfigurationAttribute::.ctor(string)
-           = {string('Debug')}
-  .custom instance void System.Reflection.AssemblyFileVersionAttribute::.ctor(string)
-           = {string('1.0.0.0')}
-  .custom instance void System.Reflection.AssemblyInformationalVersionAttribute::.ctor(string)
-           = {string('1.0.0')}
-  .custom instance void System.Reflection.AssemblyProductAttribute::.ctor(string)
-           = {string('System.Private.CoreLib')}
-  .custom instance void System.Reflection.AssemblyTitleAttribute::.ctor(string) = {string('System.Private.CoreLib')}
+  .custom instance void System.Runtime.Versioning.TargetFrameworkAttribute::.ctor(string) = ( 01 00 19 2E 4E 45 54 53 74 61 6E 64 61 72 64 2C   // ....NETStandard,
+                                                                                              56 65 72 73 69 6F 6E 3D 76 32 2E 30 01 00 54 0E   // Version=v2.0..T.
+                                                                                              14 46 72 61 6D 65 77 6F 72 6B 44 69 73 70 6C 61   // .FrameworkDispla
+                                                                                              79 4E 61 6D 65 11 2E 4E 45 54 20 53 74 61 6E 64   // yName..NET Stand
+                                                                                              61 72 64 20 32 2E 30 )                            // ard 2.0
+  .custom instance void System.Reflection.AssemblyCompanyAttribute::.ctor(string) = ( 01 00 16 53 79 73 74 65 6D 2E 50 72 69 76 61 74   // ...System.Privat
+                                                                                      65 2E 43 6F 72 65 4C 69 62 00 00 )                // e.CoreLib..
+  .custom instance void System.Reflection.AssemblyConfigurationAttribute::.ctor(string) = ( 01 00 05 44 65 62 75 67 00 00 )                   // ...Debug..
+  .custom instance void System.Reflection.AssemblyFileVersionAttribute::.ctor(string) = ( 01 00 07 31 2E 30 2E 30 2E 30 00 00 )             // ...1.0.0.0..
+  .custom instance void System.Reflection.AssemblyInformationalVersionAttribute::.ctor(string) = ( 01 00 2E 31 2E 30 2E 30 2B 66 36 35 33 62 37 39   // ...1.0.0+f653b79
+                                                                                                   33 33 37 31 37 38 37 34 62 38 63 39 65 61 63 34   // 33717874b8c9eac4
+                                                                                                   66 35 31 37 64 31 36 66 35 31 66 31 38 37 63 31   // f517d16f51f187c1
+                                                                                                   66 00 00 )                                        // f..
+  .custom instance void System.Reflection.AssemblyProductAttribute::.ctor(string) = ( 01 00 16 53 79 73 74 65 6D 2E 50 72 69 76 61 74   // ...System.Privat
+                                                                                      65 2E 43 6F 72 65 4C 69 62 00 00 )                // e.CoreLib..
+  .custom instance void System.Reflection.AssemblyTitleAttribute::.ctor(string) = ( 01 00 16 53 79 73 74 65 6D 2E 50 72 69 76 61 74   // ...System.Privat
+                                                                                    65 2E 43 6F 72 65 4C 69 62 00 00 )                // e.CoreLib..
   .hash algorithm 0x00008004
   .ver 1:0:0:0
 }
 .module System.Private.CoreLib.dll
-// MVID: {7b4ecbca-bb51-4696-b0a4-dbbf4c54e2ee}
+// MVID: {c18620d2-59f0-4e78-80da-0732a42af703}
+.custom instance void System.Runtime.CompilerServices.RefSafetyRulesAttribute::.ctor(int32) = ( 01 00 0B 00 00 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x00007F799521F000
+// Image base: 0x0x10052c000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -41,7 +45,7 @@
 .class private auto ansi sealed beforefieldinit Microsoft.CodeAnalysis.EmbeddedAttribute
        extends System.Attribute
 {
-  .custom instance void Microsoft.CodeAnalysis.EmbeddedAttribute::.ctor() = {}
+  .custom instance void Microsoft.CodeAnalysis.EmbeddedAttribute::.ctor() = ( 01 00 00 00 ) 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
   {
@@ -58,7 +62,7 @@
 .class private auto ansi sealed beforefieldinit System.Runtime.CompilerServices.IsReadOnlyAttribute
        extends System.Attribute
 {
-  .custom instance void Microsoft.CodeAnalysis.EmbeddedAttribute::.ctor() = {}
+  .custom instance void Microsoft.CodeAnalysis.EmbeddedAttribute::.ctor() = ( 01 00 00 00 ) 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
   {
@@ -75,11 +79,10 @@
 .class private auto ansi sealed beforefieldinit System.Runtime.CompilerServices.NullableAttribute
        extends System.Attribute
 {
-  .custom instance void Microsoft.CodeAnalysis.EmbeddedAttribute::.ctor() = {}
-  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets)
-           = {int32(27524)
-              property bool 'AllowMultiple' = bool(false)
-              property bool 'Inherited' = bool(false)}
+  .custom instance void Microsoft.CodeAnalysis.EmbeddedAttribute::.ctor() = ( 01 00 00 00 ) 
+  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets) = ( 01 00 84 6B 00 00 02 00 54 02 0D 41 6C 6C 6F 77   // ...k....T..Allow
+                                                                                                     4D 75 6C 74 69 70 6C 65 00 54 02 09 49 6E 68 65   // Multiple.T..Inhe
+                                                                                                     72 69 74 65 64 00 )                               // rited.
   .field public initonly uint8[] NullableFlags
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor(uint8 A_1) cil managed
@@ -119,11 +122,10 @@
 .class private auto ansi sealed beforefieldinit System.Runtime.CompilerServices.NullableContextAttribute
        extends System.Attribute
 {
-  .custom instance void Microsoft.CodeAnalysis.EmbeddedAttribute::.ctor() = {}
-  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets)
-           = {int32(5196)
-              property bool 'AllowMultiple' = bool(false)
-              property bool 'Inherited' = bool(false)}
+  .custom instance void Microsoft.CodeAnalysis.EmbeddedAttribute::.ctor() = ( 01 00 00 00 ) 
+  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets) = ( 01 00 4C 14 00 00 02 00 54 02 0D 41 6C 6C 6F 77   // ..L.....T..Allow
+                                                                                                     4D 75 6C 74 69 70 6C 65 00 54 02 09 49 6E 68 65   // Multiple.T..Inhe
+                                                                                                     72 69 74 65 64 00 )                               // rited.
   .field public initonly uint8 Flag
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor(uint8 A_1) cil managed
@@ -140,6 +142,30 @@
   } // end of method NullableContextAttribute::.ctor
 
 } // end of class System.Runtime.CompilerServices.NullableContextAttribute
+
+.class private auto ansi sealed beforefieldinit System.Runtime.CompilerServices.RefSafetyRulesAttribute
+       extends System.Attribute
+{
+  .custom instance void Microsoft.CodeAnalysis.EmbeddedAttribute::.ctor() = ( 01 00 00 00 ) 
+  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets) = ( 01 00 02 00 00 00 02 00 54 02 0D 41 6C 6C 6F 77   // ........T..Allow
+                                                                                                     4D 75 6C 74 69 70 6C 65 00 54 02 09 49 6E 68 65   // Multiple.T..Inhe
+                                                                                                     72 69 74 65 64 00 )                               // rited.
+  .field public initonly int32 Version
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor(int32 A_1) cil managed
+  {
+    // Code size       15 (0xf)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  call       instance void System.Attribute::.ctor()
+    IL_0006:  nop
+    IL_0007:  ldarg.0
+    IL_0008:  ldarg.1
+    IL_0009:  stfld      int32 System.Runtime.CompilerServices.RefSafetyRulesAttribute::Version
+    IL_000e:  ret
+  } // end of method RefSafetyRulesAttribute::.ctor
+
+} // end of class System.Runtime.CompilerServices.RefSafetyRulesAttribute
 
 .class public abstract auto ansi beforefieldinit System.Array
        extends System.Object
@@ -163,7 +189,7 @@
 .class public auto ansi sealed System.AttributeTargets
        extends System.Enum
 {
-  .custom instance void System.FlagsAttribute::.ctor() = {}
+  .custom instance void System.FlagsAttribute::.ctor() = ( 01 00 00 00 ) 
   .field public specialname rtspecialname int32 value__
   .field public static literal valuetype System.AttributeTargets Assembly = int32(0x00000001)
   .field public static literal valuetype System.AttributeTargets Module = int32(0x00000002)
@@ -186,9 +212,8 @@
 .class public auto ansi sealed beforefieldinit System.AttributeUsageAttribute
        extends System.Attribute
 {
-  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets)
-           = {int32(4)
-              property bool 'Inherited' = bool(true)}
+  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets) = ( 01 00 04 00 00 00 01 00 54 02 09 49 6E 68 65 72   // ........T..Inher
+                                                                                                     69 74 65 64 01 )                                  // ited.
   .field private initonly valuetype System.AttributeTargets _attributeTarget
   .field private bool _allowMultiple
   .field private bool _inherited
@@ -297,17 +322,17 @@
     IL_000f:  ret
   } // end of method AttributeUsageAttribute::.cctor
 
-  .property instance valuetype System.AttributeTargets
+  .property instance callconv(8) valuetype System.AttributeTargets
           ValidOn()
   {
     .get instance valuetype System.AttributeTargets System.AttributeUsageAttribute::get_ValidOn()
   } // end of property AttributeUsageAttribute::ValidOn
-  .property instance bool AllowMultiple()
+  .property instance callconv(8) bool AllowMultiple()
   {
     .get instance bool System.AttributeUsageAttribute::get_AllowMultiple()
     .set instance void System.AttributeUsageAttribute::set_AllowMultiple(bool)
   } // end of property AttributeUsageAttribute::AllowMultiple
-  .property instance bool Inherited()
+  .property instance callconv(8) bool Inherited()
   {
     .get instance bool System.AttributeUsageAttribute::get_Inherited()
     .set instance void System.AttributeUsageAttribute::set_Inherited(bool)
@@ -317,8 +342,7 @@
 .class public sequential ansi sealed beforefieldinit System.Boolean
        extends System.ValueType
 {
-  .custom instance void System.Runtime.CompilerServices.IsReadOnlyAttribute::.ctor()
-           = {}
+  .custom instance void System.Runtime.CompilerServices.IsReadOnlyAttribute::.ctor() = ( 01 00 00 00 ) 
   .field private initonly bool m_value
   .field static assembly literal int32 True = int32(0x00000001)
   .field static assembly literal int32 False = int32(0x00000000)
@@ -394,12 +418,9 @@
 .class public sequential ansi sealed beforefieldinit System.Byte
        extends System.ValueType
 {
-  .custom instance void System.Runtime.CompilerServices.NullableContextAttribute::.ctor(uint8)
-           = {uint8(2)}
-  .custom instance void System.Runtime.CompilerServices.NullableAttribute::.ctor(uint8)
-           = {uint8(0)}
-  .custom instance void System.Runtime.CompilerServices.IsReadOnlyAttribute::.ctor()
-           = {}
+  .custom instance void System.Runtime.CompilerServices.NullableContextAttribute::.ctor(uint8) = ( 01 00 02 00 00 ) 
+  .custom instance void System.Runtime.CompilerServices.NullableAttribute::.ctor(uint8) = ( 01 00 00 00 00 ) 
+  .custom instance void System.Runtime.CompilerServices.IsReadOnlyAttribute::.ctor() = ( 01 00 00 00 ) 
   .field private initonly uint8 m_value
   .field public static literal uint8 MaxValue = uint8(0xFF)
   .field public static literal uint8 MinValue = uint8(0x00)
@@ -504,8 +525,7 @@
   .method public hidebysig instance bool 
           Equals(uint8 obj) cil managed
   {
-    .custom instance void System.Runtime.Versioning.NonVersionableAttribute::.ctor()
-             = {}
+    .custom instance void System.Runtime.Versioning.NonVersionableAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       11 (0xb)
     .maxstack  2
     .locals init (bool V_0)
@@ -542,8 +562,7 @@
 .class public sequential ansi sealed beforefieldinit System.Char
        extends System.ValueType
 {
-  .custom instance void System.Runtime.CompilerServices.IsReadOnlyAttribute::.ctor()
-           = {}
+  .custom instance void System.Runtime.CompilerServices.IsReadOnlyAttribute::.ctor() = ( 01 00 00 00 ) 
   .field private initonly char m_value
   .field public static literal char MaxValue = char(0xFFFF)
   .field public static literal char MinValue = char(0x0000)
@@ -593,8 +612,7 @@
   .method public hidebysig virtual instance bool 
           Equals(object obj) cil managed
   {
-    .custom instance void System.Runtime.CompilerServices.NullableContextAttribute::.ctor(uint8)
-             = {uint8(2)}
+    .custom instance void System.Runtime.CompilerServices.NullableContextAttribute::.ctor(uint8) = ( 01 00 02 00 00 ) 
     // Code size       37 (0x25)
     .maxstack  2
     .locals init (bool V_0,
@@ -630,8 +648,7 @@
   .method public hidebysig instance bool 
           Equals(char obj) cil managed
   {
-    .custom instance void System.Runtime.Versioning.NonVersionableAttribute::.ctor()
-             = {}
+    .custom instance void System.Runtime.Versioning.NonVersionableAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       11 (0xb)
     .maxstack  2
     .locals init (bool V_0)
@@ -689,8 +706,7 @@
 .class public sequential ansi sealed beforefieldinit System.Double
        extends System.ValueType
 {
-  .custom instance void System.Runtime.CompilerServices.IsReadOnlyAttribute::.ctor()
-           = {}
+  .custom instance void System.Runtime.CompilerServices.IsReadOnlyAttribute::.ctor() = ( 01 00 00 00 ) 
   .field private initonly float64 m_value
 } // end of class System.Double
 
@@ -710,12 +726,744 @@
 
 } // end of class System.Enum
 
+.class public auto ansi beforefieldinit System.Exception
+       extends System.Object
+{
+  .field private string _message
+  .field private class System.Exception _innerException
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor() cil managed
+  {
+    // Code size       14 (0xe)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldstr      "Exception of type 'System.Exception' was thrown."
+    IL_0006:  call       instance void System.Exception::.ctor(string)
+    IL_000b:  nop
+    IL_000c:  nop
+    IL_000d:  ret
+  } // end of method Exception::.ctor
+
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor(string message) cil managed
+  {
+    // Code size       16 (0x10)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  call       instance void System.Object::.ctor()
+    IL_0006:  nop
+    IL_0007:  nop
+    IL_0008:  ldarg.0
+    IL_0009:  ldarg.1
+    IL_000a:  stfld      string System.Exception::_message
+    IL_000f:  ret
+  } // end of method Exception::.ctor
+
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor(string message,
+                               class System.Exception innerException) cil managed
+  {
+    // Code size       17 (0x11)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.1
+    IL_0002:  call       instance void System.Exception::.ctor(string)
+    IL_0007:  nop
+    IL_0008:  nop
+    IL_0009:  ldarg.0
+    IL_000a:  ldarg.2
+    IL_000b:  stfld      class System.Exception System.Exception::_innerException
+    IL_0010:  ret
+  } // end of method Exception::.ctor
+
+  .method public hidebysig newslot specialname virtual 
+          instance string  get_Message() cil managed
+  {
+    // Code size       12 (0xc)
+    .maxstack  1
+    .locals init (string V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  ldfld      string System.Exception::_message
+    IL_0007:  stloc.0
+    IL_0008:  br.s       IL_000a
+
+    IL_000a:  ldloc.0
+    IL_000b:  ret
+  } // end of method Exception::get_Message
+
+  .method public hidebysig specialname instance class System.Exception 
+          get_InnerException() cil managed
+  {
+    // Code size       12 (0xc)
+    .maxstack  1
+    .locals init (class System.Exception V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  ldfld      class System.Exception System.Exception::_innerException
+    IL_0007:  stloc.0
+    IL_0008:  br.s       IL_000a
+
+    IL_000a:  ldloc.0
+    IL_000b:  ret
+  } // end of method Exception::get_InnerException
+
+  .method public hidebysig virtual instance string 
+          ToString() cil managed
+  {
+    // Code size       12 (0xc)
+    .maxstack  1
+    .locals init (string V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  callvirt   instance string System.Exception::get_Message()
+    IL_0007:  stloc.0
+    IL_0008:  br.s       IL_000a
+
+    IL_000a:  ldloc.0
+    IL_000b:  ret
+  } // end of method Exception::ToString
+
+  .property instance callconv(8) string Message()
+  {
+    .get instance string System.Exception::get_Message()
+  } // end of property Exception::Message
+  .property instance callconv(8) class System.Exception
+          InnerException()
+  {
+    .get instance class System.Exception System.Exception::get_InnerException()
+  } // end of property Exception::InnerException
+} // end of class System.Exception
+
+.class public auto ansi beforefieldinit System.SystemException
+       extends System.Exception
+{
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor() cil managed
+  {
+    // Code size       14 (0xe)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldstr      "Exception of type 'System.SystemException' was thr"
+    + "own."
+    IL_0006:  call       instance void System.Exception::.ctor(string)
+    IL_000b:  nop
+    IL_000c:  nop
+    IL_000d:  ret
+  } // end of method SystemException::.ctor
+
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor(string message) cil managed
+  {
+    // Code size       10 (0xa)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.1
+    IL_0002:  call       instance void System.Exception::.ctor(string)
+    IL_0007:  nop
+    IL_0008:  nop
+    IL_0009:  ret
+  } // end of method SystemException::.ctor
+
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor(string message,
+                               class System.Exception innerException) cil managed
+  {
+    // Code size       11 (0xb)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.1
+    IL_0002:  ldarg.2
+    IL_0003:  call       instance void System.Exception::.ctor(string,
+                                                               class System.Exception)
+    IL_0008:  nop
+    IL_0009:  nop
+    IL_000a:  ret
+  } // end of method SystemException::.ctor
+
+} // end of class System.SystemException
+
+.class public auto ansi beforefieldinit System.ArithmeticException
+       extends System.SystemException
+{
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor() cil managed
+  {
+    // Code size       14 (0xe)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldstr      "Exception of type 'System.ArithmeticException' was"
+    + " thrown."
+    IL_0006:  call       instance void System.SystemException::.ctor(string)
+    IL_000b:  nop
+    IL_000c:  nop
+    IL_000d:  ret
+  } // end of method ArithmeticException::.ctor
+
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor(string message) cil managed
+  {
+    // Code size       10 (0xa)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.1
+    IL_0002:  call       instance void System.SystemException::.ctor(string)
+    IL_0007:  nop
+    IL_0008:  nop
+    IL_0009:  ret
+  } // end of method ArithmeticException::.ctor
+
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor(string message,
+                               class System.Exception innerException) cil managed
+  {
+    // Code size       11 (0xb)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.1
+    IL_0002:  ldarg.2
+    IL_0003:  call       instance void System.SystemException::.ctor(string,
+                                                                     class System.Exception)
+    IL_0008:  nop
+    IL_0009:  nop
+    IL_000a:  ret
+  } // end of method ArithmeticException::.ctor
+
+} // end of class System.ArithmeticException
+
+.class public auto ansi beforefieldinit System.DivideByZeroException
+       extends System.ArithmeticException
+{
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor() cil managed
+  {
+    // Code size       14 (0xe)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldstr      "Exception of type 'System.DivideByZeroException' w"
+    + "as thrown."
+    IL_0006:  call       instance void System.ArithmeticException::.ctor(string)
+    IL_000b:  nop
+    IL_000c:  nop
+    IL_000d:  ret
+  } // end of method DivideByZeroException::.ctor
+
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor(string message) cil managed
+  {
+    // Code size       10 (0xa)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.1
+    IL_0002:  call       instance void System.ArithmeticException::.ctor(string)
+    IL_0007:  nop
+    IL_0008:  nop
+    IL_0009:  ret
+  } // end of method DivideByZeroException::.ctor
+
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor(string message,
+                               class System.Exception innerException) cil managed
+  {
+    // Code size       11 (0xb)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.1
+    IL_0002:  ldarg.2
+    IL_0003:  call       instance void System.ArithmeticException::.ctor(string,
+                                                                         class System.Exception)
+    IL_0008:  nop
+    IL_0009:  nop
+    IL_000a:  ret
+  } // end of method DivideByZeroException::.ctor
+
+} // end of class System.DivideByZeroException
+
+.class public auto ansi beforefieldinit System.NullReferenceException
+       extends System.SystemException
+{
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor() cil managed
+  {
+    // Code size       14 (0xe)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldstr      "Exception of type 'System.NullReferenceException' "
+    + "was thrown."
+    IL_0006:  call       instance void System.SystemException::.ctor(string)
+    IL_000b:  nop
+    IL_000c:  nop
+    IL_000d:  ret
+  } // end of method NullReferenceException::.ctor
+
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor(string message) cil managed
+  {
+    // Code size       10 (0xa)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.1
+    IL_0002:  call       instance void System.SystemException::.ctor(string)
+    IL_0007:  nop
+    IL_0008:  nop
+    IL_0009:  ret
+  } // end of method NullReferenceException::.ctor
+
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor(string message,
+                               class System.Exception innerException) cil managed
+  {
+    // Code size       11 (0xb)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.1
+    IL_0002:  ldarg.2
+    IL_0003:  call       instance void System.SystemException::.ctor(string,
+                                                                     class System.Exception)
+    IL_0008:  nop
+    IL_0009:  nop
+    IL_000a:  ret
+  } // end of method NullReferenceException::.ctor
+
+} // end of class System.NullReferenceException
+
+.class public auto ansi beforefieldinit System.IndexOutOfRangeException
+       extends System.SystemException
+{
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor() cil managed
+  {
+    // Code size       14 (0xe)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldstr      "Exception of type 'System.IndexOutOfRangeException"
+    + "' was thrown."
+    IL_0006:  call       instance void System.SystemException::.ctor(string)
+    IL_000b:  nop
+    IL_000c:  nop
+    IL_000d:  ret
+  } // end of method IndexOutOfRangeException::.ctor
+
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor(string message) cil managed
+  {
+    // Code size       10 (0xa)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.1
+    IL_0002:  call       instance void System.SystemException::.ctor(string)
+    IL_0007:  nop
+    IL_0008:  nop
+    IL_0009:  ret
+  } // end of method IndexOutOfRangeException::.ctor
+
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor(string message,
+                               class System.Exception innerException) cil managed
+  {
+    // Code size       11 (0xb)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.1
+    IL_0002:  ldarg.2
+    IL_0003:  call       instance void System.SystemException::.ctor(string,
+                                                                     class System.Exception)
+    IL_0008:  nop
+    IL_0009:  nop
+    IL_000a:  ret
+  } // end of method IndexOutOfRangeException::.ctor
+
+} // end of class System.IndexOutOfRangeException
+
+.class public auto ansi beforefieldinit System.InvalidCastException
+       extends System.SystemException
+{
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor() cil managed
+  {
+    // Code size       14 (0xe)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldstr      "Exception of type 'System.InvalidCastException' wa"
+    + "s thrown."
+    IL_0006:  call       instance void System.SystemException::.ctor(string)
+    IL_000b:  nop
+    IL_000c:  nop
+    IL_000d:  ret
+  } // end of method InvalidCastException::.ctor
+
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor(string message) cil managed
+  {
+    // Code size       10 (0xa)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.1
+    IL_0002:  call       instance void System.SystemException::.ctor(string)
+    IL_0007:  nop
+    IL_0008:  nop
+    IL_0009:  ret
+  } // end of method InvalidCastException::.ctor
+
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor(string message,
+                               class System.Exception innerException) cil managed
+  {
+    // Code size       11 (0xb)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.1
+    IL_0002:  ldarg.2
+    IL_0003:  call       instance void System.SystemException::.ctor(string,
+                                                                     class System.Exception)
+    IL_0008:  nop
+    IL_0009:  nop
+    IL_000a:  ret
+  } // end of method InvalidCastException::.ctor
+
+} // end of class System.InvalidCastException
+
+.class public auto ansi beforefieldinit System.ArrayTypeMismatchException
+       extends System.SystemException
+{
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor() cil managed
+  {
+    // Code size       14 (0xe)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldstr      "Exception of type 'System.ArrayTypeMismatchExcepti"
+    + "on' was thrown."
+    IL_0006:  call       instance void System.SystemException::.ctor(string)
+    IL_000b:  nop
+    IL_000c:  nop
+    IL_000d:  ret
+  } // end of method ArrayTypeMismatchException::.ctor
+
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor(string message) cil managed
+  {
+    // Code size       10 (0xa)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.1
+    IL_0002:  call       instance void System.SystemException::.ctor(string)
+    IL_0007:  nop
+    IL_0008:  nop
+    IL_0009:  ret
+  } // end of method ArrayTypeMismatchException::.ctor
+
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor(string message,
+                               class System.Exception innerException) cil managed
+  {
+    // Code size       11 (0xb)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.1
+    IL_0002:  ldarg.2
+    IL_0003:  call       instance void System.SystemException::.ctor(string,
+                                                                     class System.Exception)
+    IL_0008:  nop
+    IL_0009:  nop
+    IL_000a:  ret
+  } // end of method ArrayTypeMismatchException::.ctor
+
+} // end of class System.ArrayTypeMismatchException
+
+.class public auto ansi beforefieldinit System.OverflowException
+       extends System.ArithmeticException
+{
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor() cil managed
+  {
+    // Code size       14 (0xe)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldstr      "Exception of type 'System.OverflowException' was t"
+    + "hrown."
+    IL_0006:  call       instance void System.ArithmeticException::.ctor(string)
+    IL_000b:  nop
+    IL_000c:  nop
+    IL_000d:  ret
+  } // end of method OverflowException::.ctor
+
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor(string message) cil managed
+  {
+    // Code size       10 (0xa)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.1
+    IL_0002:  call       instance void System.ArithmeticException::.ctor(string)
+    IL_0007:  nop
+    IL_0008:  nop
+    IL_0009:  ret
+  } // end of method OverflowException::.ctor
+
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor(string message,
+                               class System.Exception innerException) cil managed
+  {
+    // Code size       11 (0xb)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.1
+    IL_0002:  ldarg.2
+    IL_0003:  call       instance void System.ArithmeticException::.ctor(string,
+                                                                         class System.Exception)
+    IL_0008:  nop
+    IL_0009:  nop
+    IL_000a:  ret
+  } // end of method OverflowException::.ctor
+
+} // end of class System.OverflowException
+
+.class public auto ansi beforefieldinit System.InvalidOperationException
+       extends System.SystemException
+{
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor() cil managed
+  {
+    // Code size       14 (0xe)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldstr      "Exception of type 'System.InvalidOperationExceptio"
+    + "n' was thrown."
+    IL_0006:  call       instance void System.SystemException::.ctor(string)
+    IL_000b:  nop
+    IL_000c:  nop
+    IL_000d:  ret
+  } // end of method InvalidOperationException::.ctor
+
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor(string message) cil managed
+  {
+    // Code size       10 (0xa)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.1
+    IL_0002:  call       instance void System.SystemException::.ctor(string)
+    IL_0007:  nop
+    IL_0008:  nop
+    IL_0009:  ret
+  } // end of method InvalidOperationException::.ctor
+
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor(string message,
+                               class System.Exception innerException) cil managed
+  {
+    // Code size       11 (0xb)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.1
+    IL_0002:  ldarg.2
+    IL_0003:  call       instance void System.SystemException::.ctor(string,
+                                                                     class System.Exception)
+    IL_0008:  nop
+    IL_0009:  nop
+    IL_000a:  ret
+  } // end of method InvalidOperationException::.ctor
+
+} // end of class System.InvalidOperationException
+
+.class public auto ansi beforefieldinit System.ArgumentException
+       extends System.SystemException
+{
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor() cil managed
+  {
+    // Code size       14 (0xe)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldstr      "Exception of type 'System.ArgumentException' was t"
+    + "hrown."
+    IL_0006:  call       instance void System.SystemException::.ctor(string)
+    IL_000b:  nop
+    IL_000c:  nop
+    IL_000d:  ret
+  } // end of method ArgumentException::.ctor
+
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor(string message) cil managed
+  {
+    // Code size       10 (0xa)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.1
+    IL_0002:  call       instance void System.SystemException::.ctor(string)
+    IL_0007:  nop
+    IL_0008:  nop
+    IL_0009:  ret
+  } // end of method ArgumentException::.ctor
+
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor(string message,
+                               class System.Exception innerException) cil managed
+  {
+    // Code size       11 (0xb)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.1
+    IL_0002:  ldarg.2
+    IL_0003:  call       instance void System.SystemException::.ctor(string,
+                                                                     class System.Exception)
+    IL_0008:  nop
+    IL_0009:  nop
+    IL_000a:  ret
+  } // end of method ArgumentException::.ctor
+
+} // end of class System.ArgumentException
+
+.class public auto ansi beforefieldinit System.ArgumentNullException
+       extends System.ArgumentException
+{
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor() cil managed
+  {
+    // Code size       14 (0xe)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldstr      "Exception of type 'System.ArgumentNullException' w"
+    + "as thrown."
+    IL_0006:  call       instance void System.ArgumentException::.ctor(string)
+    IL_000b:  nop
+    IL_000c:  nop
+    IL_000d:  ret
+  } // end of method ArgumentNullException::.ctor
+
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor(string message) cil managed
+  {
+    // Code size       10 (0xa)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.1
+    IL_0002:  call       instance void System.ArgumentException::.ctor(string)
+    IL_0007:  nop
+    IL_0008:  nop
+    IL_0009:  ret
+  } // end of method ArgumentNullException::.ctor
+
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor(string message,
+                               class System.Exception innerException) cil managed
+  {
+    // Code size       11 (0xb)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.1
+    IL_0002:  ldarg.2
+    IL_0003:  call       instance void System.ArgumentException::.ctor(string,
+                                                                       class System.Exception)
+    IL_0008:  nop
+    IL_0009:  nop
+    IL_000a:  ret
+  } // end of method ArgumentNullException::.ctor
+
+} // end of class System.ArgumentNullException
+
+.class public auto ansi beforefieldinit System.NotImplementedException
+       extends System.SystemException
+{
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor() cil managed
+  {
+    // Code size       14 (0xe)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldstr      "Exception of type 'System.NotImplementedException'"
+    + " was thrown."
+    IL_0006:  call       instance void System.SystemException::.ctor(string)
+    IL_000b:  nop
+    IL_000c:  nop
+    IL_000d:  ret
+  } // end of method NotImplementedException::.ctor
+
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor(string message) cil managed
+  {
+    // Code size       10 (0xa)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.1
+    IL_0002:  call       instance void System.SystemException::.ctor(string)
+    IL_0007:  nop
+    IL_0008:  nop
+    IL_0009:  ret
+  } // end of method NotImplementedException::.ctor
+
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor(string message,
+                               class System.Exception innerException) cil managed
+  {
+    // Code size       11 (0xb)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.1
+    IL_0002:  ldarg.2
+    IL_0003:  call       instance void System.SystemException::.ctor(string,
+                                                                     class System.Exception)
+    IL_0008:  nop
+    IL_0009:  nop
+    IL_000a:  ret
+  } // end of method NotImplementedException::.ctor
+
+} // end of class System.NotImplementedException
+
+.class public auto ansi beforefieldinit System.NotSupportedException
+       extends System.SystemException
+{
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor() cil managed
+  {
+    // Code size       14 (0xe)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldstr      "Exception of type 'System.NotSupportedException' w"
+    + "as thrown."
+    IL_0006:  call       instance void System.SystemException::.ctor(string)
+    IL_000b:  nop
+    IL_000c:  nop
+    IL_000d:  ret
+  } // end of method NotSupportedException::.ctor
+
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor(string message) cil managed
+  {
+    // Code size       10 (0xa)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.1
+    IL_0002:  call       instance void System.SystemException::.ctor(string)
+    IL_0007:  nop
+    IL_0008:  nop
+    IL_0009:  ret
+  } // end of method NotSupportedException::.ctor
+
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor(string message,
+                               class System.Exception innerException) cil managed
+  {
+    // Code size       11 (0xb)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.1
+    IL_0002:  ldarg.2
+    IL_0003:  call       instance void System.SystemException::.ctor(string,
+                                                                     class System.Exception)
+    IL_0008:  nop
+    IL_0009:  nop
+    IL_000a:  ret
+  } // end of method NotSupportedException::.ctor
+
+} // end of class System.NotSupportedException
+
 .class public auto ansi beforefieldinit System.FlagsAttribute
        extends System.Attribute
 {
-  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets)
-           = {int32(16)
-              property bool 'Inherited' = bool(false)}
+  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets) = ( 01 00 10 00 00 00 01 00 54 02 09 49 6E 68 65 72   // ........T..Inher
+                                                                                                     69 74 65 64 00 )                                  // ited.
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
   {
@@ -733,16 +1481,14 @@
 .class public sequential ansi sealed beforefieldinit System.Int32
        extends System.ValueType
 {
-  .custom instance void System.Runtime.CompilerServices.IsReadOnlyAttribute::.ctor()
-           = {}
+  .custom instance void System.Runtime.CompilerServices.IsReadOnlyAttribute::.ctor() = ( 01 00 00 00 ) 
   .field private initonly int32 m_value
   .field public static literal int32 MaxValue = int32(0x7FFFFFFF)
   .field public static literal int32 MinValue = int32(0x80000000)
   .method public hidebysig instance int32 
           CompareTo(object 'value') cil managed
   {
-    .custom instance void System.Runtime.CompilerServices.NullableContextAttribute::.ctor(uint8)
-             = {uint8(2)}
+    .custom instance void System.Runtime.CompilerServices.NullableContextAttribute::.ctor(uint8) = ( 01 00 02 00 00 ) 
     // Code size       78 (0x4e)
     .maxstack  2
     .locals init (int32 V_0,
@@ -860,8 +1606,7 @@
   .method public hidebysig virtual instance bool 
           Equals(object obj) cil managed
   {
-    .custom instance void System.Runtime.CompilerServices.NullableContextAttribute::.ctor(uint8)
-             = {uint8(2)}
+    .custom instance void System.Runtime.CompilerServices.NullableContextAttribute::.ctor(uint8) = ( 01 00 02 00 00 ) 
     // Code size       37 (0x25)
     .maxstack  2
     .locals init (bool V_0,
@@ -983,25 +1728,25 @@
   {
   } // end of method Console::WriteLine
 
-  .method public hidebysig static void WriteLine(char v) cil managed internalcall
+  .method public hidebysig static void  WriteLine(char 'value') cil managed internalcall
   {
-  }
+  } // end of method Console::WriteLine
 
-  .method public hidebysig static void WriteLine(uint32 v) cil managed internalcall
+  .method public hidebysig static void  WriteLine(uint32 'value') cil managed internalcall
   {
-  }
+  } // end of method Console::WriteLine
 
-  .method public hidebysig static void WriteLine(int64 v) cil managed internalcall
+  .method public hidebysig static void  WriteLine(int64 'value') cil managed internalcall
   {
-  }
+  } // end of method Console::WriteLine
 
-  .method public hidebysig static void WriteLine(uint64 v) cil managed internalcall
+  .method public hidebysig static void  WriteLine(uint64 'value') cil managed internalcall
   {
-  }
+  } // end of method Console::WriteLine
 
-  .method public hidebysig static void WriteLine(float32 v) cil managed internalcall
+  .method public hidebysig static void  WriteLine(float32 'value') cil managed internalcall
   {
-  }
+  } // end of method Console::WriteLine
 
   .method public hidebysig static void  WriteLine(string s) cil managed internalcall
   {
@@ -1066,8 +1811,7 @@
 
 .class public auto ansi beforefieldinit System.Object
 {
-  .custom instance void System.Runtime.CompilerServices.NullableContextAttribute::.ctor(uint8)
-           = {uint8(2)}
+  .custom instance void System.Runtime.CompilerServices.NullableContextAttribute::.ctor(uint8) = ( 01 00 02 00 00 ) 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
   {
@@ -1133,13 +1877,54 @@
 
 } // end of class System.Object
 
+.class public sequential ansi sealed beforefieldinit System.SByte
+       extends System.ValueType
+{
+  .pack 0
+  .size 1
+} // end of class System.SByte
+
+.class public sequential ansi sealed beforefieldinit System.Int16
+       extends System.ValueType
+{
+  .pack 0
+  .size 1
+} // end of class System.Int16
+
+.class public sequential ansi sealed beforefieldinit System.UInt16
+       extends System.ValueType
+{
+  .pack 0
+  .size 1
+} // end of class System.UInt16
+
+.class public sequential ansi sealed beforefieldinit System.Int64
+       extends System.ValueType
+{
+  .pack 0
+  .size 1
+} // end of class System.Int64
+
+.class public sequential ansi sealed beforefieldinit System.UInt64
+       extends System.ValueType
+{
+  .pack 0
+  .size 1
+} // end of class System.UInt64
+
+.class public sequential ansi sealed beforefieldinit System.Single
+       extends System.ValueType
+{
+  .pack 0
+  .size 1
+} // end of class System.Single
+
 .class public abstract auto ansi beforefieldinit System.Attribute
        extends System.Object
 {
-  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets)
-           = {int32(32767)
-              property bool 'Inherited' = bool(true)
-              property bool 'AllowMultiple' = bool(false)}
+  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets) = ( 01 00 FF 7F 00 00 02 00 54 02 09 49 6E 68 65 72   // ........T..Inher
+                                                                                                     69 74 65 64 01 54 02 0D 41 6C 6C 6F 77 4D 75 6C   // ited.T..AllowMul
+                                                                                                     74 69 70 6C 65 00 )                               // tiple.
   .method family hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
   {
@@ -1155,8 +1940,7 @@
   .method public hidebysig newslot virtual 
           instance bool  Match(object obj) cil managed
   {
-    .custom instance void System.Runtime.CompilerServices.NullableContextAttribute::.ctor(uint8)
-             = {uint8(2)}
+    .custom instance void System.Runtime.CompilerServices.NullableContextAttribute::.ctor(uint8) = ( 01 00 02 00 00 ) 
     // Code size       8 (0x8)
     .maxstack  8
     IL_0000:  ldarg.0
@@ -1200,16 +1984,14 @@
 .class public sequential ansi sealed beforefieldinit System.UInt32
        extends System.ValueType
 {
-  .custom instance void System.Runtime.CompilerServices.IsReadOnlyAttribute::.ctor()
-           = {}
+  .custom instance void System.Runtime.CompilerServices.IsReadOnlyAttribute::.ctor() = ( 01 00 00 00 ) 
   .field private initonly uint32 m_value
   .field public static literal uint32 MaxValue = uint32(0xFFFFFFFF)
   .field public static literal uint32 MinValue = uint32(0x00000000)
   .method public hidebysig instance int32 
           CompareTo(object 'value') cil managed
   {
-    .custom instance void System.Runtime.CompilerServices.NullableContextAttribute::.ctor(uint8)
-             = {uint8(2)}
+    .custom instance void System.Runtime.CompilerServices.NullableContextAttribute::.ctor(uint8) = ( 01 00 02 00 00 ) 
     // Code size       78 (0x4e)
     .maxstack  2
     .locals init (uint32 V_0,
@@ -1327,8 +2109,7 @@
   .method public hidebysig virtual instance bool 
           Equals(object obj) cil managed
   {
-    .custom instance void System.Runtime.CompilerServices.NullableContextAttribute::.ctor(uint8)
-             = {uint8(2)}
+    .custom instance void System.Runtime.CompilerServices.NullableContextAttribute::.ctor(uint8) = ( 01 00 02 00 00 ) 
     // Code size       37 (0x25)
     .maxstack  2
     .locals init (bool V_0,
@@ -1432,8 +2213,7 @@
   .method public hidebysig virtual instance string 
           ToString() cil managed
   {
-    .custom instance void System.Runtime.CompilerServices.NullableContextAttribute::.ctor(uint8)
-             = {uint8(2)}
+    .custom instance void System.Runtime.CompilerServices.NullableContextAttribute::.ctor(uint8) = ( 01 00 02 00 00 ) 
     // Code size       11 (0xb)
     .maxstack  1
     .locals init (string V_0)
@@ -1459,36 +2239,6 @@
 
 } // end of class System.ValueType
 
-.class public sequential ansi sealed beforefieldinit System.SByte
-       extends System.ValueType
-{
-}
-
-.class public sequential ansi sealed beforefieldinit System.Int16
-       extends System.ValueType
-{
-}
-
-.class public sequential ansi sealed beforefieldinit System.UInt16
-       extends System.ValueType
-{
-}
-
-.class public sequential ansi sealed beforefieldinit System.Int64
-       extends System.ValueType
-{
-}
-
-.class public sequential ansi sealed beforefieldinit System.UInt64
-       extends System.ValueType
-{
-}
-
-.class public sequential ansi sealed beforefieldinit System.Single
-       extends System.ValueType
-{
-}
-
 .class public sequential ansi sealed beforefieldinit System.Void
        extends System.ValueType
 {
@@ -1499,10 +2249,9 @@
 .class private auto ansi sealed beforefieldinit System.Runtime.Versioning.NonVersionableAttribute
        extends System.Attribute
 {
-  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets)
-           = {int32(108)
-              property bool 'AllowMultiple' = bool(false)
-              property bool 'Inherited' = bool(false)}
+  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets) = ( 01 00 6C 00 00 00 02 00 54 02 0D 41 6C 6C 6F 77   // ..l.....T..Allow
+                                                                                                     4D 75 6C 74 69 70 6C 65 00 54 02 09 49 6E 68 65   // Multiple.T..Inhe
+                                                                                                     72 69 74 65 64 00 )                               // rited.
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
   {
@@ -1520,14 +2269,12 @@
 .class public auto ansi sealed beforefieldinit System.Runtime.Versioning.TargetFrameworkAttribute
        extends System.Attribute
 {
-  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets)
-           = {int32(1)
-              property bool 'AllowMultiple' = bool(false)
-              property bool 'Inherited' = bool(false)}
+  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets) = ( 01 00 01 00 00 00 02 00 54 02 0D 41 6C 6C 6F 77   // ........T..Allow
+                                                                                                     4D 75 6C 74 69 70 6C 65 00 54 02 09 49 6E 68 65   // Multiple.T..Inhe
+                                                                                                     72 69 74 65 64 00 )                               // rited.
   .field private initonly string _frameworkName
   .field private string _frameworkDisplayName
-  .custom instance void System.Runtime.CompilerServices.NullableAttribute::.ctor(uint8)
-           = {uint8(2)}
+  .custom instance void System.Runtime.CompilerServices.NullableAttribute::.ctor(uint8) = ( 01 00 02 00 00 ) 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor(string frameworkName) cil managed
   {
@@ -1556,8 +2303,7 @@
   .method public hidebysig specialname instance string 
           get_FrameworkDisplayName() cil managed
   {
-    .custom instance void System.Runtime.CompilerServices.NullableContextAttribute::.ctor(uint8)
-             = {uint8(2)}
+    .custom instance void System.Runtime.CompilerServices.NullableContextAttribute::.ctor(uint8) = ( 01 00 02 00 00 ) 
     // Code size       7 (0x7)
     .maxstack  8
     IL_0000:  ldarg.0
@@ -1568,8 +2314,7 @@
   .method public hidebysig specialname instance void 
           set_FrameworkDisplayName(string 'value') cil managed
   {
-    .custom instance void System.Runtime.CompilerServices.NullableContextAttribute::.ctor(uint8)
-             = {uint8(2)}
+    .custom instance void System.Runtime.CompilerServices.NullableContextAttribute::.ctor(uint8) = ( 01 00 02 00 00 ) 
     // Code size       8 (0x8)
     .maxstack  8
     IL_0000:  ldarg.0
@@ -1578,14 +2323,13 @@
     IL_0007:  ret
   } // end of method TargetFrameworkAttribute::set_FrameworkDisplayName
 
-  .property instance string FrameworkName()
+  .property instance callconv(8) string FrameworkName()
   {
     .get instance string System.Runtime.Versioning.TargetFrameworkAttribute::get_FrameworkName()
   } // end of property TargetFrameworkAttribute::FrameworkName
-  .property instance string FrameworkDisplayName()
+  .property instance callconv(8) string FrameworkDisplayName()
   {
-    .custom instance void System.Runtime.CompilerServices.NullableAttribute::.ctor(uint8)
-             = {uint8(2)}
+    .custom instance void System.Runtime.CompilerServices.NullableAttribute::.ctor(uint8) = ( 01 00 02 00 00 ) 
     .get instance string System.Runtime.Versioning.TargetFrameworkAttribute::get_FrameworkDisplayName()
     .set instance void System.Runtime.Versioning.TargetFrameworkAttribute::set_FrameworkDisplayName(string)
   } // end of property TargetFrameworkAttribute::FrameworkDisplayName
@@ -1604,9 +2348,8 @@
 .class public auto ansi sealed beforefieldinit System.Runtime.CompilerServices.MethodImplAttribute
        extends System.Attribute
 {
-  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets)
-           = {int32(96)
-              property bool 'Inherited' = bool(false)}
+  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets) = ( 01 00 60 00 00 00 01 00 54 02 09 49 6E 68 65 72   // ..`.....T..Inher
+                                                                                                     69 74 65 64 00 )                                  // ited.
   .field public valuetype System.Runtime.CompilerServices.MethodCodeType MethodCodeType
   .field private initonly valuetype System.Runtime.CompilerServices.MethodImplOptions '<Value>k__BackingField'
   .method public hidebysig specialname rtspecialname 
@@ -1661,7 +2404,7 @@
     IL_0006:  ret
   } // end of method MethodImplAttribute::get_Value
 
-  .property instance valuetype System.Runtime.CompilerServices.MethodImplOptions
+  .property instance callconv(8) valuetype System.Runtime.CompilerServices.MethodImplOptions
           Value()
   {
     .get instance valuetype System.Runtime.CompilerServices.MethodImplOptions System.Runtime.CompilerServices.MethodImplAttribute::get_Value()
@@ -1671,7 +2414,7 @@
 .class public auto ansi sealed System.Runtime.CompilerServices.MethodImplOptions
        extends System.Enum
 {
-  .custom instance void System.FlagsAttribute::.ctor() = {}
+  .custom instance void System.FlagsAttribute::.ctor() = ( 01 00 00 00 ) 
   .field public specialname rtspecialname int32 value__
   .field public static literal valuetype System.Runtime.CompilerServices.MethodImplOptions Unmanaged = int32(0x00000004)
   .field public static literal valuetype System.Runtime.CompilerServices.MethodImplOptions NoInlining = int32(0x00000008)
@@ -1687,9 +2430,8 @@
 .class public auto ansi sealed beforefieldinit System.Reflection.AssemblyCompanyAttribute
        extends System.Attribute
 {
-  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets)
-           = {int32(1)
-              property bool 'Inherited' = bool(false)}
+  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets) = ( 01 00 01 00 00 00 01 00 54 02 09 49 6E 68 65 72   // ........T..Inher
+                                                                                                     69 74 65 64 00 )                                  // ited.
   .field private initonly string '<Company>k__BackingField'
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor(string company) cil managed
@@ -1716,7 +2458,7 @@
     IL_0006:  ret
   } // end of method AssemblyCompanyAttribute::get_Company
 
-  .property instance string Company()
+  .property instance callconv(8) string Company()
   {
     .get instance string System.Reflection.AssemblyCompanyAttribute::get_Company()
   } // end of property AssemblyCompanyAttribute::Company
@@ -1725,9 +2467,8 @@
 .class public auto ansi sealed beforefieldinit System.Reflection.AssemblyConfigurationAttribute
        extends System.Attribute
 {
-  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets)
-           = {int32(1)
-              property bool 'Inherited' = bool(false)}
+  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets) = ( 01 00 01 00 00 00 01 00 54 02 09 49 6E 68 65 72   // ........T..Inher
+                                                                                                     69 74 65 64 00 )                                  // ited.
   .field private initonly string '<Configuration>k__BackingField'
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor(string configuration) cil managed
@@ -1754,7 +2495,7 @@
     IL_0006:  ret
   } // end of method AssemblyConfigurationAttribute::get_Configuration
 
-  .property instance string Configuration()
+  .property instance callconv(8) string Configuration()
   {
     .get instance string System.Reflection.AssemblyConfigurationAttribute::get_Configuration()
   } // end of property AssemblyConfigurationAttribute::Configuration
@@ -1763,9 +2504,8 @@
 .class public auto ansi sealed beforefieldinit System.Reflection.AssemblyCopyrightAttribute
        extends System.Attribute
 {
-  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets)
-           = {int32(1)
-              property bool 'Inherited' = bool(false)}
+  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets) = ( 01 00 01 00 00 00 01 00 54 02 09 49 6E 68 65 72   // ........T..Inher
+                                                                                                     69 74 65 64 00 )                                  // ited.
   .field private initonly string '<Copyright>k__BackingField'
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor(string copyright) cil managed
@@ -1792,7 +2532,7 @@
     IL_0006:  ret
   } // end of method AssemblyCopyrightAttribute::get_Copyright
 
-  .property instance string Copyright()
+  .property instance callconv(8) string Copyright()
   {
     .get instance string System.Reflection.AssemblyCopyrightAttribute::get_Copyright()
   } // end of property AssemblyCopyrightAttribute::Copyright
@@ -1801,9 +2541,8 @@
 .class public auto ansi sealed beforefieldinit System.Reflection.AssemblyCultureAttribute
        extends System.Attribute
 {
-  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets)
-           = {int32(1)
-              property bool 'Inherited' = bool(false)}
+  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets) = ( 01 00 01 00 00 00 01 00 54 02 09 49 6E 68 65 72   // ........T..Inher
+                                                                                                     69 74 65 64 00 )                                  // ited.
   .field private initonly string '<Culture>k__BackingField'
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor(string culture) cil managed
@@ -1830,7 +2569,7 @@
     IL_0006:  ret
   } // end of method AssemblyCultureAttribute::get_Culture
 
-  .property instance string Culture()
+  .property instance callconv(8) string Culture()
   {
     .get instance string System.Reflection.AssemblyCultureAttribute::get_Culture()
   } // end of property AssemblyCultureAttribute::Culture
@@ -1839,9 +2578,8 @@
 .class public auto ansi sealed beforefieldinit System.Reflection.AssemblyDefaultAliasAttribute
        extends System.Attribute
 {
-  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets)
-           = {int32(1)
-              property bool 'Inherited' = bool(false)}
+  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets) = ( 01 00 01 00 00 00 01 00 54 02 09 49 6E 68 65 72   // ........T..Inher
+                                                                                                     69 74 65 64 00 )                                  // ited.
   .field private initonly string '<DefaultAlias>k__BackingField'
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor(string defaultAlias) cil managed
@@ -1868,7 +2606,7 @@
     IL_0006:  ret
   } // end of method AssemblyDefaultAliasAttribute::get_DefaultAlias
 
-  .property instance string DefaultAlias()
+  .property instance callconv(8) string DefaultAlias()
   {
     .get instance string System.Reflection.AssemblyDefaultAliasAttribute::get_DefaultAlias()
   } // end of property AssemblyDefaultAliasAttribute::DefaultAlias
@@ -1877,9 +2615,8 @@
 .class public auto ansi sealed beforefieldinit System.Reflection.AssemblyDelaySignAttribute
        extends System.Attribute
 {
-  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets)
-           = {int32(1)
-              property bool 'Inherited' = bool(false)}
+  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets) = ( 01 00 01 00 00 00 01 00 54 02 09 49 6E 68 65 72   // ........T..Inher
+                                                                                                     69 74 65 64 00 )                                  // ited.
   .field private initonly bool '<DelaySign>k__BackingField'
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor(bool delaySign) cil managed
@@ -1906,7 +2643,7 @@
     IL_0006:  ret
   } // end of method AssemblyDelaySignAttribute::get_DelaySign
 
-  .property instance bool DelaySign()
+  .property instance callconv(8) bool DelaySign()
   {
     .get instance bool System.Reflection.AssemblyDelaySignAttribute::get_DelaySign()
   } // end of property AssemblyDelaySignAttribute::DelaySign
@@ -1915,9 +2652,8 @@
 .class public auto ansi sealed beforefieldinit System.Reflection.AssemblyDescriptionAttribute
        extends System.Attribute
 {
-  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets)
-           = {int32(1)
-              property bool 'Inherited' = bool(false)}
+  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets) = ( 01 00 01 00 00 00 01 00 54 02 09 49 6E 68 65 72   // ........T..Inher
+                                                                                                     69 74 65 64 00 )                                  // ited.
   .field private initonly string '<Description>k__BackingField'
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor(string description) cil managed
@@ -1944,7 +2680,7 @@
     IL_0006:  ret
   } // end of method AssemblyDescriptionAttribute::get_Description
 
-  .property instance string Description()
+  .property instance callconv(8) string Description()
   {
     .get instance string System.Reflection.AssemblyDescriptionAttribute::get_Description()
   } // end of property AssemblyDescriptionAttribute::Description
@@ -1953,9 +2689,8 @@
 .class public auto ansi sealed beforefieldinit System.Reflection.AssemblyFileVersionAttribute
        extends System.Attribute
 {
-  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets)
-           = {int32(1)
-              property bool 'Inherited' = bool(false)}
+  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets) = ( 01 00 01 00 00 00 01 00 54 02 09 49 6E 68 65 72   // ........T..Inher
+                                                                                                     69 74 65 64 00 )                                  // ited.
   .field private initonly string '<Version>k__BackingField'
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor(string version) cil managed
@@ -1982,7 +2717,7 @@
     IL_0006:  ret
   } // end of method AssemblyFileVersionAttribute::get_Version
 
-  .property instance string Version()
+  .property instance callconv(8) string Version()
   {
     .get instance string System.Reflection.AssemblyFileVersionAttribute::get_Version()
   } // end of property AssemblyFileVersionAttribute::Version
@@ -1991,9 +2726,8 @@
 .class public auto ansi sealed beforefieldinit System.Reflection.AssemblyInformationalVersionAttribute
        extends System.Attribute
 {
-  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets)
-           = {int32(1)
-              property bool 'Inherited' = bool(false)}
+  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets) = ( 01 00 01 00 00 00 01 00 54 02 09 49 6E 68 65 72   // ........T..Inher
+                                                                                                     69 74 65 64 00 )                                  // ited.
   .field private initonly string '<InformationalVersion>k__BackingField'
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor(string informationalVersion) cil managed
@@ -2020,7 +2754,7 @@
     IL_0006:  ret
   } // end of method AssemblyInformationalVersionAttribute::get_InformationalVersion
 
-  .property instance string InformationalVersion()
+  .property instance callconv(8) string InformationalVersion()
   {
     .get instance string System.Reflection.AssemblyInformationalVersionAttribute::get_InformationalVersion()
   } // end of property AssemblyInformationalVersionAttribute::InformationalVersion
@@ -2029,9 +2763,8 @@
 .class public auto ansi sealed beforefieldinit System.Reflection.AssemblyKeyFileAttribute
        extends System.Attribute
 {
-  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets)
-           = {int32(1)
-              property bool 'Inherited' = bool(false)}
+  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets) = ( 01 00 01 00 00 00 01 00 54 02 09 49 6E 68 65 72   // ........T..Inher
+                                                                                                     69 74 65 64 00 )                                  // ited.
   .field private initonly string '<KeyFile>k__BackingField'
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor(string keyFile) cil managed
@@ -2058,7 +2791,7 @@
     IL_0006:  ret
   } // end of method AssemblyKeyFileAttribute::get_KeyFile
 
-  .property instance string KeyFile()
+  .property instance callconv(8) string KeyFile()
   {
     .get instance string System.Reflection.AssemblyKeyFileAttribute::get_KeyFile()
   } // end of property AssemblyKeyFileAttribute::KeyFile
@@ -2067,9 +2800,8 @@
 .class public auto ansi sealed beforefieldinit System.Reflection.AssemblyKeyNameAttribute
        extends System.Attribute
 {
-  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets)
-           = {int32(1)
-              property bool 'Inherited' = bool(false)}
+  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets) = ( 01 00 01 00 00 00 01 00 54 02 09 49 6E 68 65 72   // ........T..Inher
+                                                                                                     69 74 65 64 00 )                                  // ited.
   .field private initonly string '<KeyName>k__BackingField'
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor(string keyName) cil managed
@@ -2096,7 +2828,7 @@
     IL_0006:  ret
   } // end of method AssemblyKeyNameAttribute::get_KeyName
 
-  .property instance string KeyName()
+  .property instance callconv(8) string KeyName()
   {
     .get instance string System.Reflection.AssemblyKeyNameAttribute::get_KeyName()
   } // end of property AssemblyKeyNameAttribute::KeyName
@@ -2105,21 +2837,18 @@
 .class public auto ansi sealed beforefieldinit System.Reflection.AssemblyMetadataAttribute
        extends System.Attribute
 {
-  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets)
-           = {int32(1)
-              property bool 'AllowMultiple' = bool(true)
-              property bool 'Inherited' = bool(false)}
+  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets) = ( 01 00 01 00 00 00 02 00 54 02 0D 41 6C 6C 6F 77   // ........T..Allow
+                                                                                                     4D 75 6C 74 69 70 6C 65 01 54 02 09 49 6E 68 65   // Multiple.T..Inhe
+                                                                                                     72 69 74 65 64 00 )                               // rited.
   .field private initonly string '<Key>k__BackingField'
   .field private initonly string '<Value>k__BackingField'
-  .custom instance void System.Runtime.CompilerServices.NullableAttribute::.ctor(uint8)
-           = {uint8(2)}
+  .custom instance void System.Runtime.CompilerServices.NullableAttribute::.ctor(uint8) = ( 01 00 02 00 00 ) 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor(string key,
                                string 'value') cil managed
   {
     .param [2]
-    .custom instance void System.Runtime.CompilerServices.NullableAttribute::.ctor(uint8)
-             = {uint8(2)}
+    .custom instance void System.Runtime.CompilerServices.NullableAttribute::.ctor(uint8) = ( 01 00 02 00 00 ) 
     // Code size       23 (0x17)
     .maxstack  8
     IL_0000:  ldarg.0
@@ -2148,8 +2877,7 @@
   .method public hidebysig specialname instance string 
           get_Value() cil managed
   {
-    .custom instance void System.Runtime.CompilerServices.NullableContextAttribute::.ctor(uint8)
-             = {uint8(2)}
+    .custom instance void System.Runtime.CompilerServices.NullableContextAttribute::.ctor(uint8) = ( 01 00 02 00 00 ) 
     // Code size       7 (0x7)
     .maxstack  8
     IL_0000:  ldarg.0
@@ -2157,14 +2885,13 @@
     IL_0006:  ret
   } // end of method AssemblyMetadataAttribute::get_Value
 
-  .property instance string Key()
+  .property instance callconv(8) string Key()
   {
     .get instance string System.Reflection.AssemblyMetadataAttribute::get_Key()
   } // end of property AssemblyMetadataAttribute::Key
-  .property instance string Value()
+  .property instance callconv(8) string Value()
   {
-    .custom instance void System.Runtime.CompilerServices.NullableAttribute::.ctor(uint8)
-             = {uint8(2)}
+    .custom instance void System.Runtime.CompilerServices.NullableAttribute::.ctor(uint8) = ( 01 00 02 00 00 ) 
     .get instance string System.Reflection.AssemblyMetadataAttribute::get_Value()
   } // end of property AssemblyMetadataAttribute::Value
 } // end of class System.Reflection.AssemblyMetadataAttribute
@@ -2172,9 +2899,8 @@
 .class public auto ansi sealed beforefieldinit System.Reflection.AssemblyProductAttribute
        extends System.Attribute
 {
-  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets)
-           = {int32(1)
-              property bool 'Inherited' = bool(false)}
+  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets) = ( 01 00 01 00 00 00 01 00 54 02 09 49 6E 68 65 72   // ........T..Inher
+                                                                                                     69 74 65 64 00 )                                  // ited.
   .field private initonly string '<Product>k__BackingField'
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor(string product) cil managed
@@ -2201,7 +2927,7 @@
     IL_0006:  ret
   } // end of method AssemblyProductAttribute::get_Product
 
-  .property instance string Product()
+  .property instance callconv(8) string Product()
   {
     .get instance string System.Reflection.AssemblyProductAttribute::get_Product()
   } // end of property AssemblyProductAttribute::Product
@@ -2210,10 +2936,9 @@
 .class public auto ansi sealed beforefieldinit System.Reflection.AssemblySignatureKeyAttribute
        extends System.Attribute
 {
-  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets)
-           = {int32(1)
-              property bool 'Inherited' = bool(false)
-              property bool 'AllowMultiple' = bool(false)}
+  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets) = ( 01 00 01 00 00 00 02 00 54 02 09 49 6E 68 65 72   // ........T..Inher
+                                                                                                     69 74 65 64 00 54 02 0D 41 6C 6C 6F 77 4D 75 6C   // ited.T..AllowMul
+                                                                                                     74 69 70 6C 65 00 )                               // tiple.
   .field private initonly string '<PublicKey>k__BackingField'
   .field private initonly string '<Countersignature>k__BackingField'
   .method public hidebysig specialname rtspecialname 
@@ -2255,11 +2980,11 @@
     IL_0006:  ret
   } // end of method AssemblySignatureKeyAttribute::get_Countersignature
 
-  .property instance string PublicKey()
+  .property instance callconv(8) string PublicKey()
   {
     .get instance string System.Reflection.AssemblySignatureKeyAttribute::get_PublicKey()
   } // end of property AssemblySignatureKeyAttribute::PublicKey
-  .property instance string Countersignature()
+  .property instance callconv(8) string Countersignature()
   {
     .get instance string System.Reflection.AssemblySignatureKeyAttribute::get_Countersignature()
   } // end of property AssemblySignatureKeyAttribute::Countersignature
@@ -2268,9 +2993,8 @@
 .class public auto ansi sealed beforefieldinit System.Reflection.AssemblyTitleAttribute
        extends System.Attribute
 {
-  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets)
-           = {int32(1)
-              property bool 'Inherited' = bool(false)}
+  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets) = ( 01 00 01 00 00 00 01 00 54 02 09 49 6E 68 65 72   // ........T..Inher
+                                                                                                     69 74 65 64 00 )                                  // ited.
   .field private initonly string '<Title>k__BackingField'
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor(string title) cil managed
@@ -2297,7 +3021,7 @@
     IL_0006:  ret
   } // end of method AssemblyTitleAttribute::get_Title
 
-  .property instance string Title()
+  .property instance callconv(8) string Title()
   {
     .get instance string System.Reflection.AssemblyTitleAttribute::get_Title()
   } // end of property AssemblyTitleAttribute::Title
@@ -2306,9 +3030,8 @@
 .class public auto ansi sealed beforefieldinit System.Reflection.AssemblyTrademarkAttribute
        extends System.Attribute
 {
-  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets)
-           = {int32(1)
-              property bool 'Inherited' = bool(false)}
+  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets) = ( 01 00 01 00 00 00 01 00 54 02 09 49 6E 68 65 72   // ........T..Inher
+                                                                                                     69 74 65 64 00 )                                  // ited.
   .field private initonly string '<Trademark>k__BackingField'
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor(string trademark) cil managed
@@ -2335,7 +3058,7 @@
     IL_0006:  ret
   } // end of method AssemblyTrademarkAttribute::get_Trademark
 
-  .property instance string Trademark()
+  .property instance callconv(8) string Trademark()
   {
     .get instance string System.Reflection.AssemblyTrademarkAttribute::get_Trademark()
   } // end of property AssemblyTrademarkAttribute::Trademark
@@ -2344,9 +3067,8 @@
 .class public auto ansi sealed beforefieldinit System.Reflection.AssemblyVersionAttribute
        extends System.Attribute
 {
-  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets)
-           = {int32(1)
-              property bool 'Inherited' = bool(false)}
+  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets) = ( 01 00 01 00 00 00 01 00 54 02 09 49 6E 68 65 72   // ........T..Inher
+                                                                                                     69 74 65 64 00 )                                  // ited.
   .field private initonly string '<Version>k__BackingField'
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor(string version) cil managed
@@ -2373,7 +3095,7 @@
     IL_0006:  ret
   } // end of method AssemblyVersionAttribute::get_Version
 
-  .property instance string Version()
+  .property instance callconv(8) string Version()
   {
     .get instance string System.Reflection.AssemblyVersionAttribute::get_Version()
   } // end of property AssemblyVersionAttribute::Version
@@ -2382,8 +3104,7 @@
 .class public auto ansi sealed beforefieldinit System.Reflection.DefaultMemberAttribute
        extends System.Attribute
 {
-  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets)
-           = {int32(1036)}
+  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets) = ( 01 00 0C 04 00 00 00 00 ) 
   .field private initonly string '<MemberName>k__BackingField'
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor(string memberName) cil managed
@@ -2410,7 +3131,7 @@
     IL_0006:  ret
   } // end of method DefaultMemberAttribute::get_MemberName
 
-  .property instance string MemberName()
+  .property instance callconv(8) string MemberName()
   {
     .get instance string System.Reflection.DefaultMemberAttribute::get_MemberName()
   } // end of property DefaultMemberAttribute::MemberName
@@ -2442,10 +3163,9 @@
 .class public auto ansi sealed beforefieldinit System.Reflection.ObfuscateAssemblyAttribute
        extends System.Attribute
 {
-  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets)
-           = {int32(1)
-              property bool 'AllowMultiple' = bool(false)
-              property bool 'Inherited' = bool(false)}
+  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets) = ( 01 00 01 00 00 00 02 00 54 02 0D 41 6C 6C 6F 77   // ........T..Allow
+                                                                                                     4D 75 6C 74 69 70 6C 65 00 54 02 09 49 6E 68 65   // Multiple.T..Inhe
+                                                                                                     72 69 74 65 64 00 )                               // rited.
   .field private initonly bool '<AssemblyIsPrivate>k__BackingField'
   .field private bool '<StripAfterObfuscation>k__BackingField'
   .method public hidebysig specialname rtspecialname 
@@ -2497,11 +3217,11 @@
     IL_0007:  ret
   } // end of method ObfuscateAssemblyAttribute::set_StripAfterObfuscation
 
-  .property instance bool AssemblyIsPrivate()
+  .property instance callconv(8) bool AssemblyIsPrivate()
   {
     .get instance bool System.Reflection.ObfuscateAssemblyAttribute::get_AssemblyIsPrivate()
   } // end of property ObfuscateAssemblyAttribute::AssemblyIsPrivate
-  .property instance bool StripAfterObfuscation()
+  .property instance callconv(8) bool StripAfterObfuscation()
   {
     .get instance bool System.Reflection.ObfuscateAssemblyAttribute::get_StripAfterObfuscation()
     .set instance void System.Reflection.ObfuscateAssemblyAttribute::set_StripAfterObfuscation(bool)
@@ -2511,14 +3231,11 @@
 .class public auto ansi sealed beforefieldinit System.Reflection.ObfuscationAttribute
        extends System.Attribute
 {
-  .custom instance void System.Runtime.CompilerServices.NullableContextAttribute::.ctor(uint8)
-           = {uint8(2)}
-  .custom instance void System.Runtime.CompilerServices.NullableAttribute::.ctor(uint8)
-           = {uint8(0)}
-  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets)
-           = {int32(8157)
-              property bool 'AllowMultiple' = bool(true)
-              property bool 'Inherited' = bool(false)}
+  .custom instance void System.Runtime.CompilerServices.NullableContextAttribute::.ctor(uint8) = ( 01 00 02 00 00 ) 
+  .custom instance void System.Runtime.CompilerServices.NullableAttribute::.ctor(uint8) = ( 01 00 00 00 00 ) 
+  .custom instance void System.AttributeUsageAttribute::.ctor(valuetype System.AttributeTargets) = ( 01 00 DD 1F 00 00 02 00 54 02 0D 41 6C 6C 6F 77   // ........T..Allow
+                                                                                                     4D 75 6C 74 69 70 6C 65 01 54 02 09 49 6E 68 65   // Multiple.T..Inhe
+                                                                                                     72 69 74 65 64 00 )                               // rited.
   .field private bool '<StripAfterObfuscation>k__BackingField'
   .field private bool '<Exclude>k__BackingField'
   .field private bool '<ApplyToMembers>k__BackingField'
@@ -2631,22 +3348,22 @@
     IL_0007:  ret
   } // end of method ObfuscationAttribute::set_Feature
 
-  .property instance bool StripAfterObfuscation()
+  .property instance callconv(8) bool StripAfterObfuscation()
   {
     .get instance bool System.Reflection.ObfuscationAttribute::get_StripAfterObfuscation()
     .set instance void System.Reflection.ObfuscationAttribute::set_StripAfterObfuscation(bool)
   } // end of property ObfuscationAttribute::StripAfterObfuscation
-  .property instance bool Exclude()
+  .property instance callconv(8) bool Exclude()
   {
     .get instance bool System.Reflection.ObfuscationAttribute::get_Exclude()
     .set instance void System.Reflection.ObfuscationAttribute::set_Exclude(bool)
   } // end of property ObfuscationAttribute::Exclude
-  .property instance bool ApplyToMembers()
+  .property instance callconv(8) bool ApplyToMembers()
   {
     .get instance bool System.Reflection.ObfuscationAttribute::get_ApplyToMembers()
     .set instance void System.Reflection.ObfuscationAttribute::set_ApplyToMembers(bool)
   } // end of property ObfuscationAttribute::ApplyToMembers
-  .property instance string Feature()
+  .property instance callconv(8) string Feature()
   {
     .get instance string System.Reflection.ObfuscationAttribute::get_Feature()
     .set instance void System.Reflection.ObfuscationAttribute::set_Feature(string)

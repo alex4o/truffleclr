@@ -57,6 +57,11 @@ class App : CliktCommand() {
                 println(out.toString("utf-8"))
             }
             println("Completed in: ${time}ms")
+        } catch (e: org.graalvm.polyglot.PolyglotException) {
+            if (!e.isGuestException) throw e
+            print(out.toString("utf-8"))
+            System.err.println("Unhandled exception. " + e.message)
+            kotlin.system.exitProcess(1)
         }catch (e: FrameSlotTypeException) {
             e.printStackTrace()
         }
