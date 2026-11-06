@@ -14,6 +14,7 @@ kotlin {
 dependencies {
     antlr(libs.antlr.tool)
     implementation(libs.antlr.runtime)
+    implementation(libs.gson)
     implementation(libs.truffle.api)
     kapt(libs.truffle.dsl.processor)
 }
@@ -21,6 +22,22 @@ dependencies {
 // The antlr plugin leaks the full ANTLR tool onto the runtime classpath; only the runtime is needed.
 configurations.api {
     setExtendsFrom(extendsFrom.filterNot { it.name == "antlr" })
+}
+
+// Package the host library as a resource; the FFM bridge extracts it once per JVM.
+val nativeRoot = rootDir.parentFile.resolve("native")
+val nativeTarget = layout.buildDirectory.dir("native")
+val nativeLibrary = nativeTarget.map { it.file("release/${System.mapLibraryName("dllreader")}") }
+val buildDllReader by tasks.registering(Exec::class) {
+    workingDir(nativeRoot)
+    commandLine("cargo", "build", "--release", "--locked", "--target-dir", nativeTarget.get().asFile.absolutePath)
+    inputs.files(fileTree(nativeRoot) { exclude("**/target/**") })
+    outputs.file(nativeLibrary)
+}
+
+tasks.processResources {
+    dependsOn(buildDllReader)
+    from(nativeLibrary) { into("native") }
 }
 
 tasks.generateGrammarSource {

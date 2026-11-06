@@ -1,0 +1,1060 @@
+//! High-level API for parsing and writing .NET assemblies.
+//!
+//! This module provides [`Resolution`], the main entry point for working with .NET metadata,
+//! along with typed index types for safe navigation.
+//!
+//! # Examples
+//!
+//! ## Parsing and iterating
+//!
+//! ```rust,no_run
+//! use dotnetdll::prelude::*;
+//!
+//! let bytes = std::fs::read("MyLibrary.dll").unwrap();
+//! let res = Resolution::parse(&bytes, ReadOptions::default()).unwrap();
+//!
+//! // Iterate over all types
+//! for (type_idx, typedef) in res.enumerate_type_definitions() {
+//!     println!("Type: {} (namespace: {:?})", typedef.name, typedef.namespace);
+//!     
+//!     // Access fields
+//!     for field in &typedef.fields {
+//!         println!("  Field: {}", field.name);
+//!     }
+//!     
+//!     // Iterate over methods with typed indices
+//!     for (method_idx, method) in res.enumerate_methods(type_idx) {
+//!         println!("  Method: {}", method.name);
+//!     }
+//! }
+//! ```
+//!
+//! ## Creating a new assembly
+//!
+//! ```rust,no_run
+//! use dotnetdll::prelude::*;
+//!
+//! let mut res = Resolution::new(Module::new("Example.dll"));
+//! res.assembly = Some(Assembly::new("Example"));
+//!
+//! // Reference external assemblies
+//! let mscorlib = res.push_assembly_reference(
+//!     ExternalAssemblyReference::new("mscorlib")
+//! );
+//!
+//! // Create a type
+//! let my_type = res.push_type_definition(
+//!     TypeDefinition::new(Some("MyApp".into()), "Program")
+//! );
+//!
+//! // Add a method
+//! let method = res.push_method(
+//!     my_type,
+//!     Method::new(
+//!         Accessibility::Public,
+//!         msig! { static void () },
+//!         "Main",
+//!         None
+//!     )
+//! );
+//!
+//! // Write to disk
+//! let bytes = res.write(WriteOptions::default()).unwrap();
+//! std::fs::write("Example.dll", bytes).unwrap();
+//! ```
+
+pub(crate) mod lazy;
+pub mod read;
+pub mod utils;
+pub mod write;
+
+use crate::{
+    dll::{ResolveError, Result},
+    prelude::*,
+};
+use dotnetdll_macros::From;
+use paste::paste;
+use std::{
+    ops::{Index, IndexMut},
+    sync::Arc,
+};
+
+/// A structured representation of a .NET DLL file's metadata, according to the ECMA-335 standard.
+///
+/// `Resolution` is the top-level data structure of dotnetdll.
+/// By working with a `Resolution` instance, you can access all the details of the assembly, modules, types, and other members defined or referenced in a DLL.
+#[derive(Debug, Clone)]
+pub struct Resolution<'a> {
+    /// Assembly metadata, if the DLL defines an assembly.
+    pub assembly: Option<Assembly<'a>>,
+    /// All external assemblies referenced by the DLL.
+    pub assembly_references: Vec<ExternalAssemblyReference<'a>>,
+    /// Entry point for the DLL, if one is defined.
+    pub entry_point: Option<EntryPoint>,
+    /// Types that this assembly exports, but are not defined in the assembly's main module.
+    pub exported_types: Vec<ExportedType<'a>>,
+    /// References to fields defined in external assemblies.
+    pub field_references: Vec<ExternalFieldReference<'a>>,
+    /// File resources that the DLL references or contains.
+    pub files: Vec<File<'a>>,
+    /// Resources embedded within the DLL.
+    pub manifest_resources: Vec<resource::ManifestResource<'a>>,
+    /// References to methods defined in external assemblies.
+    pub method_references: Vec<ExternalMethodReference<'a>>,
+    /// The module defined by the DLL. Note that this is a distinct object from an assembly.
+    pub module: Module<'a>,
+    /// References to modules defined in external assemblies.
+    pub module_references: Vec<ExternalModuleReference<'a>>,
+    /// Types defined within the DLL.
+    pub type_definitions: Vec<TypeDefinition<'a>>,
+    /// References to types defined in external assemblies.
+    pub type_references: Vec<ExternalTypeReference<'a>>,
+    /// Retained parse state for lazy/deferred read-path data.
+    ///
+    /// This is `None` when no lazy read option remains enabled after applying
+    /// `skip_method_bodies`. It may contain method-body,
+    /// method-signature, property-signature, and/or custom-attribute state depending on the parse
+    /// options. Shared across clones via `Arc` so data decoded by one clone is visible to all.
+    pub(crate) lazy_state: Option<Arc<lazy::LazyParseState<'a>>>,
+}
+
+impl<'a> Resolution<'a> {
+    /// Creates a new `Resolution` with a single module.
+    ///
+    /// Every .NET DLL contains exactly one module (ECMA-335, II.22.30).
+    ///
+    /// By default, a special `<Module>` type is created, as required by the ECMA-335 standard (II.22.37).
+    pub fn new(module: Module<'a>) -> Self {
+        Resolution {
+            assembly: None,
+            assembly_references: vec![],
+            entry_point: None,
+            exported_types: vec![],
+            field_references: vec![],
+            files: vec![],
+            manifest_resources: vec![],
+            method_references: vec![],
+            module,
+            module_references: vec![],
+            type_definitions: vec![TypeDefinition::new(None, "<Module>")],
+            type_references: vec![],
+            lazy_state: None,
+        }
+    }
+
+    /// Parses a .NET DLL from a byte slice.
+    ///
+    /// This method first parses the PE (Portable Executable) file structure, then resolves the CLI metadata into a high-level `Resolution` struct.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when PE parsing fails, required metadata streams are
+    /// malformed/missing, or metadata resolution/validity checks fail.
+    pub fn parse(bytes: &'a [u8], opts: ReadOptions) -> crate::dll::Result<Self> {
+        let dll = DLL::parse(bytes)?;
+        dll.resolve(opts)
+    }
+
+    /// Returns the decoded body for the method at `idx`.
+    ///
+    /// **Eager mode** (`lazy_method_bodies: false`, the default): delegates to
+    /// `self[idx].body.as_ref()`. Returns an error if the body is `None` (abstract method or
+    /// `skip_method_bodies` was set at parse time).
+    ///
+    /// **Lazy mode** (`lazy_method_bodies: true`): decodes and caches the body on first call.
+    /// The cache is shared across all clones of this `Resolution`, so a body decoded by one clone
+    /// is visible to all. Errors from decoding a bad body are *not* cached — the next call will
+    /// retry. Malformed body bytes do not fail the initial parse; an invalid body RVA
+    /// still fails during parsing because its input range cannot be retained.
+    /// If `skip_method_bodies` was set, it takes precedence over lazy bodies:
+    /// no body is retained or decoded, and this accessor returns an error.
+    ///
+    /// # Notes on `body: None`
+    ///
+    /// In lazy mode `Method::body` is always `None` regardless of whether the method is abstract.
+    /// Use `method_body` to access the decoded body; check the method's `abstract_member` flag to
+    /// determine whether a body exists at all.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when `idx` has no method body (abstract/zero-RVA) or
+    /// when lazy decoding of the body fails.
+    pub fn method_body(&self, idx: MethodIndex) -> Result<&body::Method> {
+        if let Some(state) = &self.lazy_state {
+            if state.lazy_bodies {
+                let def_idx = state.method_idx_to_def.get(&idx).ok_or(ResolveError::LazyLookupFailed(
+                    "method has no body (abstract or rva == 0)",
+                ))?;
+                return state.decode_body(*def_idx);
+            }
+        }
+        self[idx]
+            .body
+            .as_ref()
+            .ok_or(ResolveError::LazyLookupFailed("method has no decoded body").into())
+    }
+
+    /// Returns the decoded signature for the method definition at `idx`.
+    ///
+    /// **Eager mode** (`lazy_method_signatures: false`, the default): returns
+    /// `&self[idx].signature` directly.
+    ///
+    /// **Lazy mode** (`lazy_method_signatures: true`): decodes and caches the signature on first
+    /// call using the raw blob captured at parse time. The cache is shared across all clones of
+    /// this `Resolution`. Decode errors are *not* cached — the next call retries.
+    ///
+    /// Use this accessor (rather than accessing `Method::signature` directly) whenever
+    /// `lazy_method_signatures` may be set.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error in lazy mode when the method cannot be mapped to its
+    /// stored signature blob or that blob fails to decode.
+    pub fn method_signature(
+        &self,
+        idx: MethodIndex,
+    ) -> Result<&crate::resolved::signature::ManagedMethod<crate::resolved::types::MethodType>> {
+        if let Some(state) = &self.lazy_state {
+            if state.lazy_signatures {
+                let def_idx = state
+                    .method_def_idx_for_signature(idx)
+                    .ok_or(ResolveError::LazyLookupFailed(
+                        "method index not found in signature map",
+                    ))?;
+                return state.decode_method_def_sig(def_idx);
+            }
+        }
+        Ok(&self[idx].signature)
+    }
+
+    /// Returns the decoded signature for the method reference at `idx`.
+    ///
+    /// **Eager mode** (`lazy_method_signatures: false`, the default): returns
+    /// `&self[idx].signature` directly.
+    ///
+    /// **Lazy mode** (`lazy_method_signatures: true`): decodes and caches the signature on first
+    /// call. The cache is shared across all clones of this `Resolution`. Decode errors are *not*
+    /// cached — the next call retries.
+    ///
+    /// Use this accessor (rather than accessing `ExternalMethodReference::signature` directly)
+    /// whenever `lazy_method_signatures` may be set.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error in lazy mode when signature decoding from the stored
+    /// method-ref blob fails.
+    pub fn method_ref_signature(
+        &self,
+        idx: MethodRefIndex,
+    ) -> Result<&crate::resolved::signature::ManagedMethod<crate::resolved::types::MethodType>> {
+        if let Some(state) = &self.lazy_state {
+            if state.lazy_signatures {
+                return state.decode_method_ref_sig(idx.0);
+            }
+        }
+        Ok(&self[idx].signature)
+    }
+
+    /// Returns the decoded signature components for the property at `idx`.
+    ///
+    /// The returned tuple is `(static_member, property_type, parameters)`.
+    ///
+    /// **Eager mode** (`lazy_property_signatures: false`, the default): returns values directly
+    /// from the `Property` stored in the resolution.
+    ///
+    /// **Lazy mode** (`lazy_property_signatures: true`): decodes and caches the property
+    /// signature on first call. The cache is shared across all clones of this `Resolution`.
+    /// Decode errors are *not* cached — the next call retries.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error in lazy mode when the property cannot be mapped to its
+    /// stored signature blob or that blob fails to decode.
+    pub fn property_signature(
+        &self,
+        idx: PropertyIndex,
+    ) -> Result<(
+        bool,
+        &crate::resolved::signature::Parameter<crate::resolved::types::MemberType>,
+        &[crate::resolved::signature::Parameter<crate::resolved::types::MemberType>],
+    )> {
+        if let Some(state) = &self.lazy_state {
+            if state.lazy_property_signatures {
+                let def_idx = state
+                    .property_def_idx_for_signature(idx)
+                    .ok_or(ResolveError::LazyLookupFailed(
+                        "property index not found in signature map",
+                    ))?;
+                let (static_member, property_type, parameters) = state.decode_property_sig(def_idx)?;
+                return Ok((*static_member, property_type, parameters.as_slice()));
+            }
+        }
+
+        let property = &self[idx];
+        Ok((
+            property.static_member,
+            &property.property_type,
+            property.parameters.as_slice(),
+        ))
+    }
+
+    /// Returns the custom attributes for the type definition at `idx`.
+    ///
+    /// Always returns an owned `Vec`. In **eager mode** (`lazy_attributes: false`, the default)
+    /// this clones `self[idx].attributes`; if you only need to borrow and are certain you are in
+    /// eager mode, prefer `&self[idx].attributes` directly to avoid the allocation.
+    ///
+    /// In **lazy mode** (`lazy_attributes: true`) the constructor/blob-index pairs are resolved and
+    /// cached on the first call for each type; the blob bytes are then re-read from the heap on
+    /// each call to reconstruct the `Attribute` values (cheap pointer arithmetic, no heap copy).
+    /// Calling this multiple times for the same index is correct but allocates a new `Vec` each
+    /// time — cache the result yourself if you need to avoid that.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error in lazy mode when attribute constructor/blob metadata
+    /// cannot be resolved or decoded for `idx`.
+    pub fn type_attributes(
+        &self,
+        idx: TypeIndex,
+    ) -> crate::dll::Result<Vec<crate::resolved::attribute::Attribute<'_>>> {
+        if let Some(state) = &self.lazy_state {
+            if state.lazy_attributes {
+                return state.type_attributes(idx.0);
+            }
+        }
+        Ok(self[idx].attributes.clone())
+    }
+
+    /// Returns the custom attributes for the method definition at `idx`.
+    ///
+    /// Always returns an owned `Vec`. In **eager mode** this clones `self[idx].attributes`; prefer
+    /// `&self[idx].attributes` for a borrow when you know the parse was not lazy.
+    ///
+    /// In **lazy mode** constructor/blob-index pairs are cached on the first call per method; blob
+    /// bytes are re-read on each call. See [`Resolution::type_attributes`] for the full contract.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error in lazy mode when `idx` is missing from the lazy
+    /// attribute map or when attribute decoding fails.
+    pub fn method_attributes(
+        &self,
+        idx: MethodIndex,
+    ) -> crate::dll::Result<Vec<crate::resolved::attribute::Attribute<'_>>> {
+        if let Some(state) = &self.lazy_state {
+            if state.lazy_attributes {
+                let def_idx = state
+                    .attr_method_idx_to_def
+                    .get(&idx)
+                    .copied()
+                    .ok_or(ResolveError::LazyLookupFailed("method index not found in attr map"))?;
+                return state.method_attributes(def_idx);
+            }
+        }
+        Ok(self[idx].attributes.clone())
+    }
+
+    /// Returns the custom attributes for the field definition at `idx`.
+    ///
+    /// Always returns an owned `Vec`. In **eager mode** this clones `self[idx].attributes`; prefer
+    /// `&self[idx].attributes` for a borrow when you know the parse was not lazy.
+    ///
+    /// In **lazy mode** constructor/blob-index pairs are cached on the first call per field; blob
+    /// bytes are re-read on each call. See [`Resolution::type_attributes`] for the full contract.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error in lazy mode when `idx` is missing from the lazy
+    /// attribute map or when attribute decoding fails.
+    pub fn field_attributes(
+        &self,
+        idx: FieldIndex,
+    ) -> crate::dll::Result<Vec<crate::resolved::attribute::Attribute<'_>>> {
+        if let Some(state) = &self.lazy_state {
+            if state.lazy_attributes {
+                let def_idx = state
+                    .attr_field_idx_to_def
+                    .get(&idx)
+                    .copied()
+                    .ok_or(ResolveError::LazyLookupFailed("field index not found in attr map"))?;
+                return state.field_attributes(def_idx);
+            }
+        }
+        Ok(self[idx].attributes.clone())
+    }
+
+    /// Returns the custom attributes on the assembly manifest entry, if this module defines one.
+    ///
+    /// Always returns an owned `Vec`. In **eager mode** this clones `assembly.attributes`; prefer
+    /// `self.assembly.as_ref()?.attributes` for a borrow when you know the parse was not lazy.
+    ///
+    /// In **lazy mode** constructor/blob-index pairs are cached on the first call; blob bytes are
+    /// re-read on each call. Returns an empty `Vec` when the module has no assembly entry.
+    /// See [`Resolution::type_attributes`] for the full contract.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error in lazy mode when assembly-level attribute metadata
+    /// cannot be resolved or decoded.
+    pub fn assembly_attributes(&self) -> crate::dll::Result<Vec<crate::resolved::attribute::Attribute<'_>>> {
+        if let Some(state) = &self.lazy_state {
+            if state.lazy_attributes {
+                return state.assembly_attributes();
+            }
+        }
+        Ok(self.assembly.as_ref().map(|a| a.attributes.clone()).unwrap_or_default())
+    }
+
+    /// Writes the `Resolution` to a byte vector in the .NET PE format.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when metadata serialization or PE image emission fails.
+    pub fn write(&self, opts: WriteOptions) -> crate::dll::Result<Vec<u8>> {
+        write::write_impl(self, opts)
+    }
+
+    /// Sets the entry point for the DLL.
+    pub fn set_entry_point(&mut self, entry_point: impl Into<EntryPoint>) {
+        self.entry_point = Some(entry_point.into());
+    }
+}
+
+/// The entry point of a .NET assembly, which can be either a method or a file.
+///
+/// See ECMA-335, II.15.4.1.2 (page 182) for more information.
+#[derive(Debug, Copy, Clone, From)]
+pub enum EntryPoint {
+    /// A method that serves as the entry point.
+    Method(MethodIndex),
+    /// A file that contains the entry point (for multi-module assemblies).
+    File(FileIndex),
+}
+
+macro_rules! basic_index {
+    ($name:ident indexes $field:ident as $t:ty) => {
+        paste! {
+            #[doc = "An index into [`Resolution::" [<$field s>] "`]."]
+            #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
+            pub struct $name(pub(crate) usize);
+
+            impl<'a> Index<$name> for Resolution<'a> {
+                type Output = $t;
+
+                fn index(&self, index: $name) -> &Self::Output {
+                    &self.[<$field s>][index.0]
+                }
+            }
+            impl<'a> IndexMut<$name> for Resolution<'a> {
+                fn index_mut(&mut self, index: $name) -> &mut Self::Output {
+                    &mut self.[<$field s>][index.0]
+                }
+            }
+            impl<'a> Resolution<'a> {
+                #[doc = "Adds a new item to [`Resolution::" [<$field s>] "`] and returns its index."]
+                pub fn [<push_ $field>](&mut self, val: $t) -> $name {
+                    self.[<$field s>].push(val);
+                    $name(self.[<$field s>].len() - 1)
+                }
+
+                #[doc = "Returns the index corresponding to the raw index in [`Resolution::" [<$field s>] "`], if it exists."]
+                pub fn [<$field _index>](&self, index: usize) -> Option<$name> {
+                    if index < self.[<$field s>].len() {
+                        Some($name(index))
+                    } else {
+                        None
+                    }
+                }
+
+                #[doc = "Iterates through all items in [`Resolution::" [<$field s>] "`] with their corresponding typed indices."]
+                pub fn [<enumerate_ $field s>](&self) -> impl Iterator<Item = ($name, &$t)> {
+                    self.[<$field s>].iter().enumerate().map(|(i, f)| ($name(i), f))
+                }
+            }
+        }
+    };
+}
+
+basic_index!(AssemblyRefIndex indexes assembly_reference as ExternalAssemblyReference<'a>);
+basic_index!(ExportedTypeIndex indexes exported_type as ExportedType<'a>);
+basic_index!(FieldRefIndex indexes field_reference as ExternalFieldReference<'a>);
+basic_index!(FileIndex indexes file as File<'a>);
+basic_index!(MethodRefIndex indexes method_reference as ExternalMethodReference<'a>);
+basic_index!(ModuleRefIndex indexes module_reference as ExternalModuleReference<'a>);
+basic_index!(TypeIndex indexes type_definition as TypeDefinition<'a>);
+basic_index!(TypeRefIndex indexes type_reference as ExternalTypeReference<'a>);
+
+macro_rules! internal_index {
+    ($name:ident indexes $sing:ident / $plural:ident as $t:ty) => {
+        #[doc = concat!("Index into a [`TypeDefinition`]'s `", stringify!($plural), "` list.")]
+        #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
+        pub struct $name {
+            pub(crate) parent_type: TypeIndex,
+            pub(crate) $sing: usize,
+        }
+        impl $name {
+            /// Returns the [`TypeIndex`] of the type that defines this member.
+            pub fn parent_type(self) -> TypeIndex {
+                self.parent_type
+            }
+        }
+
+        impl<'a> Index<$name> for Resolution<'a> {
+            type Output = $t;
+
+            fn index(&self, index: $name) -> &Self::Output {
+                &self[index.parent_type].$plural[index.$sing]
+            }
+        }
+
+        impl<'a> IndexMut<$name> for Resolution<'a> {
+            fn index_mut(&mut self, index: $name) -> &mut Self::Output {
+                &mut self[index.parent_type].$plural[index.$sing]
+            }
+        }
+
+        impl<'a> Resolution<'a> {
+            paste! {
+                #[doc = "Adds a new item to the `" [<$plural>] "` of the [`TypeDefinition`] at `parent` and returns its index."]
+                pub fn [<push_ $sing>](&mut self, parent: TypeIndex, $sing: $t) -> $name {
+                    let $plural = &mut self[parent].$plural;
+                    $plural.push($sing);
+                    $name {
+                        parent_type: parent,
+                        $sing: $plural.len() - 1
+                    }
+                }
+
+                #[doc = "Returns the index corresponding to the raw index in the parent [`TypeDefinition`]'s `" [<$plural>] "`, if it exists."]
+                pub fn [<$sing _index>](&self, parent: TypeIndex, index: usize) -> Option<$name> {
+                    if index < self[parent].$plural.len() {
+                        Some($name {
+                            parent_type: parent,
+                            $sing: index,
+                        })
+                    } else {
+                        None
+                    }
+                }
+
+                #[doc = "Enumerates all items in the `" [<$plural>] "` of the [`TypeDefinition`] at `parent` with their indices."]
+                pub fn [<enumerate_ $plural>](&self, parent: TypeIndex) -> impl Iterator<Item = ($name, &$t)> {
+                    self[parent].$plural.iter().enumerate().map(move |(i, f)| ($name {
+                        parent_type: parent,
+                        $sing: i
+                    }, f))
+                }
+            }
+        }
+    };
+}
+
+internal_index!(FieldIndex indexes field / fields as Field<'a>);
+internal_index!(PropertyIndex indexes property / properties as Property<'a>);
+internal_index!(EventIndex indexes event / events as Event<'a>);
+
+/// Specifies which member a [`MethodIndex`] refers to.
+///
+/// While regular methods are direct members of a type, getters and setters are owned by properties, and listeners are owned by events.
+/// This enum allows [`MethodIndex`] to point to any of these implementation methods.
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+pub enum MethodMemberIndex {
+    /// A regular method defined directly on a type.
+    Method(usize),
+    /// The getter method of a property.
+    PropertyGetter(usize),
+    /// The setter method of a property.
+    PropertySetter(usize),
+    /// An "other" method associated with a property.
+    PropertyOther { property: usize, other: usize },
+    /// The add listener method of an event.
+    EventAdd(usize),
+    /// The remove listener method of an event.
+    EventRemove(usize),
+    /// The raise method of an event.
+    EventRaise(usize),
+    /// An "other" method associated with an event.
+    EventOther { event: usize, other: usize },
+}
+/// A typed index into a [`Method`] defined within a [`Resolution`].
+///
+/// Use `resolution[index]` to access the [`Method`].
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+pub struct MethodIndex {
+    pub(crate) parent_type: TypeIndex,
+    pub(crate) member: MethodMemberIndex,
+}
+impl MethodIndex {
+    /// Returns the [`TypeIndex`] of the type that defines this method.
+    pub fn parent_type(self) -> TypeIndex {
+        self.parent_type
+    }
+}
+
+impl<'a> Index<MethodIndex> for Resolution<'a> {
+    type Output = Method<'a>;
+
+    fn index(&self, index: MethodIndex) -> &Self::Output {
+        let parent = &self[index.parent_type];
+
+        use MethodMemberIndex::*;
+        match index.member {
+            Method(i) => &parent.methods[i],
+            PropertyGetter(i) => {
+                let o = parent.properties[i].getter.as_ref();
+                o.unwrap()
+            }
+            PropertySetter(i) => {
+                let o = parent.properties[i].setter.as_ref();
+                o.unwrap()
+            }
+            PropertyOther { property, other } => &parent.properties[property].other[other],
+            EventAdd(i) => &parent.events[i].add_listener,
+            EventRemove(i) => &parent.events[i].remove_listener,
+            EventRaise(i) => {
+                let o = parent.events[i].raise_event.as_ref();
+                o.unwrap()
+            }
+            EventOther { event, other } => &parent.events[event].other[other],
+        }
+    }
+}
+impl IndexMut<MethodIndex> for Resolution<'_> {
+    fn index_mut(&mut self, index: MethodIndex) -> &mut Self::Output {
+        let parent = &mut self[index.parent_type];
+
+        use MethodMemberIndex::*;
+        match index.member {
+            Method(i) => &mut parent.methods[i],
+            PropertyGetter(i) => {
+                let o = parent.properties[i].getter.as_mut();
+                o.unwrap()
+            }
+            PropertySetter(i) => {
+                let o = parent.properties[i].setter.as_mut();
+                o.unwrap()
+            }
+            PropertyOther { property, other } => &mut parent.properties[property].other[other],
+            EventAdd(i) => &mut parent.events[i].add_listener,
+            EventRemove(i) => &mut parent.events[i].remove_listener,
+            EventRaise(i) => {
+                let o = parent.events[i].raise_event.as_mut();
+                o.unwrap()
+            }
+            EventOther { event, other } => &mut parent.events[event].other[other],
+        }
+    }
+}
+impl<'a> Resolution<'a> {
+    /// Adds a new method to a type and returns its index.
+    pub fn push_method(&mut self, parent: TypeIndex, method: Method<'a>) -> MethodIndex {
+        let methods = &mut self[parent].methods;
+        methods.push(method);
+        MethodIndex {
+            parent_type: parent,
+            member: MethodMemberIndex::Method(methods.len() - 1),
+        }
+    }
+    /// Returns the index corresponding to the raw index of a method in a type's `methods` list, if it exists.
+    pub fn method_index(&self, parent: TypeIndex, index: usize) -> Option<MethodIndex> {
+        if index < self[parent].methods.len() {
+            Some(MethodIndex {
+                parent_type: parent,
+                member: MethodMemberIndex::Method(index),
+            })
+        } else {
+            None
+        }
+    }
+    /// Iterates through all methods defined directly on a type with their corresponding typed indices.
+    pub fn enumerate_methods(&self, parent: TypeIndex) -> impl Iterator<Item = (MethodIndex, &Method<'a>)> {
+        self[parent].methods.iter().enumerate().map(move |(i, f)| {
+            (
+                MethodIndex {
+                    parent_type: parent,
+                    member: MethodMemberIndex::Method(i),
+                },
+                f,
+            )
+        })
+    }
+
+    /// Sets the getter method of a property.
+    pub fn set_property_getter(&mut self, property: PropertyIndex, method: Method<'a>) -> MethodIndex {
+        self[property].getter = Some(method);
+        MethodIndex {
+            parent_type: property.parent_type,
+            member: MethodMemberIndex::PropertyGetter(property.property),
+        }
+    }
+    /// Returns the index of a property's getter method, if it exists.
+    pub fn property_getter_index(&self, property: PropertyIndex) -> Option<MethodIndex> {
+        if self[property].getter.is_some() {
+            Some(MethodIndex {
+                parent_type: property.parent_type,
+                member: MethodMemberIndex::PropertyGetter(property.property),
+            })
+        } else {
+            None
+        }
+    }
+
+    /// Sets the setter method of a property.
+    pub fn set_property_setter(&mut self, property: PropertyIndex, method: Method<'a>) -> MethodIndex {
+        self[property].setter = Some(method);
+        MethodIndex {
+            parent_type: property.parent_type,
+            member: MethodMemberIndex::PropertySetter(property.property),
+        }
+    }
+    /// Returns the index of a property's setter method, if it exists.
+    pub fn property_setter_index(&self, property: PropertyIndex) -> Option<MethodIndex> {
+        if self[property].setter.is_some() {
+            Some(MethodIndex {
+                parent_type: property.parent_type,
+                member: MethodMemberIndex::PropertySetter(property.property),
+            })
+        } else {
+            None
+        }
+    }
+
+    /// Adds an "other" method to a property and returns its index.
+    pub fn push_property_other(&mut self, property: PropertyIndex, method: Method<'a>) -> MethodIndex {
+        let methods = &mut self[property].other;
+        methods.push(method);
+        MethodIndex {
+            parent_type: property.parent_type,
+            member: MethodMemberIndex::PropertyOther {
+                property: property.property,
+                other: methods.len() - 1,
+            },
+        }
+    }
+    /// Returns the index of an "other" method of a property, if it exists.
+    pub fn property_other_index(&self, property: PropertyIndex, index: usize) -> Option<MethodIndex> {
+        if index < self[property].other.len() {
+            Some(MethodIndex {
+                parent_type: property.parent_type,
+                member: MethodMemberIndex::PropertyOther {
+                    property: property.property,
+                    other: index,
+                },
+            })
+        } else {
+            None
+        }
+    }
+
+    /// Returns the index of an event's `add` listener method.
+    // technically since this can be derived all from `event`, self is unnecessary
+    // however, it should match the rest of the indexing functions, especially if internal
+    // representations change and self is later needed
+    #[allow(clippy::unused_self)]
+    pub fn event_add_index(&self, event: EventIndex) -> MethodIndex {
+        MethodIndex {
+            parent_type: event.parent_type,
+            member: MethodMemberIndex::EventAdd(event.event),
+        }
+    }
+
+    /// Returns the index of an event's `remove` listener method.
+    // ditto
+    #[allow(clippy::unused_self)]
+    pub fn event_remove_index(&self, event: EventIndex) -> MethodIndex {
+        MethodIndex {
+            parent_type: event.parent_type,
+            member: MethodMemberIndex::EventRemove(event.event),
+        }
+    }
+
+    /// Sets the raise method of an event.
+    pub fn set_event_raise(&mut self, event: EventIndex, method: Method<'a>) -> MethodIndex {
+        self[event].raise_event = Some(method);
+        MethodIndex {
+            parent_type: event.parent_type,
+            member: MethodMemberIndex::EventRaise(event.event),
+        }
+    }
+    /// Returns the index of an event's raise method, if it exists.
+    pub fn event_raise_index(&self, event: EventIndex) -> Option<MethodIndex> {
+        if self[event].raise_event.is_some() {
+            Some(MethodIndex {
+                parent_type: event.parent_type,
+                member: MethodMemberIndex::EventRaise(event.event),
+            })
+        } else {
+            None
+        }
+    }
+
+    /// Adds an "other" method to an event and returns its index.
+    pub fn push_event_other(&mut self, event: EventIndex, method: Method<'a>) -> MethodIndex {
+        let methods = &mut self[event].other;
+        methods.push(method);
+        MethodIndex {
+            parent_type: event.parent_type,
+            member: MethodMemberIndex::EventOther {
+                event: event.event,
+                other: methods.len() - 1,
+            },
+        }
+    }
+    /// Returns the index of an "other" method of an event, if it exists.
+    pub fn event_other_index(&self, event: EventIndex, index: usize) -> Option<MethodIndex> {
+        if index < self[event].other.len() {
+            Some(MethodIndex {
+                parent_type: event.parent_type,
+                member: MethodMemberIndex::EventOther {
+                    event: event.event,
+                    other: index,
+                },
+            })
+        } else {
+            None
+        }
+    }
+}
+
+#[cfg(test)]
+mod lazy_read_tests {
+    use super::*;
+    use crate::prelude::ReadOptions;
+    use std::sync::OnceLock;
+
+    fn test_dll() -> &'static [u8] {
+        static TEST_DLL: OnceLock<Vec<u8>> = OnceLock::new();
+
+        TEST_DLL.get_or_init(|| {
+            let mut resolution = Resolution::new(Module::new("lazy-tests.dll"));
+            resolution.assembly = Some(Assembly::new("lazy-tests"));
+
+            let attribute_type = resolution.push_type_definition(TypeDefinition::new(None, "TestAttribute"));
+            let attribute_ctor = resolution.push_method(
+                attribute_type,
+                Method::constructor(
+                    Accessibility::Public,
+                    vec![],
+                    Some(body::Method::new(asm! {
+                        Return;
+                    })),
+                ),
+            );
+
+            let subject = resolution.push_type_definition(TypeDefinition::new(None, "Subject"));
+            resolution[subject].attributes.push(Attribute::new(
+                attribute_ctor.into(),
+                CustomAttributeData {
+                    constructor_args: vec![],
+                    named_args: vec![],
+                },
+            ));
+            resolution.assembly.as_mut().unwrap().attributes.push(Attribute::new(
+                attribute_ctor.into(),
+                CustomAttributeData {
+                    constructor_args: vec![],
+                    named_args: vec![],
+                },
+            ));
+
+            resolution.push_method(
+                subject,
+                Method::new(
+                    Accessibility::Public,
+                    msig! { static void () },
+                    "Run",
+                    Some(body::Method::new(asm! {
+                        Return;
+                    })),
+                ),
+            );
+
+            let property = resolution.push_property(
+                subject,
+                Property::new(false, "Answer", Parameter::value(ctype! { int })),
+            );
+            resolution.set_property_getter(
+                property,
+                Method::new(
+                    Accessibility::Public,
+                    msig! { int () },
+                    "get_Answer",
+                    Some(body::Method::new(asm! {
+                        LoadConstantInt32 42;
+                        Return;
+                    })),
+                ),
+            );
+
+            resolution.write(WriteOptions::default()).unwrap()
+        })
+    }
+
+    fn direct_method_body_count(res: &Resolution<'_>) -> usize {
+        res.enumerate_type_definitions()
+            .flat_map(|(type_idx, _)| res.enumerate_methods(type_idx))
+            .filter(|(_, method)| method.body.is_some())
+            .count()
+    }
+
+    #[test]
+    fn lazy_attrs_match_eager_for_types() {
+        let dll = test_dll();
+        let eager = Resolution::parse(dll, ReadOptions::default()).unwrap();
+        let lazy = Resolution::parse(
+            dll,
+            ReadOptions {
+                lazy_attributes: true,
+                ..Default::default()
+            },
+        )
+        .unwrap();
+
+        let mut attribute_count = 0;
+        for (idx, _typedef) in eager.enumerate_type_definitions() {
+            // In lazy mode, .attributes is always empty.
+            assert!(
+                lazy[idx].attributes.is_empty(),
+                "type_definitions[{}].attributes should be empty in lazy mode",
+                idx.0
+            );
+
+            let eager_attrs = eager.type_attributes(idx).unwrap();
+            let lazy_attrs = lazy.type_attributes(idx).unwrap();
+            attribute_count += eager_attrs.len();
+            assert_eq!(
+                eager_attrs.len(),
+                lazy_attrs.len(),
+                "attribute count mismatch for type {}",
+                eager[idx].name
+            );
+            for (e, l) in eager_attrs.iter().zip(lazy_attrs.iter()) {
+                assert_eq!(e.constructor, l.constructor);
+                assert_eq!(e.value, l.value);
+            }
+        }
+        assert!(attribute_count > 0, "fixture should contain a type attribute");
+    }
+
+    #[test]
+    fn lazy_assembly_attrs_match_eager() {
+        let dll = test_dll();
+        let eager = Resolution::parse(dll, ReadOptions::default()).unwrap();
+        let lazy = Resolution::parse(
+            dll,
+            ReadOptions {
+                lazy_attributes: true,
+                ..Default::default()
+            },
+        )
+        .unwrap();
+
+        // In lazy mode, assembly.attributes is empty.
+        if let Some(a) = &lazy.assembly {
+            assert!(
+                a.attributes.is_empty(),
+                "assembly.attributes should be empty in lazy mode"
+            );
+        }
+
+        let eager_asm_attrs = eager.assembly_attributes().unwrap();
+        let lazy_asm_attrs = lazy.assembly_attributes().unwrap();
+        assert!(
+            !eager_asm_attrs.is_empty(),
+            "fixture should contain an assembly attribute"
+        );
+        assert_eq!(eager_asm_attrs.len(), lazy_asm_attrs.len());
+        for (e, l) in eager_asm_attrs.iter().zip(lazy_asm_attrs.iter()) {
+            assert_eq!(e.constructor, l.constructor);
+            assert_eq!(e.value, l.value);
+        }
+    }
+
+    #[test]
+    fn lazy_method_signatures_preserve_eager_method_bodies() {
+        let dll = test_dll();
+        let eager = Resolution::parse(dll, ReadOptions::default()).unwrap();
+        let lazy = Resolution::parse(
+            dll,
+            ReadOptions {
+                lazy_method_signatures: true,
+                ..Default::default()
+            },
+        )
+        .unwrap();
+
+        let eager_body_count = direct_method_body_count(&eager);
+        assert!(eager_body_count > 0, "fixture should contain eager method bodies");
+        assert_eq!(
+            eager_body_count,
+            direct_method_body_count(&lazy),
+            "lazy_method_signatures must not imply lazy_method_bodies"
+        );
+    }
+
+    #[test]
+    fn lazy_property_signatures_match_eager() {
+        let dll = test_dll();
+        let eager = Resolution::parse(dll, ReadOptions::default()).unwrap();
+        let lazy = Resolution::parse(
+            dll,
+            ReadOptions {
+                lazy_property_signatures: true,
+                ..Default::default()
+            },
+        )
+        .unwrap();
+
+        let eager_body_count = direct_method_body_count(&eager);
+        assert!(eager_body_count > 0, "fixture should contain eager method bodies");
+        assert_eq!(
+            eager_body_count,
+            direct_method_body_count(&lazy),
+            "lazy_property_signatures must not imply lazy_method_bodies"
+        );
+
+        let mut property_count = 0;
+        for (type_idx, typedef) in eager.enumerate_type_definitions() {
+            for property_idx in 0..typedef.properties.len() {
+                property_count += 1;
+                let p_idx = eager.property_index(type_idx, property_idx).unwrap();
+
+                let (e_static, e_type, e_params) = eager.property_signature(p_idx).unwrap();
+                let (l_static, l_type, l_params) = lazy.property_signature(p_idx).unwrap();
+
+                assert_eq!(e_static, l_static);
+                assert_eq!(e_type, l_type);
+                assert_eq!(e_params, l_params);
+            }
+        }
+        assert!(property_count > 0, "fixture should contain a property");
+    }
+    #[test]
+    fn heap_ownership_covers_eager_and_lazy_attribute_blobs() {
+        for lazy in [false, true] {
+            let res = Resolution::parse(
+                test_dll(),
+                ReadOptions::default()
+                    .with_lazy_attributes(lazy)
+                    .with_own_heap_values(true),
+            )
+            .unwrap();
+            let attrs = res.assembly_attributes().unwrap();
+            assert!(!attrs.is_empty());
+            assert!(
+                attrs
+                    .iter()
+                    .all(|a| matches!(a.value, Some(std::borrow::Cow::Owned(_))))
+            );
+            for (ti, _) in res.enumerate_type_definitions() {
+                assert!(
+                    res.type_attributes(ti)
+                        .unwrap()
+                        .iter()
+                        .all(|a| matches!(a.value, Some(std::borrow::Cow::Owned(_))))
+                );
+            }
+        }
+    }
+}

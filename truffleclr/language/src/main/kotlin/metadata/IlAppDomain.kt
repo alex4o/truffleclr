@@ -1,10 +1,45 @@
 package metadata
 
-class IlAppDomain {
+class IlAppDomain : AutoCloseable {
+    private val resources = mutableListOf<AutoCloseable>()
+    private var closed = false
+
+    fun own(resource: AutoCloseable) {
+        check(!closed) { "Assembly domain is closed" }
+        resources.add(resource)
+    }
+
+    override fun close() {
+        if (closed) return
+        closed = true
+        metadataChanged = null
+        materializeType = null
+        entryPointLoader = null
+        var failure: Throwable? = null
+        for (resource in resources.asReversed()) {
+            try {
+                resource.close()
+            } catch (error: Throwable) {
+                if (failure == null) failure = error else failure.addSuppressed(error)
+            }
+        }
+        resources.clear()
+        failure?.let { throw it }
+    }
 
     private val references = mutableMapOf<String, IlType>()
+    internal var metadataChanged: ((List<IlType>, List<IlMethod>) -> Unit)? = null
     var assemblies: MutableList<IlAssembly> = mutableListOf()
-    lateinit var entryPoint: IlMethod
+    internal var materializeType: ((String) -> Unit)? = null
+    internal var availableTypes: Set<String> = emptySet()
+    var entryTypeName: String? = null
+    private var entryPointLoader: (() -> IlMethod)? = null
+    private var loadedEntryPoint: IlMethod? = null
+    var entryPoint: IlMethod
+        get() = loadedEntryPoint ?: checkNotNull(entryPointLoader) { "Assembly has no entry point" }.invoke().also { loadedEntryPoint = it }
+        set(value) { loadedEntryPoint = value; entryTypeName = value.memberOf?.name }
+
+    fun deferEntryPoint(loader: () -> IlMethod) { entryPointLoader = loader }
     lateinit var entryAssembly: IlAssembly
 
     fun getType(id: String): IlType {

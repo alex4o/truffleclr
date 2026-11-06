@@ -14,6 +14,8 @@ import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 import parser.cil.ClassVisitor
 import parser.cil.DeclVisitor
+import parser.dll.DllParser
+import parser.dll.LoadingTrace
 import runtime.ClrContext
 
 
@@ -23,7 +25,8 @@ import runtime.ClrContext
     name = "clr",
     defaultMimeType = "application/il",
     characterMimeTypes = ["application/il"],
-    contextPolicy = TruffleLanguage.ContextPolicy.SHARED,
+    byteMimeTypes = ["application/x-dotnet-assembly"],
+    contextPolicy = TruffleLanguage.ContextPolicy.EXCLUSIVE,
     fileTypeDetectors = [ClrIlFileDetector::class]
 )
 @ProvidedTags(
@@ -76,21 +79,29 @@ class Clr : TruffleLanguage<ClrContext>() {
 
         val appDomain = IlAppDomain()
 
-        val coreLibrary = checkNotNull(Clr::class.java.getResourceAsStream("/System.Private.CoreLib.il")) {
-            "Missing classpath resource: /System.Private.CoreLib.il"
+        try {
+            val coreLibrary = checkNotNull(Clr::class.java.getResourceAsStream("/System.Private.CoreLib.dll")) {
+                "Missing classpath resource: /System.Private.CoreLib.dll"
+            }
+            coreLibrary.use { DllParser.load(appDomain, it.readBytes(), "System.Private.CoreLib.dll") }
+
+            if (request.source.hasBytes()) {
+                DllParser.load(appDomain, request.source.bytes.toByteArray(), request.source.name)
+            } else {
+                parseFile(appDomain, CharStreams.fromReader(request.source.reader))
+            }
+            LoadingTrace.measure("specialize signatures") { Specialize(appDomain).run() }
+            val context = contextReference.get(null)
+            val target = LoadingTrace.measure("initialize metadata") { Initialize(appDomain, context, this).callTarget }
+            context.own(appDomain)
+            return target
+        } catch (failure: Throwable) {
+            try { appDomain.close() } catch (cleanup: Throwable) { failure.addSuppressed(cleanup) }
+            throw failure
         }
-        coreLibrary.use {
-            parseFile(appDomain, CharStreams.fromStream(it))
-        }
-
-
-
-        parseFile(appDomain, CharStreams.fromReader(request.source.reader))
-        Specialize(appDomain).run()
-        val context = contextReference.get(null)
-
-        return Initialize(appDomain, context, this).callTarget
     }
+
+    override fun disposeContext(context: ClrContext) { context.close() }
 
     /** Returns the global scope exposed by `Context.getBindings`. */
     override fun getScope(context: ClrContext): Any = context

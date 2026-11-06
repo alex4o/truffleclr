@@ -1,4 +1,4 @@
 package metadata
 
 // TODO( no support for nested classes )
-class IlField(var name: String, var type: IlType, var defaultValue: Any, val static: Boolean = false)
+class IlField(var name: String, var type: IlType, var defaultValue: Any, val static: Boolean = false, val initialValue: ByteArray? = null)

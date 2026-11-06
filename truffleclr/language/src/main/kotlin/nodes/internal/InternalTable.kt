@@ -7,6 +7,7 @@ import runtime.CorElementType
  */
 object InternalTable {
     fun staticMethods() = mutableMapOf(
+        "System.Void System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(System.Array,System.RuntimeFieldHandle)" to InitializeArray(),
         "System.Int32 System.Array::get_Length()" to ArrayLength(),
         "System.Int32 System.Console::Read()" to ConsoleRead(),
         "System.Void System.Console::Write(System.Int32)" to ConsoleWrite(),

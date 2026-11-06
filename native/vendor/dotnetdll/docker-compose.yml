@@ -1,0 +1,8 @@
+services:
+  tests:
+    image: ghcr.io/nickbclifford/dotnetdll:main
+    volumes:
+      - .:/dotnetdll
+    working_dir: /dotnetdll
+    environment:
+      RUST_BACKTRACE: 1
