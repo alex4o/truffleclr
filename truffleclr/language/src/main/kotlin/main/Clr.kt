@@ -81,9 +81,8 @@ class Clr : TruffleLanguage<ClrContext>() {
 
         val appDomain = IlAppDomain()
 
-        val coreLibrary = checkNotNull(Clr::class.java.getResourceAsStream("/System.Private.CoreLib.il")) {
-            "Missing classpath resource: /System.Private.CoreLib.il"
-        }
+        val coreLibrary = Clr::class.java.getResourceAsStream("/System.Private.CoreLib.il")
+            ?: error("Missing classpath resource: /System.Private.CoreLib.il")
         coreLibrary.use {
             parseFile(appDomain, CharStreams.fromStream(it))
         }
@@ -99,5 +98,7 @@ class Clr : TruffleLanguage<ClrContext>() {
     }
 
     /** Returns the global scope exposed by `Context.getBindings`. */
-    override fun getScope(context: ClrContext): Any = context
+    override fun getScope(context: ClrContext): Any {
+        return context
+    }
 }

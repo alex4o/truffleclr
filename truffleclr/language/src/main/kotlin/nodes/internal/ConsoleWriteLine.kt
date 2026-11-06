@@ -14,7 +14,9 @@ class ConsoleWriteLine() :
     ExpressionNode() {
 
     val stream: PrintStream
-        get() = Clr.contextReference.get(this).output
+        get() {
+            return Clr.contextReference.get(this).output
+        }
 
     override fun execute(env: VirtualFrame): Any? {
         writeLine(env.arguments[0])
@@ -49,7 +51,9 @@ class ConsoleWriteLine() :
 class ConsoleWriteLine0() :
     ExpressionNode() {
     val stream: PrintStream
-        get() = Clr.contextReference.get(this).output
+        get() {
+            return Clr.contextReference.get(this).output
+        }
 
     override fun execute(env: VirtualFrame): Any? {
         writeLine()

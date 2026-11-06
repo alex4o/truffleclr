@@ -17,14 +17,17 @@ class ClrObject(val name: String) {
     lateinit var allocationShape: Shape
     val fieldDefaults: MutableMap<String, Any> = linkedMapOf()
 
-    override fun toString(): String = name
+    override fun toString(): String {
+        return name
+    }
 }
 
-/** Guest instances export interop directly rather than through ObjectType dispatch. */
 @ExportLibrary(InteropLibrary::class)
 class ClrDynamicObject(shape: Shape) : DynamicObject(shape) {
     @ExportMessage
-    fun hasMembers(): Boolean = true
+    fun hasMembers(): Boolean {
+        return true
+    }
 
     @ExportMessage
     @Throws(UnknownIdentifierException::class)
@@ -53,24 +56,30 @@ class ClrDynamicObject(shape: Shape) : DynamicObject(shape) {
 
     @ExportMessage
     fun isMemberReadable(member: String,
-                         @CachedLibrary("this") objects: DynamicObjectLibrary): Boolean =
-        objects.containsKey(this, member)
+                         @CachedLibrary("this") objects: DynamicObjectLibrary): Boolean {
+        return objects.containsKey(this, member)
+    }
 
     @ExportMessage
     fun isMemberModifiable(member: String,
-                           @CachedLibrary("this") objects: DynamicObjectLibrary): Boolean =
-        objects.containsKey(this, member)
+                           @CachedLibrary("this") objects: DynamicObjectLibrary): Boolean {
+        return objects.containsKey(this, member)
+    }
 
     @ExportMessage
     fun isMemberInsertable(member: String,
-                           @CachedLibrary("this") objects: DynamicObjectLibrary): Boolean =
-        !objects.containsKey(this, member)
+                           @CachedLibrary("this") objects: DynamicObjectLibrary): Boolean {
+        return !objects.containsKey(this, member)
+    }
 
     @ExportMessage
-    fun isMemberRemovable(member: String): Boolean = false
+    fun isMemberRemovable(member: String): Boolean {
+        return false
+    }
 
     @ExportMessage
     @TruffleBoundary
-    fun getMembers(includeInternal: Boolean): Keys =
-        Keys(DynamicObjectLibrary.getUncached().getKeyArray(this))
+    fun getMembers(includeInternal: Boolean): Keys {
+        return Keys(DynamicObjectLibrary.getUncached().getKeyArray(this))
+    }
 }
