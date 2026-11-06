@@ -18,6 +18,31 @@ class Initialize(appDomain: IlAppDomain, val context: ClrContext, val language: 
         for (assembly in appDomain.assemblies) {
             assembly.types.values.forEach { processType(it) }
         }
+        // Field types can refer forward or back to their owner. Resolve only after
+        // every shape exists; no recursive processType calls for field signatures.
+        for (type in context.types.values) {
+            for (field in type.members.values.filterIsInstance<Field>()) {
+                field.valueType = context.types[field.metadata.type.fullName]?.takeIf { it.isValueType }
+            }
+        }
+        for (type in context.types.values) type.prepareValueLayout()
+
+        // Reference/static cycles are legal, but recursively embedded structs are not.
+        val visiting = mutableSetOf<Type>()
+        val visited = mutableSetOf<Type>()
+        fun validateLayout(type: Type) {
+            if (type in visited) return
+            check(visiting.add(type)) { "Recursive value-type layout: ${type.name}" }
+            for (field in type.layoutFields) field.valueType?.let { validateLayout(it) }
+            visiting.remove(type)
+            visited.add(type)
+        }
+        for (type in context.types.values) validateLayout(type)
+        for (type in context.types.values) {
+            for (field in type.staticFields.values) {
+                field.valueType?.let { field.writeRaw(type.staticObject, it.newValue()) }
+            }
+        }
     }
 
     /** Prepare bases first, even when the assembly declares a derived class first. */
@@ -43,6 +68,7 @@ class Initialize(appDomain: IlAppDomain, val context: ClrContext, val language: 
         base?.let { type.instanceFields.putAll(it.instanceFields) }
         val instances = StaticShape.newBuilder(language)
         val statics = StaticShape.newBuilder(language)
+        val layoutFields = base?.layoutFields?.toMutableList() ?: mutableListOf()
         for (metadataField in metadata.fields.values) {
             val field = Field(metadataField, type)
             type.members[metadataField.name] = field
@@ -52,8 +78,10 @@ class Initialize(appDomain: IlAppDomain, val context: ClrContext, val language: 
             } else {
                 instances.property(field, field.storageType, false)
                 type.instanceFields[metadataField.name] = field
+                layoutFields.add(field)
             }
         }
+        type.layoutFields = layoutFields.toTypedArray()
         type.shape = if (base == null) instances.build(ClrObject::class.java, ClrObjectFactory::class.java)
             else instances.build(base.shape)
         if (type.staticFields.isNotEmpty()) {

@@ -9,7 +9,9 @@ import com.oracle.truffle.api.library.ExportLibrary
 import com.oracle.truffle.api.library.ExportMessage
 import runtime.util.Keys
 
-/** StaticShape generates subclasses of this base, preserving the CLR type identity. */
+/** StaticShape subclasses preserve CLR identity. Struct instances are unboxed owned
+ * storage; boxing must use a separate wrapper rather than alias this value.
+ */
 @ExportLibrary(InteropLibrary::class)
 open class ClrObject(val type: Type) : TruffleObject {
     @ExportMessage fun hasMembers(): Boolean = true

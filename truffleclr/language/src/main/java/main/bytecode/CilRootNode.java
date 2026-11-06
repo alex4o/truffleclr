@@ -101,17 +101,25 @@ public abstract class CilRootNode extends RootNode implements BytecodeRootNode {
         @Specialization static double dodouble(double value) { return -value; }
     }
     @Operation public static final class ArrayLoad {
+        @Specialization(guards = "array.type == type", limit = "3")
+        static Object struct(ManagedReference.ObjectArray array, int index, @Cached("array.type") Type type) { return type.isValueType() ? type.copyValue((ClrObject) array.values[index]) : array.values[index]; }
+        @Specialization(replaces = "struct") @com.oracle.truffle.api.CompilerDirectives.TruffleBoundary
+        static Object genericObjectArray(ManagedReference.ObjectArray array, int index) { return array.type.isValueType() ? array.type.copyValue((ClrObject) array.values[index]) : array.values[index]; }
+        @Specialization static int bool(boolean[] array, int index) { return array[index] ? 1 : 0; }
         @Specialization static int doint(int[] array, int index) { return array[index]; }
         @Specialization static long dolong(long[] array, int index) { return array[index]; }
         @Specialization static float dofloat(float[] array, int index) { return array[index]; }
         @Specialization static double dodouble(double[] array, int index) { return array[index]; }
-        @Specialization static char dochar(char[] array, int index) { return array[index]; }
-        @Specialization static byte dobyte(byte[] array, int index) { return array[index]; }
-        @Specialization static short doshort(short[] array, int index) { return array[index]; }
+        @Specialization static int dochar(char[] array, int index) { return array[index]; }
+        @Specialization static int dobyte(byte[] array, int index) { return array[index]; }
+        @Specialization static int doshort(short[] array, int index) { return array[index]; }
         @Specialization static String doString(String[] array, int index) { return array[index]; }
         @Specialization static Object doObject(Object[] array, int index) { return array[index]; }
     }
     @Operation public static final class ArrayLength {
+        @Specialization static int struct(ManagedReference.ObjectArray array) { return array.values.length; }
+        @Specialization static int bool(boolean[] array) { return array.length; }
+        @Specialization static int bytes(byte[] array) { return array.length; }
         @Specialization static int dolong(long[] array) { return array.length; }
         @Specialization static int doint(int[] array) { return array.length; }
         @Specialization static int doshort(short[] array) { return array.length; }
@@ -122,13 +130,23 @@ public abstract class CilRootNode extends RootNode implements BytecodeRootNode {
         @Specialization static int doObject(Object[] array) { return array.length; }
     }
     @Operation public static final class ArrayStore {
-        @Specialization static void doObject(Object[] array, int index, Object value) { array[index] = value; }
+        @Specialization(guards = "array.type == type", limit = "3")
+        static void struct(ManagedReference.ObjectArray array, int index, Object value, @Cached("array.type") Type type) {
+            if (type.isValueType()) type.copyInto((ClrObject) array.values[index], (ClrObject) value); else array.store(index, value);
+        }
+        @Specialization(replaces = "struct") @com.oracle.truffle.api.CompilerDirectives.TruffleBoundary
+        static void genericObjectArray(ManagedReference.ObjectArray array, int index, Object value) {
+            if (array.type.isValueType()) array.type.copyInto((ClrObject) array.values[index], (ClrObject) value); else array.store(index, value);
+        }
+        @Specialization static void bool(boolean[] array, int index, int value) { array[index] = value != 0; }
+        @Specialization static void doObject(Object[] array, int index, Object value) { array[index] = value == types.CTSNull.INSTANCE ? null : value; }
+        @Specialization static void dolong(long[] array, int index, long value) { array[index] = value; }
         @Specialization static void doint(int[] array, int index, int value) { array[index] = value; }
-        @Specialization static void doshort(short[] array, int index, short value) { array[index] = value; }
+        @Specialization static void doshort(short[] array, int index, int value) { array[index] = (short) value; }
         @Specialization static void dofloat(float[] array, int index, float value) { array[index] = value; }
         @Specialization static void dodouble(double[] array, int index, double value) { array[index] = value; }
-        @Specialization static void dobyte(byte[] array, int index, byte value) { array[index] = value; }
-        @Specialization static void dochar(char[] array, int index, char value) { array[index] = value; }
+        @Specialization static void dobyte(byte[] array, int index, int value) { array[index] = (byte) value; }
+        @Specialization static void dochar(char[] array, int index, int value) { array[index] = (char) value; }
     }
     /** ECMA-335 III.3.21-26: comparison results are int32, never host booleans. */
     @Operation @ConstantOperand(type = CompareCondition.class)
@@ -183,7 +201,7 @@ public abstract class CilRootNode extends RootNode implements BytecodeRootNode {
             // Both representations are used by ldnull and zero-initialized reference arrays.
             if (left == types.CTSNull.INSTANCE) left = null;
             if (right == types.CTSNull.INSTANCE) right = null;
-            boolean equal = java.util.Objects.equals(left, right);
+            boolean equal = left == right || left instanceof ManagedReference reference && reference.equals(right);
             return (c == CompareCondition.EQ ? equal : !equal) ? 1 : 0;
         }
     }
@@ -237,7 +255,7 @@ public abstract class CilRootNode extends RootNode implements BytecodeRootNode {
     }
     @Operation @ConstantOperand(type = int.class)
     public static final class InvokeVirtual {
-        static Type type(Object[] args) { return ((ClrObject) args[0]).getType(); }
+        static Type type(Object[] args) { return args[0] instanceof ManagedReference.Box box ? box.type : ((ClrObject) args[0]).getType(); }
         static com.oracle.truffle.api.CallTarget target(Type type, int index) {
             return type.getVirtualTable()[index].getCallTarget();
         }
@@ -256,9 +274,9 @@ public abstract class CilRootNode extends RootNode implements BytecodeRootNode {
         static Object execute(Type type, Method ctor, int argumentCount, @Variadic Object[] args,
                 @Cached("create(ctor.getCallTarget())") DirectCallNode call) {
             type.ensureInitialized();
-            ClrObject object = type.getShape().getFactory().create(type);
+            ClrObject object = type.newValue();
             Object[] arguments = new Object[argumentCount + 1];
-            arguments[0] = object;
+            arguments[0] = type.isValueType() ? new ManagedReference.Cell(type, object) : object;
             for (int i = 0; i < argumentCount; i++) arguments[i + 1] = args[i];
             call.call(arguments);
             return object;
@@ -287,14 +305,185 @@ public abstract class CilRootNode extends RootNode implements BytecodeRootNode {
         @Specialization static void execute(Field field, ClrObject receiver, Object value) { field.write(receiver, value); }
     }
     @Operation @ConstantOperand(type = Field.class)
+    public static final class StructFieldLoad {
+        @Specialization static Object execute(Field field, Object receiver) { return field.read(ManagedReference.receiver(receiver)); }
+    }
+    @Operation @ConstantOperand(type = Field.class)
+    public static final class StructFieldStore {
+        @Specialization static void execute(Field field, Object receiver, Object value) { field.write(ManagedReference.receiver(receiver), value); }
+    }
+    @Operation @ConstantOperand(type = Field.class)
     public static final class StaticLoad {
         @Specialization static Object execute(Field field) {
             field.getOwner().ensureInitialized();
             return field.read(field.getOwner().getStaticObject());
         }
     }
-    @Operation public static final class Box {
-        @Specialization static Object execute(int value) { return value; }
+    @Operation @ConstantOperand(type = String.class)
+    public static final class Convert {
+        @Specialization static Object integer(String kind, int value) { return convert(kind, value); }
+        @Specialization static Object wide(String kind, long value) { return convert(kind, value); }
+        @Specialization static Object single(String kind, float value) { return convert(kind, value); }
+        @Specialization static Object floating(String kind, double value) { return convert(kind, value); }
+        @Specialization static Object small(String kind, byte value) { return convert(kind, (int) value); }
+        @Specialization static Object narrow(String kind, short value) { return convert(kind, (int) value); }
+        @Specialization static Object character(String kind, char value) { return convert(kind, (int) value); }
+        @Specialization static Object bool(String kind, boolean value) { return convert(kind, value ? 1 : 0); }
+        @Fallback static Object reference(String kind, Object value) {
+            if (!kind.equals("ref")) throw new ClassCastException("Not a numeric value");
+            return value;
+        }
+        static Object convert(String kind, Object value) {
+            if (kind.equals("ref")) return value;
+            Number number = value instanceof Character c ? (int) c : value instanceof Boolean b ? (b ? 1 : 0) : (Number) value;
+            return switch (kind) {
+                case "i1" -> (int) number.byteValue();
+                case "u1" -> number.intValue() & 0xff;
+                case "i2" -> (int) number.shortValue();
+                case "u2" -> number.intValue() & 0xffff;
+                case "i4" -> number.intValue();
+                case "u4" -> value instanceof Float || value instanceof Double ? (int) number.longValue() : number.intValue();
+                case "i8", "i" -> number.longValue();
+                case "u8", "u" -> value instanceof Integer ? Integer.toUnsignedLong(number.intValue())
+                        : (value instanceof Float || value instanceof Double) && number.doubleValue() >= 0x1.0p63
+                        ? (long) (number.doubleValue() - 0x1.0p63) + Long.MIN_VALUE : number.longValue();
+                case "r4" -> number.floatValue();
+                case "r8" -> number.doubleValue();
+                case "r" -> value instanceof Integer ? (double) Integer.toUnsignedLong(number.intValue()) : value instanceof Long ? Double.parseDouble(Long.toUnsignedString(number.longValue())) : number.doubleValue();
+                default -> throw new UnsupportedOperationException("Unsupported conversion: " + kind);
+            };
+        }
+    }
+    @Operation @ConstantOperand(type = Type.class)
+    public static final class Box {
+        @Specialization static Object execute(Type type, Object value) {
+            return type.isValueType() || type.isEnum() || type.getInfo().isPrimitive() ? new ManagedReference.Box(type, value) : value;
+        }
+    }
+    @Operation @ConstantOperand(type = Type.class) @ConstantOperand(type = boolean.class, name = "copy")
+    public static final class Unbox {
+        @Specialization static Object execute(Type type, boolean copy, ManagedReference.Box box) {
+            if (box.type != type) throw new ClassCastException("Invalid unbox to " + type.getName());
+            if (!copy) return box;
+            return type.isValueType() ? type.copyValue((ClrObject) box.get()) : box.get();
+        }
+    }
+    @Operation @ConstantOperand(type = Type.class) @ConstantOperand(type = boolean.class, name = "checked")
+    public static final class TypeTest {
+        static Type actualType(Object value) { return value instanceof ManagedReference.Box box ? box.type : value instanceof ClrObject object ? object.getType() : null; }
+        @Specialization(guards = "actualType(value) == actual", limit = "5")
+        static Object execute(Type type, boolean checked, Object value, @Cached(value = "actualType(value)", neverDefault = false) Type actual) {
+            if (value == null || value == types.CTSNull.INSTANCE) return types.CTSNull.INSTANCE;
+            if ((value.getClass().isArray() || value instanceof ManagedReference.ObjectArray) && (type.getName().equals("System.Object") || type.getName().equals("System.Array"))) return value;
+            if (actual != null && type.isAssignableFrom(actual) || value instanceof String && (type.getName().equals("System.String") || type.getName().equals("System.Object"))) return value;
+            if (checked) throw new ClassCastException("Invalid cast to " + type.getName());
+            return types.CTSNull.INSTANCE;
+        }
+        @Specialization(replaces = "execute") @com.oracle.truffle.api.CompilerDirectives.TruffleBoundary
+        static Object generic(Type type, boolean checked, Object value) { return execute(type, checked, value, actualType(value)); }
+    }
+    @Operation @ConstantOperand(type = Type.class) @ConstantOperand(type = boolean.class, name = "checked")
+    public static final class ArrayTypeTest {
+        @Specialization static Object execute(Type element, boolean checked, Object value) {
+            if (value == null || value == types.CTSNull.INSTANCE) return types.CTSNull.INSTANCE;
+            boolean matches;
+            if (value instanceof ManagedReference.ObjectArray array) matches = array.type.isValueType() ? array.type == element : element.isAssignableFrom(array.type);
+            else matches = switch (element.getInfo().getType()) {
+                case BOOLEAN -> value instanceof boolean[];
+                case I1, U1 -> value instanceof byte[];
+                case I2, U2 -> value instanceof short[];
+                case CHAR -> value instanceof char[];
+                case I4, U4 -> value instanceof int[];
+                case I8, U8 -> value instanceof long[];
+                case R4 -> value instanceof float[];
+                case R8 -> value instanceof double[];
+                case STRING -> value instanceof String[];
+                default -> element.getName().equals("System.Object") && value instanceof Object[];
+            };
+            if (matches) return value;
+            if (checked) throw new ClassCastException("Invalid array cast to " + element.getName());
+            return types.CTSNull.INSTANCE;
+        }
+    }
+    @Operation @ConstantOperand(type = Type.class) public static final class CopyValue {
+        @Specialization static Object execute(Type type, ClrObject value) { return type.copyValue(value); }
+    }
+    @Operation @ConstantOperand(type = Type.class)
+    public static final class DefaultValue {
+        @Specialization static Object execute(Type type) { return type.newValue(); }
+    }
+    @Operation @ConstantOperand(type = Type.class) public static final class CellNew {
+        @Specialization static ManagedReference.Cell execute(Type type, Object value) { return new ManagedReference.Cell(type.isValueType() ? type : null, value); }
+    }
+    @Operation public static final class ReferenceLoad {
+        @Specialization(guards = "reference.getType() == type", limit = "3")
+        static Object struct(ClrObject reference, @Cached("reference.getType()") Type type) { return type.copyValue(reference); }
+        @Specialization(guards = "reference.valueType() == type", limit = "3")
+        static Object cell(ManagedReference.Cell reference, @Cached(value = "reference.valueType()", neverDefault = false) Type type) {
+            return type == null ? reference.get() : type.copyValue((ClrObject) reference.get());
+        }
+        @Specialization(guards = "reference.valueType() == type", limit = "3")
+        static Object member(ManagedReference.Member reference, @Cached(value = "reference.valueType()", neverDefault = false) Type type) {
+            return type == null ? reference.get() : type.copyValue((ClrObject) reference.get());
+        }
+        @Specialization(guards = "reference.valueType() == type", limit = "3")
+        static Object element(ManagedReference.Element reference, @Cached(value = "reference.valueType()", neverDefault = false) Type type) {
+            return type == null ? reference.get() : type.copyValue((ClrObject) reference.get());
+        }
+        @Specialization(guards = "reference.valueType() == type", limit = "3")
+        static Object box(ManagedReference.Box reference, @Cached(value = "reference.valueType()", neverDefault = false) Type type) {
+            return type == null ? reference.get() : type.copyValue((ClrObject) reference.get());
+        }
+    }
+    @Operation public static final class ReferenceStore {
+        @Specialization(guards = "reference.getType() == type", limit = "3")
+        static void struct(ClrObject reference, ClrObject value, @Cached("reference.getType()") Type type) { type.copyInto(reference, value); }
+        @Specialization(guards = "reference.valueType() == type", limit = "3")
+        static void cell(ManagedReference.Cell reference, Object value, @Cached(value = "reference.valueType()", neverDefault = false) Type type) {
+            if (type == null) reference.setRaw(value); else type.copyInto((ClrObject) reference.get(), (ClrObject) value);
+        }
+        @Specialization(guards = "reference.valueType() == type", limit = "3")
+        static void member(ManagedReference.Member reference, Object value, @Cached(value = "reference.valueType()", neverDefault = false) Type type) {
+            if (type == null) reference.setRaw(value); else type.copyInto((ClrObject) reference.get(), (ClrObject) value);
+        }
+        @Specialization(guards = "reference.valueType() == type", limit = "3")
+        static void element(ManagedReference.Element reference, Object value, @Cached(value = "reference.valueType()", neverDefault = false) Type type) {
+            if (type == null) reference.setRaw(value); else type.copyInto((ClrObject) reference.get(), (ClrObject) value);
+        }
+        @Specialization(guards = "reference.valueType() == type", limit = "3")
+        static void box(ManagedReference.Box reference, Object value, @Cached(value = "reference.valueType()", neverDefault = false) Type type) {
+            if (type == null) reference.setRaw(value); else type.copyInto((ClrObject) reference.get(), (ClrObject) value);
+        }
+    }
+    @Operation @ConstantOperand(type = Field.class)
+    public static final class FieldAddress {
+        @Specialization static Object execute(Field field, Object receiver) {
+            ClrObject object = ManagedReference.receiver(receiver);
+            return field.getValueType() == null ? new ManagedReference.Member(object, field) : field.readRaw(object);
+        }
+    }
+    @Operation @ConstantOperand(type = Field.class)
+    public static final class StaticAddress {
+        @Specialization static Object execute(Field field) {
+            field.getOwner().ensureInitialized();
+            return field.getValueType() == null ? new ManagedReference.Member(field.getOwner().getStaticObject(), field) : field.readRaw(field.getOwner().getStaticObject());
+        }
+    }
+    @Operation @ConstantOperand(type = Type.class) @ConstantOperand(type = boolean.class, name = "readOnly")
+    public static final class ArrayAddress {
+        @Specialization static Object execute(Type type, boolean readOnly, Object array, int index) {
+            if (array == null || array == types.CTSNull.INSTANCE) throw new NullPointerException("ldelema receiver");
+            int length = array instanceof ManagedReference.ObjectArray a ? a.values.length : java.lang.reflect.Array.getLength(array);
+            if (index < 0 || index >= length) throw new ArrayIndexOutOfBoundsException(index);
+            if (!readOnly && !ManagedReference.hasElementType(type, array)) throw new ManagedReference.ArrayTypeMismatchException(type);
+            return type.isValueType() ? ((ManagedReference.ObjectArray) array).values[index] : new ManagedReference.Element(null, array, index);
+        }
+    }
+    @Operation @ConstantOperand(type = Type.class)
+    public static final class ObjectArrayNew {
+        @Specialization static Object execute(Type type, int size) {
+            return new ManagedReference.ObjectArray(type, size);
+        }
     }
     @Operation @ConstantOperand(type = Type.class)
     public static final class InitializeType {

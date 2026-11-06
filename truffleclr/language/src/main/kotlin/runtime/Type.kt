@@ -2,6 +2,7 @@ package runtime
 
 import com.oracle.truffle.api.CompilerDirectives
 import com.oracle.truffle.api.staticobject.StaticShape
+import com.oracle.truffle.api.nodes.ExplodeLoop
 import com.oracle.truffle.api.interop.InteropLibrary
 import com.oracle.truffle.api.interop.TruffleObject
 import com.oracle.truffle.api.library.ExportLibrary
@@ -28,6 +29,49 @@ class Type(val name: String, val baseType: Type?): TruffleObject {
     @CompilerDirectives.CompilationFinal lateinit var shape: StaticShape<ClrObjectFactory>
     @CompilerDirectives.CompilationFinal lateinit var staticObject: ClrObject
     @CompilerDirectives.CompilationFinal(dimensions = 1) lateinit var virtualTable: Array<Method>
+    /** Only user structs use owned ClrObject storage; primitives and enums do not. */
+    val isValueType: Boolean = baseType?.name == "System.ValueType" &&
+        name != "System.Enum" && CoreTypeInfo.typeByName[name]?.isPrimitive != true
+
+    val isEnum: Boolean = baseType?.name == "System.Enum"
+
+    // Physical fields, including inherited fields hidden by a same-named declaration.
+    @CompilerDirectives.CompilationFinal(dimensions = 1)
+    internal var layoutFields: Array<Field> = emptyArray()
+    @CompilerDirectives.CompilationFinal(dimensions = 1)
+    private var structFields: Array<Field> = emptyArray()
+
+    internal fun prepareValueLayout() {
+        structFields = layoutFields.filter { it.valueType != null }.toTypedArray()
+    }
+
+    /** Allocate either a class or an unboxed struct, owning zeroed nested structs. */
+    @ExplodeLoop
+    fun newValue(): ClrObject {
+        val value = shape.factory.create(this)
+        for (field in structFields) {
+            field.writeRaw(value, field.valueType!!.newValue())
+        }
+        return value
+    }
+
+    fun copyValue(source: ClrObject): ClrObject {
+        val copy = newValue()
+        copyInto(copy, source)
+        return copy
+    }
+
+    /** Preserve target identity so interior managed pointers survive whole-value stores. */
+    @ExplodeLoop
+    fun copyInto(target: ClrObject, source: ClrObject) {
+        if (!isValueType || target.type !== this || source.type !== this) {
+            throw ClassCastException("Expected owned values of $name")
+        }
+        for (field in layoutFields) {
+            field.write(target, field.readRaw(source))
+        }
+    }
+
     val instanceFields: MutableMap<String, Field> = linkedMapOf()
     val staticFields: MutableMap<String, Field> = linkedMapOf()
     var initializer: Method? = null
@@ -99,7 +143,14 @@ class Type(val name: String, val baseType: Type?): TruffleObject {
         return CTSNull
     }
 
-    fun isAssignableFrom(type: Type): Boolean = this === type || type.baseType?.let { isAssignableFrom(it) } == true
+    fun isAssignableFrom(type: Type): Boolean {
+        var current: Type? = type
+        while (current != null) {
+            if (this === current) return true
+            current = current.baseType
+        }
+        return false
+    }
 
     fun isInstance(obj: TruffleObject?): Boolean {
         return obj is ClrObject && isAssignableFrom(obj.type)

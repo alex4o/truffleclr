@@ -24,6 +24,14 @@ class FullOutputTest {
         assertLinesEquals(expected, output)
     }
 
+    @org.junit.jupiter.api.Test
+    fun rejectsIncompatibleArrayAddress() {
+        val failure = Assertions.assertThrows(org.graalvm.polyglot.PolyglotException::class.java) {
+            testRunProgram("./test/array_address_mismatch.il", "HelloWorld.Program")
+        }
+        Assertions.assertTrue(failure.message.orEmpty().contains("ManagedReference\$ArrayTypeMismatchException"), failure.message)
+    }
+
     companion object {
         @JvmStatic
         fun testFiles(): Stream<String> {
@@ -37,23 +45,12 @@ var builder =  Context.newBuilder().allowAllAccess(true)
 fun testRunProgram(file: String, klass: String, args: Array<String> = arrayOf()): List<String> {
     val out = ByteArrayOutputStream()
 
-    val context = builder.out(out).build()
-
-    var execution = context.eval(
-        Source.newBuilder(
-            "clr",
-            File(file)
-        ).build()
-    )
-
-    val bindings = context.getBindings("clr")
-    val ProgramClass = bindings.getMember(klass)
-
-    val mainMethod = ProgramClass.memberKeys.find { it.contains("Main(") }
-    val main = ProgramClass.getMember(mainMethod)
-
-    main.execute(args)
-    context.close()
+    builder.out(out).build().use { context ->
+        context.eval(Source.newBuilder("clr", File(file)).build())
+        val ProgramClass = context.getBindings("clr").getMember(klass)
+        val mainMethod = ProgramClass.memberKeys.find { it.contains("Main(") }
+        ProgramClass.getMember(mainMethod).execute(args)
+    }
     return out.toString("utf-8").removeSuffix("\n").lines()
 }
 

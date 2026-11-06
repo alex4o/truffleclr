@@ -102,7 +102,7 @@ class MethodVisitor(var appDomain: IlAppDomain, var method: IlMethod) : Cil.CilB
                     InstructionField(INSTR_FIELD().text, type().text, typeSpec().text, dottedName().text)
                 }
                 is CilParser.Instr_varContext -> {
-                    if(INSTR_VAR().text.endsWith(".s")) {
+                    if (id() != null) {
                         InstructionVarS(INSTR_VAR().text, id().text)
                     }else{
                         InstructionVar(INSTR_VAR().text, int32().text.toInt())
