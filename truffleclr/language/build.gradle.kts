@@ -6,13 +6,15 @@ plugins {
 
 kotlin {
     jvmToolchain(25)
+    compilerOptions {
+        freeCompilerArgs.addAll("-Xno-param-assertions", "-Xno-call-assertions", "-Xno-receiver-assertions")
+    }
 }
 
 dependencies {
     antlr(libs.antlr.tool)
     implementation(libs.antlr.runtime)
     implementation(libs.truffle.api)
-    implementation(libs.graphviz)
     kapt(libs.truffle.dsl.processor)
 }
 

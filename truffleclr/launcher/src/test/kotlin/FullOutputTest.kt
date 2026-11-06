@@ -4,13 +4,10 @@ import org.graalvm.polyglot.Context
 import org.graalvm.polyglot.Source
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.DisplayName
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import java.io.ByteArrayOutputStream
 import java.io.File
-import java.nio.file.FileVisitOption
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.stream.Stream
@@ -57,10 +54,11 @@ fun testRunProgram(file: String, klass: String, args: Array<String> = arrayOf())
 
     main.execute(args)
     context.close()
-    return out.toString("utf-8").lines()
+    return out.toString("utf-8").removeSuffix("\n").lines()
 }
 
 fun assertLinesEquals(expected: Iterable<String>, output: Iterable<String>) {
+    Assertions.assertEquals(expected.count(), output.count(), "Output line count")
     expected.zip(output).forEachIndexed() { line, (expectedLine, outpuLine) ->
         Assertions.assertEquals(expectedLine, outpuLine, "Error on line $line")
     }

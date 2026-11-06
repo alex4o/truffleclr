@@ -1,12 +1,11 @@
 package main.compilationNodes
 
 import com.oracle.truffle.api.`object`.DynamicObjectLibrary
-import com.oracle.truffle.api.Truffle
+import main.Clr
+import main.bytecode.CilRootNodeGen
+import com.oracle.truffle.api.bytecode.BytecodeConfig
 import com.oracle.truffle.api.TruffleLanguage
 import types.CTSNull
-import com.oracle.truffle.api.frame.FrameDescriptor
-import com.oracle.truffle.api.frame.VirtualFrame
-import com.oracle.truffle.api.nodes.RootNode
 import nodes.internal.InternalTable
 import metadata.IlAppDomain
 import metadata.IlType
@@ -15,9 +14,8 @@ import runtime.*
 class Initialize(
     appDomain: IlAppDomain,
     var context: ClrContext,
-    frameDescriptor: FrameDescriptor,
     val language: TruffleLanguage<*>
-) : RootNode(language, frameDescriptor) {
+) {
 
     var compileChildren = mutableListOf<CompileMethod>()
 
@@ -157,20 +155,18 @@ class Initialize(
         return type
     }
 
-    var runtime = Truffle.getRuntime()
+    // Initialization uses the same interpreter as methods, but only installs lazy
+    // compilers. This initializes interpreter infrastructure without parsing bodies.
+    val callTarget = CilRootNodeGen.create(language as Clr, BytecodeConfig.DEFAULT) { builder ->
+        builder.beginRoot()
+        builder.emitInitializeContext(this)
+        builder.beginReturn()
+        builder.emitLoadConstant(0)
+        builder.endReturn()
+        builder.endRoot()
+    }.nodes.single().also { it.setMethodName("Initialize") }.callTarget
 
-    override fun execute(env: VirtualFrame): Any? {
+    fun install() { compileChildren.forEach { it.install() } }
 
-        for (compileNode in compileChildren) {
-            compileNode.executeVoid(env)
-        }
-
-        return 0
-    }
-
-    override fun getName() = "Initialize"
-
-    override fun toString(): String {
-        return name
-    }
+    override fun toString() = "Initialize"
 }

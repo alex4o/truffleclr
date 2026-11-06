@@ -1,7 +1,6 @@
 package metadata
 
 
-import main.InstructionBlock
 import metadata.instruction.Instruction
 
 
@@ -20,7 +19,6 @@ class IlMethod(var name: String, var arguments: List<Pair<String, IlType>>) {
     var internal = false
     var abstract = false
 
-    val blockByLabel = mutableMapOf<String, InstructionBlock>()
 
     override fun toString(): String {
           return "$returnType $memberOf::$name(${arguments.map { it.second }.joinToString(",")})"

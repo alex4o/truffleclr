@@ -1,0 +1,22 @@
+ldnull / ldnull
+1
+array null / ldnull
+1
+ldnull / array null
+1
+array null / array null
+1
+array null cgt.un ldnull
+0
+object cgt.un ldnull
+1
+different objects
+0
+same object
+1
+null representations bne.un
+0
+null representations reversed bne.un
+0
+null versus instance bne.un
+1

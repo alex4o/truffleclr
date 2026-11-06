@@ -1,0 +1,260 @@
+i4 minus-one / one
+0
+0
+1
+1
+0
+0
+1
+0
+1
+0
+1
+1
+0
+1
+0
+i4 one / minus-one
+0
+1
+0
+0
+1
+0
+1
+1
+0
+1
+0
+0
+1
+0
+1
+i4 minimum / maximum
+0
+0
+1
+1
+0
+0
+1
+0
+1
+0
+1
+1
+0
+1
+0
+i4 minus-one / minimum
+0
+1
+1
+0
+0
+0
+1
+1
+1
+1
+1
+0
+0
+0
+0
+i4 minimum / minus-one
+0
+0
+0
+1
+1
+0
+1
+0
+0
+0
+0
+1
+1
+1
+1
+i4 minimum / minimum
+1
+0
+0
+0
+0
+1
+0
+0
+0
+1
+1
+0
+0
+1
+1
+i8 minus-one / one
+0
+0
+1
+1
+0
+0
+1
+0
+1
+0
+1
+1
+0
+1
+0
+i8 one / minus-one
+0
+1
+0
+0
+1
+0
+1
+1
+0
+1
+0
+0
+1
+0
+1
+i8 minimum / maximum
+0
+0
+1
+1
+0
+0
+1
+0
+1
+0
+1
+1
+0
+1
+0
+i8 minus-one / minimum
+0
+1
+1
+0
+0
+0
+1
+1
+1
+1
+1
+0
+0
+0
+0
+i8 minimum / minus-one
+0
+0
+0
+1
+1
+0
+1
+0
+0
+0
+0
+1
+1
+1
+1
+i8 minimum / minimum
+1
+0
+0
+0
+0
+1
+0
+0
+0
+1
+1
+0
+0
+1
+1
+i4 signed -5 / 3
+-1
+i4 unsigned -5 / 3
+1431655763
+i4 signed -5 remainder 3
+-2
+i4 unsigned -5 remainder 3
+2
+i4 unsigned 5 / -3
+0
+i4 unsigned 5 remainder -3
+5
+i4 unsigned -5 / -3
+0
+i4 unsigned -5 remainder -3
+-5
+i4 unsigned minimum / -1
+0
+i4 unsigned minimum remainder -1
+-2147483648
+i4 unsigned -1 / 2
+2147483647
+i4 unsigned -1 remainder 2
+1
+i4 signed -1 shift 1
+-1
+i4 unsigned -1 shift 1
+2147483647
+i4 unsigned minimum shift 31
+1
+i4 signed minimum shift 31
+-1
+i4 unsigned -1 shift 0
+-1
+i8 signed -5 / 3
+1
+i8 unsigned -5 / 3
+1
+i8 signed -5 remainder 3
+1
+i8 unsigned -5 remainder 3
+1
+i8 unsigned 5 / -3
+1
+i8 unsigned 5 remainder -3
+1
+i8 unsigned -5 / -3
+1
+i8 unsigned -5 remainder -3
+1
+i8 unsigned minimum / -1
+1
+i8 unsigned minimum remainder -1
+1
+i8 unsigned -1 / 2
+1
+i8 unsigned -1 remainder 2
+1
+i8 signed -1 shift 1
+1
+i8 unsigned -1 shift 1
+1
+i8 unsigned minimum shift 63
+1
+i8 signed minimum shift 63
+1
+i8 unsigned -1 shift 0
+1

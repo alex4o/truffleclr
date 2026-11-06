@@ -12,7 +12,7 @@ object InternalTable {
         "System.Void System.Console::Write(System.Double)" to ConsoleWrite(),
         "System.Void System.Console::Write(System.Char)" to ConsoleWrite(),
         "System.Void System.Console::WriteLine(System.Int32)" to ConsoleWriteLine(),
-        "System.Void System.Console::WriteLine(System.Boolean)" to ConsoleWriteLine(),
+        "System.Void System.Console::WriteLine(System.Boolean)" to ConsoleWriteLine(true),
         "System.Void System.Console::WriteLine(System.String)" to ConsoleWriteLine(),
         "System.Void System.Console::WriteLine(System.Double)" to ConsoleWriteLine(),
         "System.Void System.Console::WriteLine(System.Object)" to ConsoleWriteLine(),

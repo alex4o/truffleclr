@@ -65,11 +65,18 @@ class MethodVisitor(var appDomain: IlAppDomain, var method: IlMethod) : Cil.CilB
                 }
                 is CilParser.Instr_iContext -> {
                     val arg: Int = if (int64().text.startsWith("0x")) {
-                        int64().text.substring(2).toInt(16)
+                        Integer.parseUnsignedInt(int64().text.substring(2), 16)
                     } else {
                         int64().text.toInt(10)
                     }
                     InstructionI(INSTR_I().text, arg)
+                }
+                is CilParser.Instr_i8Context -> {
+                    val literal = int64().text
+                    val value = if (literal.startsWith("0x")) {
+                        java.lang.Long.parseUnsignedLong(literal.substring(2), 16)
+                    } else literal.toLong()
+                    InstructionI8(INSTR_I8().text, value)
                 }
                 is CilParser.Instr_methodContext -> {
                     val methodRef = methodRef();
