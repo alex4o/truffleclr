@@ -84,8 +84,8 @@ fun ControlFlowGraph.getNodes(
 
 
                     res.add(StoreLocalNodeGen.create(s0.second, slot))
-                    stack.push(Pair(s0.first, LoadLocal(slot)))
-                    stack.push(Pair(s0.first, LoadLocal(slot)))
+                    stack.push(Pair(s0.first, LoadLocal(slot, compileNode.slotKinds[slot], compileNode.slotNames[slot])))
+                    stack.push(Pair(s0.first, LoadLocal(slot, compileNode.slotKinds[slot], compileNode.slotNames[slot])))
                 }
                 if (it.instruction == "pop" && it is InstructionNone) {
                     val s0 = stack.pop()
@@ -377,21 +377,24 @@ fun ControlFlowGraph.getNodes(
                     if (compileNode.method.static) {
                         val node = LoadArgument(
                             number,
-                            compileNode.argumentsSlots[number]
+                            compileNode.argumentsSlots[number],
+                            compileNode.slotKinds[compileNode.argumentsSlots[number]]
                         )
                         stack.push(Pair(compileNode.method.arguments[number].second.name, node))
                     } else if (number == 0) {
                         // this pointer
                         val node = LoadArgument(
                             number,
-                            compileNode.argumentsSlots[number]
+                            compileNode.argumentsSlots[number],
+                            compileNode.slotKinds[compileNode.argumentsSlots[number]]
                         )
                         stack.push(Pair("Ref", node))
                         // Not doing the call instance thing rn
                     } else {
                         val node = LoadArgument(
                             number,
-                            compileNode.argumentsSlots[number]
+                            compileNode.argumentsSlots[number],
+                            compileNode.slotKinds[compileNode.argumentsSlots[number]]
                         )
                         stack.push(Pair(compileNode.method.arguments[number - 1].second.name, node))
                     }
@@ -409,12 +412,12 @@ fun ControlFlowGraph.getNodes(
                         error("Wrong instruction type")
                     }
 
-                    val node = LoadLocal(compileNode.frameSlots[number])
+                    val node = LoadLocal(compileNode.frameSlots[number], compileNode.slotKinds[compileNode.frameSlots[number]], compileNode.slotNames[compileNode.frameSlots[number]])
 
                     val type = compileNode.method.locals[number]
                     stack.push(
                         Pair(
-                            if (compileNode.frameSlots[number].kind == FrameSlotKind.Object) {
+                            if (compileNode.slotKinds[compileNode.frameSlots[number]] == FrameSlotKind.Object) {
                                 "Ref"
                             } else {
                                 type.name
@@ -1116,7 +1119,7 @@ fun ControlFlowGraph.getNodes(
                         error("Expression 'compileNode.method.memberOf' must not be null")
                     } else {
                         val methodIndex =
-                            (context.types.getValue(it.method.memberOf!!.fullName).shape.objectType as ClrObject).virtualTable.indexOfFirst { method ->
+                            (context.types.getValue(it.method.memberOf!!.fullName).shape.dynamicType as ClrObject).virtualTable.indexOfFirst { method ->
                                 method.metadata.toString(false) == it.method.toString(false)
                             }
 

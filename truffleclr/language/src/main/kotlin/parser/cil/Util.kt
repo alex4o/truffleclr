@@ -94,10 +94,7 @@ fun TypeContext.getType(appDomain: IlAppDomain): IlType {
 fun TypeContext.toClassName(): String {
     return when (this) {
         is TypeClassContext -> {
-            className().text
-        }
-        is TypeObjectContext -> {
-            "System.Object"
+            className()?.text ?: "System.Object"
         }
         is TypePrimitiveContext -> {
             when (text.trim()) {
@@ -177,7 +174,7 @@ class ParsedType() {
 fun TypeContext.toParsedType(): String {
     return when (this) {
         is TypeClassContext -> {
-            className().slashedName().text
+            className()?.slashedName()?.text ?: "System.Object"
         }
         is TypePrimitiveContext -> {
             when (text) {
@@ -189,9 +186,6 @@ fun TypeContext.toParsedType(): String {
                 "bool" -> "System.Boolean"
                 else -> error("Unsupported primitive: ${this.start.line}")
             }
-        }
-        is TypeObjectContext -> {
-            "System.Object"
         }
         is TypeValueTypeContext -> {
             className().text

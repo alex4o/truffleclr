@@ -14,7 +14,7 @@ class GetJavaType() :
     ExpressionNode() {
 
     val context by lazy {
-        lookupContextReference(Clr::class.java).get()
+        Clr.contextReference.get(this)
     }
 
     override fun execute(env: VirtualFrame): Any? {

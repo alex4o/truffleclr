@@ -7,10 +7,7 @@ import com.oracle.truffle.api.interop.TruffleObject
 import com.oracle.truffle.api.library.ExportLibrary
 import com.oracle.truffle.api.library.ExportMessage
 import runtime.util.Keys
-import sun.reflect.generics.tree.BaseType
 import types.CTSNull
-import util.iterate
-import util.mutableLazy
 
 @ExportLibrary(InteropLibrary::class)
 class Type(val name: String, val baseType: Type?): TruffleObject {

@@ -15,7 +15,7 @@ class NewJavaType() :
     @Child var interopLib = InteropLibrary.getFactory().createDispatched(5)
 
     val context by lazy {
-        lookupContextReference(Clr::class.java).get()
+        Clr.contextReference.get(this)
     }
 
     override fun execute(env: VirtualFrame): Any? {

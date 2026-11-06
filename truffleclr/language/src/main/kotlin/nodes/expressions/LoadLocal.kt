@@ -1,7 +1,6 @@
 package nodes.expressions
 
 import com.oracle.truffle.api.CompilerDirectives
-import com.oracle.truffle.api.frame.FrameSlot
 import com.oracle.truffle.api.frame.FrameSlotKind
 import com.oracle.truffle.api.frame.VirtualFrame
 import com.oracle.truffle.api.nodes.NodeInfo
@@ -11,7 +10,7 @@ import nodes.ExpressionNode
  * Read a local from the VirtualFrame slot.
  */
 @NodeInfo(shortName = "ldloc")
-class LoadLocal(val slot: FrameSlot?) : ExpressionNode() {
+class LoadLocal(val slot: Int, val kind: FrameSlotKind, val name: String) : ExpressionNode() {
 
     /**
      * The use of a final lambda in Truffle allows the whole thing to be inlined
@@ -19,7 +18,7 @@ class LoadLocal(val slot: FrameSlot?) : ExpressionNode() {
      * without the use of the `@Specialization` annotation, when the methods are known at runtime.
      */
     @CompilerDirectives.CompilationFinal
-    val get = when (slot?.kind) {
+    val get = when (kind) {
         FrameSlotKind.Int -> {
             this::executeInt
         }
@@ -77,6 +76,6 @@ class LoadLocal(val slot: FrameSlot?) : ExpressionNode() {
 
 
     override fun toString(): String {
-        return "(ldloc ${slot?.identifier} ${slot?.kind})"
+        return "(ldloc $name $kind)"
     }
 }

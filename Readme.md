@@ -3,13 +3,21 @@ TruffleCLR
 
 The main goal of this project is to implement the Common Language Infrastructure (CLI) using Truffle [GraalVM]. The project requires the the use of a disassembled file in the `.il` format. To obtain that file the `ildasm` program should be used. The main component of this project resides inside of the `truffleclr` folder. 
 
+## Requirements
+
+JDK 25; use GraalVM CE 25 for JIT compilation (on a stock JDK Truffle falls back to the interpreter). The Gradle wrapper downloads everything else. Versions are pinned in `truffleclr/gradle/libs.versions.toml`.
+
 ## Building
 
-When inside of the `truffleclr` folder the project can be build using `./gradlew fatJar copyJar`. This will produce artifacts inside `./build/libs`.
+Inside the `truffleclr` folder: `./gradlew :launcher:installDist`. The ANTLR parser is generated from `language/src/main/antlr/Cil.g4` during the build.
 
 ## Running
 
-After the project has been build it can be ran with this command: `java -Dtruffle.class.path.append=./build/libs/language-1.0.0.jar -jar build/libs/launcher-1.0.0.jar --class HelloWorld.Program ./test/loop.il`. Help can be obtained using: `java -jar build/libs/launcher-1.0.0.jar --help`.
+`launcher/build/install/launcher/bin/launcher --class HelloWorld.Program test/loop.il`. Help: `launcher/build/install/launcher/bin/launcher --help`.
+
+## Testing
+
+`./gradlew :launcher:test` runs every `test/<name>.il` that has a `test/expected/<name>.out` and compares the output.
 
 ## Obtaining CIL (.il) files
 To execute a program an `.il` file is needed. The instructions below describe how such file can be obtained when using the 2 C# compilers on supporting linux.

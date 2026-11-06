@@ -1,4 +1,5 @@
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.main
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.prompt
@@ -25,8 +26,10 @@ fun String.runCommand() {
 
 // TODO: Show the strange behaviour of mono
 
-class App : CliktCommand(printHelpOnEmptyArgs = true) {
-    private val file: File? by argument(help="The file to run").file(mustExist = true)
+class App : CliktCommand() {
+    override val printHelpOnEmptyArgs = true
+
+    private val file: File by argument(help="The file to run").file(mustExist = true)
     private val `class`: String by option(help="The class containing the Main method").prompt("Class with Main method")
 
     override fun run() {

@@ -3,7 +3,6 @@ package nodes.statements
 import com.oracle.truffle.api.CompilerDirectives
 import com.oracle.truffle.api.dsl.NodeField
 import com.oracle.truffle.api.dsl.Specialization
-import com.oracle.truffle.api.frame.FrameSlot
 import com.oracle.truffle.api.frame.FrameSlotKind
 import com.oracle.truffle.api.frame.VirtualFrame
 import com.oracle.truffle.api.nodes.Node
@@ -13,10 +12,10 @@ import types.TypeSystemGen
 /**
  * Stores an argument inside of a VirtualFrame, can be replaced by StoreLocal
  */
-@NodeField(name = "slot", type = FrameSlot::class)
+@NodeField(name = "slot", type = Int::class)
 abstract class StoreArgument(val index: Int): ExpressionNode() {
 
-    protected abstract val slot: FrameSlot?
+    protected abstract val slot: Int
 
     abstract override fun execute(env: VirtualFrame): Any
 
@@ -64,33 +63,33 @@ abstract class StoreArgument(val index: Int): ExpressionNode() {
     }
 
     protected fun isLong(env: VirtualFrame): Boolean {
-        val kind = env.frameDescriptor.getFrameSlotKind(slot)
+        val kind = env.frameDescriptor.getSlotKind(slot)
         return kind == FrameSlotKind.Long
     }
 
     protected fun isInt(env: VirtualFrame): Boolean {
-        val kind = env.frameDescriptor.getFrameSlotKind(slot)
+        val kind = env.frameDescriptor.getSlotKind(slot)
         return kind == FrameSlotKind.Int
     }
 
     protected fun isBoolean(env: VirtualFrame): Boolean {
-        val kind = env.frameDescriptor.getFrameSlotKind(slot)
+        val kind = env.frameDescriptor.getSlotKind(slot)
         return kind == FrameSlotKind.Boolean
     }
 
     protected fun isFloat(env: VirtualFrame): Boolean {
-        val kind = env.frameDescriptor.getFrameSlotKind(slot)
+        val kind = env.frameDescriptor.getSlotKind(slot)
         return kind == FrameSlotKind.Float
     }
 
     protected fun isDouble(env: VirtualFrame): Boolean {
-        val kind = env.frameDescriptor.getFrameSlotKind(slot)
+        val kind = env.frameDescriptor.getSlotKind(slot)
         return kind == FrameSlotKind.Double
     }
 
 
     protected fun isObject(env: VirtualFrame): Boolean {
-        val kind = env.frameDescriptor.getFrameSlotKind(slot)
+        val kind = env.frameDescriptor.getSlotKind(slot)
         return kind == FrameSlotKind.Object
     }
 

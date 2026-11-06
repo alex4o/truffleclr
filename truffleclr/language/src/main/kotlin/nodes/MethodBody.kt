@@ -3,7 +3,6 @@ package nodes
 import com.oracle.truffle.api.CompilerDirectives
 import com.oracle.truffle.api.TruffleLanguage
 import com.oracle.truffle.api.frame.FrameDescriptor
-import com.oracle.truffle.api.frame.FrameSlot
 import com.oracle.truffle.api.frame.VirtualFrame
 import com.oracle.truffle.api.interop.InteropLibrary
 import com.oracle.truffle.api.library.ExportLibrary
@@ -22,7 +21,7 @@ import nodes.statements.StoreLocalNodeGen
  * a DispatchNode but it most likely is.
  */
 @NodeInfo(shortName = "method")
-class MethodBody(private val id: String, @Child var startBlock: ExpressionNode, @CompilerDirectives.CompilationFinal(dimensions = 1) val arguments: Array<FrameSlot>, frameDescriptor: FrameDescriptor, language: TruffleLanguage<*>): RootNode(null, frameDescriptor) {
+class MethodBody(private val id: String, @Child var startBlock: ExpressionNode, @CompilerDirectives.CompilationFinal(dimensions = 1) val arguments: Array<Int>, frameDescriptor: FrameDescriptor, language: TruffleLanguage<*>): RootNode(null, frameDescriptor) {
 
     @Children val argumentWriters: Array<StoreArgument> = arguments.mapIndexed { index, it -> StoreArgumentNodeGen.create(index, it) }.toTypedArray()
 

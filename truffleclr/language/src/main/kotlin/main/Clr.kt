@@ -3,8 +3,6 @@ package main
 import Cil.CilLexer
 import Cil.CilParser
 import com.oracle.truffle.api.CallTarget
-import com.oracle.truffle.api.Scope
-import com.oracle.truffle.api.Truffle
 import com.oracle.truffle.api.TruffleLanguage
 import com.oracle.truffle.api.debug.DebuggerTags
 import com.oracle.truffle.api.frame.FrameDescriptor
@@ -18,8 +16,6 @@ import org.antlr.v4.runtime.CommonTokenStream
 import parser.cil.ClassVisitor
 import parser.cil.DeclVisitor
 import runtime.ClrContext
-import java.io.File
-import kotlin.collections.MutableIterable
 
 
 @kotlin.ExperimentalUnsignedTypes
@@ -40,6 +36,11 @@ import kotlin.collections.MutableIterable
     DebuggerTags.AlwaysHalt::class
 )
 class Clr : TruffleLanguage<ClrContext>() {
+    companion object {
+        @JvmField
+        val contextReference: ContextReference<ClrContext> = ContextReference.create(Clr::class.java)
+    }
+
     // TODO: Remove without breaking debug
     // it is a bad idea to store the context globally
     lateinit var tmp: ClrContext
@@ -48,10 +49,6 @@ class Clr : TruffleLanguage<ClrContext>() {
         val context = ClrContext()
         context.env = env
         return context
-    }
-
-    override fun isObjectOfLanguage(`object`: Any?): Boolean {
-        return false; // We don's support objects yet.
     }
 
 
@@ -84,28 +81,23 @@ class Clr : TruffleLanguage<ClrContext>() {
 
         val appDomain = IlAppDomain()
 
-        parseFile(
-            appDomain, CharStreams.fromPath(
-                File("./language/src/main/resources/System.Private.CoreLib.il").toPath()
-            )
-        )
+        val coreLibrary = checkNotNull(Clr::class.java.getResourceAsStream("/System.Private.CoreLib.il")) {
+            "Missing classpath resource: /System.Private.CoreLib.il"
+        }
+        coreLibrary.use {
+            parseFile(appDomain, CharStreams.fromStream(it))
+        }
 
 
 
         parseFile(appDomain, CharStreams.fromReader(request.source.reader))
-        val context = getCurrentContext(Clr::class.java)
+        val context = contextReference.get(null)
         tmp = context
 
-        val frameDescriptor = FrameDescriptor()
-        return Truffle.getRuntime().createCallTarget(
-            Initialize(appDomain, context, frameDescriptor, this)
-        )
+        val frameDescriptor = FrameDescriptor.newBuilder().build()
+        return Initialize(appDomain, context, frameDescriptor, this).callTarget
     }
 
-    /**
-     * Returns the scopes that are obtained through `context.getBindings`
-     */
-    override fun findTopScopes(context: ClrContext): MutableIterable<Scope> {
-        return context.scopes
-    }
+    /** Returns the global scope exposed by `Context.getBindings`. */
+    override fun getScope(context: ClrContext): Any = context
 }

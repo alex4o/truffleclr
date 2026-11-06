@@ -21,7 +21,7 @@ class FullOutputTest {
     @MethodSource("testFiles")
     fun runFile(file: String) {
         val output = testRunProgram("./test/$file.il", "HelloWorld.Program")
-        val expected = Files.readAllLines(Paths.get("./test/out/$file.out"))
+        val expected = Files.readAllLines(Paths.get("./test/expected/$file.out"))
 
         println(output.joinToString("\n"))
         assertLinesEquals(expected, output)
@@ -30,7 +30,7 @@ class FullOutputTest {
     companion object {
         @JvmStatic
         fun testFiles(): Stream<String> {
-            return Files.walk(Paths.get("./test/out/")).filter { Files.isRegularFile(it) }
+            return Files.walk(Paths.get("./test/expected/")).filter { Files.isRegularFile(it) }
                 .map { it.fileName.toString().replace(".out", "") }
         }
     }

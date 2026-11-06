@@ -1,7 +1,5 @@
 package nodes.internal
 
-import com.sun.org.apache.xpath.internal.ExpressionNode
-
 /**
  * All the internal methods are implemented as nodes, this allows them to also use specializations.
  */

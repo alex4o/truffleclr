@@ -129,6 +129,6 @@ abstract class Compare(
     }
 
     override fun toString(): String {
-        return "(c${condition.toString().toLowerCase()} ${this.children.joinToString(" ")})"
+        return "(c${condition.toString().lowercase(java.util.Locale.getDefault())} ${this.children.joinToString(" ")})"
     }
 }

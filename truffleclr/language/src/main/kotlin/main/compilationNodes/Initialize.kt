@@ -1,9 +1,9 @@
 package main.compilationNodes
 
-import com.oracle.truffle.`object`.LocationImpl
+import com.oracle.truffle.api.`object`.DynamicObjectLibrary
 import com.oracle.truffle.api.Truffle
 import com.oracle.truffle.api.TruffleLanguage
-import com.oracle.truffle.api.`object`.Property
+import types.CTSNull
 import com.oracle.truffle.api.frame.FrameDescriptor
 import com.oracle.truffle.api.frame.VirtualFrame
 import com.oracle.truffle.api.nodes.RootNode
@@ -48,9 +48,20 @@ class Initialize(
                     })
 
                 // Setup a shape and a virtual table
-                type.shape = if (type.baseType != null) {
-                    val objectType = ClrObject(type.name)
-                    val virtualTable = mutableListOf(*(type.baseType.shape.objectType as ClrObject).virtualTable)
+                val objects = DynamicObjectLibrary.getUncached()
+                val objectType = ClrObject(type.name)
+                objectType.allocationShape = com.oracle.truffle.api.`object`.Shape.newBuilder()
+                    .layout(ClrDynamicObject::class.java, java.lang.invoke.MethodHandles.lookup())
+                    .dynamicType(objectType)
+                    .build()
+                val template = ClrDynamicObject(objectType.allocationShape)
+                if (type.baseType != null) {
+                    val baseObjectType = type.baseType.shape.dynamicType as ClrObject
+                    objectType.fieldDefaults.putAll(baseObjectType.fieldDefaults)
+                    for ((name, value) in baseObjectType.fieldDefaults) {
+                        objects.putWithFlags(template, name, value, type.baseType.shape.getProperty(name).flags)
+                    }
+                    val virtualTable = mutableListOf(*baseObjectType.virtualTable)
 
                     for (method in type.members.map { it.value as Method }) {
                         val index =
@@ -62,14 +73,9 @@ class Initialize(
                         }
                     }
                     objectType.virtualTable = virtualTable.toTypedArray()
-                    type.baseType.shape.createSeparateShape(null).changeType(objectType)
                 } else {
-                    val objectType = ClrObject(type.name)
                     objectType.virtualTable = type.members.map { it.value as Method }.toTypedArray()
-                    context.baseObject.createSeparateShape(null).changeType(objectType)
                 }
-
-                val allocator = type.shape.allocator()
 
                 // Use the fields to create all the properties.
                 for (field in v.fields.values) {
@@ -114,13 +120,22 @@ class Initialize(
                         Any::class.java
                     }
 
-                    val location = allocator.locationForType(locationType)
-                    val property = Property.create(field.name, location, if(locationType.isPrimitive) { 0 } else { 1 })
-
-                    type.shape = type.shape.addProperty(property)
+                    val defaultValue: Any = when (locationType) {
+                        Boolean::class.java -> false
+                        Byte::class.java -> 0.toByte()
+                        Short::class.java -> 0.toShort()
+                        Int::class.java -> 0
+                        Long::class.java -> 0L
+                        Float::class.java -> 0.0f
+                        Double::class.java -> 0.0
+                        else -> CTSNull
+                    }
+                    objectType.fieldDefaults[field.name] = defaultValue
+                    objects.putWithFlags(template, field.name, defaultValue, if (locationType.isPrimitive) 0 else 1)
 
                     type.members[field.name] = Field(field, context)
                 }
+                type.shape = template.shape
             }
         }
     }
