@@ -357,7 +357,7 @@ public abstract class CilRootNode extends RootNode implements BytecodeRootNode {
     @Operation @ConstantOperand(type = Type.class)
     public static final class Box {
         @Specialization static Object execute(Type type, Object value) {
-            return type.isValueType() || type.isEnum() || type.getInfo().isPrimitive() ? new ManagedReference.Box(type, value) : value;
+            return new ManagedReference.Box(type, value);
         }
     }
     @Operation @ConstantOperand(type = Type.class) @ConstantOperand(type = boolean.class, name = "copy")

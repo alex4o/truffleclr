@@ -444,8 +444,12 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
             "box" -> {
                 val name = (i as InstructionType).type
                 if (!name.endsWith("[]")) {
-                    val value = pop(); val type = context.types.getValue(name)
-                    push { b.beginBox(type); load(value); b.endBox() }
+                    val type = context.types.getValue(name)
+                    // The operand type is known here; keep lazy Type.info lookup out of guest execution.
+                    if (type.isValueType || type.isEnum || type.info.isPrimitive) {
+                        val value = pop()
+                        push { b.beginBox(type); load(value); b.endBox() }
+                    }
                 }
             }
             "newarr" -> { val size = pop(); val type = context.types.getValue((i as InstructionType).type)
