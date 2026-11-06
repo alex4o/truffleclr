@@ -10,6 +10,7 @@ class IlMethod(var name: String, var arguments: List<Pair<String, IlType>>) {
     var maxstack: Int = 0
     var locals: List<IlType> = mutableListOf()
     var instructions = mutableListOf<Instruction>()
+    val instructionOffsets = mutableMapOf(0 to 0)
     var jumpLabels = mutableListOf<String>()
     var labels = linkedMapOf<String, Int>()
     lateinit var returnType: IlType

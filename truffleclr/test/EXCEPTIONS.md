@@ -14,6 +14,10 @@ output. Its IL replaces that catch with `fault`, removes the exception-stack
 clauses directly. The table-gap/layout fixtures are hand-written IL with
 explicit expected outputs, exercising mixed numeric/label bounds, preceding
 handlers, backward leaves, external gap entry and crossing loops.
+`exceptions_numeric_bounds` uses non-IL labels, forward numeric tables,
+variable-width instructions, numeric filters and a method-end boundary.
+`array_address_mismatch` catches the incompatible `ldelema` in guest code
+and prints a marker after first checking the permitted `readonly.` form.
 
 `exceptions_unhandled` deliberately has no expected-output file. Run it manually:
 stdout must be `before` then `cleanup`; stderr must be
@@ -30,6 +34,23 @@ after inner finally blocks (including inner method frames), not during the
 CLR’s first-pass search. Therefore filters observing state changed by inner
 cleanup can select a different handler than .NET. A false or throwing filter
 continues searching subsequent clauses.
+
+For example, an inner finally can mutate state that an outer filter reads:
+
+
+```csharp
+int state = 0;
+try {
+    try { throw new Exception(); }
+    finally { state = 1; }
+}
+catch (Exception) when (state == 0) { Console.WriteLine("filtered"); }
+catch (Exception) { Console.WriteLine("fallback"); }
+```
+
+.NET selects the filter before running the finally and prints "filtered".
+TruffleCLR runs the finally first, so the filter sees 1 and prints "fallback".
+This one-pass deviation is intentional for now; two-pass filters are deferred.
 
 Expected runtime failures throw guest exceptions directly. The Bytecode DSL
 invalidates compiled code before its internal-exception interception hook, so

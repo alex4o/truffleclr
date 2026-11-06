@@ -24,15 +24,6 @@ class FullOutputTest {
         assertLinesEquals(expected, output)
     }
 
-    @org.junit.jupiter.api.Test
-    fun rejectsIncompatibleArrayAddress() {
-        val failure = Assertions.assertThrows(org.graalvm.polyglot.PolyglotException::class.java) {
-            testRunProgram("./test/array_address_mismatch.il", "HelloWorld.Program")
-        }
-        Assertions.assertTrue(failure.isGuestException, failure.message)
-        Assertions.assertTrue(failure.message.orEmpty().startsWith("System.ArrayTypeMismatchException:"), failure.message)
-    }
-
     companion object {
         @JvmStatic
         fun testFiles(): Stream<String> {
