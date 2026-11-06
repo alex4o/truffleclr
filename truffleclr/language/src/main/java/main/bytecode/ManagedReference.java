@@ -39,7 +39,8 @@ public abstract class ManagedReference implements TruffleObject {
         public final Object[] values;
         public void store(int index, Object value) {
             if (value == types.CTSNull.INSTANCE) value = null;
-            if (value != null && (!(value instanceof ClrObject object) || !type.isAssignableFrom(object.getType())))
+            Type actual = value instanceof Box box ? box.type : value instanceof ClrObject object ? object.getType() : null;
+            if (value != null && (actual == null || !type.isAssignableFrom(actual)))
                 throw new ArrayStoreException("Invalid element for " + type.getName());
             values[index] = value;
         }
@@ -49,6 +50,27 @@ public abstract class ManagedReference implements TruffleObject {
             if (type.isValueType()) for (int i = 0; i < size; i++) values[i] = type.newValue();
         }
     }
+    /** Kept distinct so guest exception handling can map this to System.ArrayTypeMismatchException. */
+    public static final class ArrayTypeMismatchException extends RuntimeException {
+        public ArrayTypeMismatchException(Type expected) {
+            super("ldelema: array element type is incompatible with " + expected.getName());
+        }
+    }
+    static boolean hasElementType(Type element, Object array) {
+        if (array instanceof ObjectArray a) return a.type == element;
+        return switch (element.getInfo().getType()) {
+            case BOOLEAN -> array instanceof boolean[];
+            case I1, U1 -> array instanceof byte[];
+            case I2, U2 -> array instanceof short[];
+            case CHAR -> array instanceof char[];
+            case I4, U4 -> array instanceof int[];
+            case I8, U8 -> array instanceof long[];
+            case R4 -> array instanceof float[];
+            case R8 -> array instanceof double[];
+            case STRING -> array instanceof String[];
+            default -> element.getName().equals("System.Object") && array.getClass() == Object[].class;
+        };
+    }
     public static final class Element extends ManagedReference {
         private final Object array;
         private final int index;
@@ -57,7 +79,6 @@ public abstract class ManagedReference implements TruffleObject {
         @Override public boolean equals(Object other) { return other instanceof Element ref && array == ref.array && index == ref.index; }
         @Override public int hashCode() { return System.identityHashCode(array) * 31 + index; }
         public Element(Type type, Object array, int index) {
-            if (index < 0 || index >= (array instanceof ObjectArray a ? a.values.length : java.lang.reflect.Array.getLength(array))) throw new ArrayIndexOutOfBoundsException(index);
             this.type = type; this.array = array; this.index = index;
         }
         public Object get() {

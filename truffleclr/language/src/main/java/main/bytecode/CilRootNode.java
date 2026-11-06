@@ -341,9 +341,12 @@ public abstract class CilRootNode extends RootNode implements BytecodeRootNode {
                 case "u1" -> number.intValue() & 0xff;
                 case "i2" -> (int) number.shortValue();
                 case "u2" -> number.intValue() & 0xffff;
-                case "i4", "u4" -> number.intValue();
+                case "i4" -> number.intValue();
+                case "u4" -> value instanceof Float || value instanceof Double ? (int) number.longValue() : number.intValue();
                 case "i8", "i" -> number.longValue();
-                case "u8", "u" -> value instanceof Integer ? Integer.toUnsignedLong(number.intValue()) : number.longValue();
+                case "u8", "u" -> value instanceof Integer ? Integer.toUnsignedLong(number.intValue())
+                        : (value instanceof Float || value instanceof Double) && number.doubleValue() >= 0x1.0p63
+                        ? (long) (number.doubleValue() - 0x1.0p63) + Long.MIN_VALUE : number.longValue();
                 case "r4" -> number.floatValue();
                 case "r8" -> number.doubleValue();
                 case "r" -> value instanceof Integer ? (double) Integer.toUnsignedLong(number.intValue()) : value instanceof Long ? Double.parseDouble(Long.toUnsignedString(number.longValue())) : number.doubleValue();
@@ -353,7 +356,9 @@ public abstract class CilRootNode extends RootNode implements BytecodeRootNode {
     }
     @Operation @ConstantOperand(type = Type.class)
     public static final class Box {
-        @Specialization static Object execute(Type type, Object value) { return new ManagedReference.Box(type, value); }
+        @Specialization static Object execute(Type type, Object value) {
+            return type.isValueType() || type.isEnum() || type.getInfo().isPrimitive() ? new ManagedReference.Box(type, value) : value;
+        }
     }
     @Operation @ConstantOperand(type = Type.class) @ConstantOperand(type = boolean.class, name = "copy")
     public static final class Unbox {
@@ -464,8 +469,13 @@ public abstract class CilRootNode extends RootNode implements BytecodeRootNode {
             return field.getValueType() == null ? new ManagedReference.Member(field.getOwner().getStaticObject(), field) : field.readRaw(field.getOwner().getStaticObject());
         }
     }
-    @Operation @ConstantOperand(type = Type.class) public static final class ArrayAddress {
-        @Specialization static Object execute(Type type, Object array, int index) {
+    @Operation @ConstantOperand(type = Type.class) @ConstantOperand(type = boolean.class, name = "readOnly")
+    public static final class ArrayAddress {
+        @Specialization static Object execute(Type type, boolean readOnly, Object array, int index) {
+            if (array == null || array == types.CTSNull.INSTANCE) throw new NullPointerException("ldelema receiver");
+            int length = array instanceof ManagedReference.ObjectArray a ? a.values.length : java.lang.reflect.Array.getLength(array);
+            if (index < 0 || index >= length) throw new ArrayIndexOutOfBoundsException(index);
+            if (!readOnly && !ManagedReference.hasElementType(type, array)) throw new ManagedReference.ArrayTypeMismatchException(type);
             return type.isValueType() ? ((ManagedReference.ObjectArray) array).values[index] : new ManagedReference.Element(null, array, index);
         }
     }

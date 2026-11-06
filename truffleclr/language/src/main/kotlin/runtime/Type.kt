@@ -33,6 +33,8 @@ class Type(val name: String, val baseType: Type?): TruffleObject {
     val isValueType: Boolean = baseType?.name == "System.ValueType" &&
         name != "System.Enum" && CoreTypeInfo.typeByName[name]?.isPrimitive != true
 
+    val isEnum: Boolean = baseType?.name == "System.Enum"
+
     // Physical fields, including inherited fields hidden by a same-named declaration.
     @CompilerDirectives.CompilationFinal(dimensions = 1)
     internal var layoutFields: Array<Field> = emptyArray()

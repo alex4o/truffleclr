@@ -29,7 +29,13 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
     private val mutableArguments by lazy { addressedArguments + code.filter { it.instruction == "starg" }.map { number(it, true) } }
     private val addressedLocals by lazy { code.filter { it.instruction == "ldloca" }.map { number(it) }.toSet() }
     private val addressedArguments by lazy { code.filter { it.instruction == "ldarga" }.map { number(it, true) }.toSet() }
-    private val argumentTypes get() = (if (method.static) emptyList() else listOf(method.memberOf!!)) + method.arguments.map { it.second }
+    private val argumentTypes by lazy {
+        val receiver = if (method.static) emptyList() else {
+            val owner = method.memberOf!!
+            listOf(if (context.types.getValue(owner.fullName).isValueType) owner.makeByRef() else owner)
+        }
+        receiver + method.arguments.map { it.second }
+    }
     // isBoolean proves a Boolean-local load; comparison instructions always push int32.
     private class Value(var emit: () -> Unit, val isBoolean: Boolean, var materialized: Boolean = false)
     private val stack = mutableListOf<Value>()
@@ -234,7 +240,7 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
                                 if (method.returnType.type == CorElementType.VOID) b.emitLoadConstant(0) else load(pop())
                                 b.endReturn()
                             }
-                            else -> emit(i)
+                            else -> emit(i, instructionIndex)
                         }
                     }
                     val tail = code[block.end - 1]
@@ -307,6 +313,16 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
         else -> error("Unknown local type encountered: "+type.type)
     }
 
+    private fun typeTest(name: String, checked: Boolean, value: Value) {
+        if (name.endsWith("[]")) {
+            val element = context.types.getValue(name.removeSuffix("[]"))
+            push { b.beginArrayTypeTest(element, checked); load(value); b.endArrayTypeTest() }
+        } else {
+            val type = context.types.getValue(name)
+            push { b.beginTypeTest(type, checked); load(value); b.endTypeTest() }
+        }
+    }
+
     private fun narrowConversion(i: Instruction): String? = when {
         i is InstructionType && i.type == "System.SByte" -> "i1"
         i is InstructionType && i.type == "System.Int16" -> "i2"
@@ -316,7 +332,7 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
         else -> null
     }
 
-    private fun emit(i: Instruction) {
+    private fun emit(i: Instruction, instructionIndex: Int) {
         when (i.instruction) {
             "nop", "break", "readonly" -> Unit
             "dup" -> { materialize(); stack.add(stack.last()) }
@@ -352,7 +368,7 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
                 }
             }
             "ldnull" -> push { b.emitLoadConstant(CTSNull) }
-            "ldstr" -> push { b.emitLoadConstant((i as InstructionString).content.drop(1).dropLast(1)) }
+            "ldstr" -> push { b.emitLoadConstant((i as InstructionString).content.drop(1).dropLast(1).intern()) }
             "ldc" -> push { b.emitLoadConstant(when (i) {
                 is InstructionI -> i.arg
                 is InstructionI8 -> i.arg
@@ -382,21 +398,17 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
                 require("ovf" !in i.instructionArgs) { "Checked conversion is unsupported: $i" }
                 val value = pop(); push { b.beginConvert(i.instructionArgs.first()); load(value); b.endConvert() }
             }
-            "castclass", "isinst" -> {
-                val value = pop(); val name = (i as InstructionType).type
-                if (name.endsWith("[]")) {
-                    val element = context.types.getValue(name.removeSuffix("[]"))
-                    push { b.beginArrayTypeTest(element, i.instruction == "castclass"); load(value); b.endArrayTypeTest() }
-                } else {
-                    val type = context.types.getValue(name)
-                    push { b.beginTypeTest(type, i.instruction == "castclass"); load(value); b.endTypeTest() }
-                }
-            }
+            "castclass", "isinst" -> typeTest((i as InstructionType).type, i.instruction == "castclass", pop())
             "unbox" -> {
-                val value = pop(); val type = context.types.getValue((i as InstructionType).type)
-                if (!type.isValueType && !type.info.isPrimitive && "any" in i.instructionArgs) {
-                    push { b.beginTypeTest(type, true); load(value); b.endTypeTest() }
-                } else push { b.beginUnbox(type, "any" in i.instructionArgs); load(value); b.endUnbox() }
+                val name = (i as InstructionType).type
+                val value = pop()
+                val type = context.types[name]
+                if ("any" in i.instructionArgs && (name.endsWith("[]") || type != null && !type.isValueType && !type.isEnum && !type.info.isPrimitive)) {
+                    typeTest(name, true, value)
+                } else {
+                    requireNotNull(type) { "Unknown unbox type: $name" }
+                    push { b.beginUnbox(type, "any" in i.instructionArgs); load(value); b.endUnbox() }
+                }
             }
             "ldind", "ldobj" -> {
                 val value = pop()
@@ -429,7 +441,13 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
                 })
                 b.endReferenceStore()
             }
-            "box" -> { val v = pop(); val type = context.types.getValue((i as InstructionType).type); push { b.beginBox(type); load(v); b.endBox() } }
+            "box" -> {
+                val name = (i as InstructionType).type
+                if (!name.endsWith("[]")) {
+                    val value = pop(); val type = context.types.getValue(name)
+                    push { b.beginBox(type); load(value); b.endBox() }
+                }
+            }
             "newarr" -> { val size = pop(); val type = context.types.getValue((i as InstructionType).type)
                 push {
                     if (type.isValueType || (!type.info.isPrimitive && type.name != "System.Object" && type.name != "System.String")) { b.beginObjectArrayNew(type); load(size); b.endObjectArrayNew() }
@@ -440,7 +458,7 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
                 val index = pop(); val array = pop()
                 val conversion = narrowConversion(i)
                 push {
-                    if (i.instruction == "ldelema") { b.beginArrayAddress(context.types.getValue((i as InstructionType).type)); load(array, index); b.endArrayAddress() }
+                    if (i.instruction == "ldelema") { b.beginArrayAddress(context.types.getValue((i as InstructionType).type), instructionIndex > 0 && code[instructionIndex - 1].instruction == "readonly"); load(array, index); b.endArrayAddress() }
                     else {
                         if (conversion != null) b.beginConvert(conversion)
                         b.beginArrayLoad(); load(array, index); b.endArrayLoad()
