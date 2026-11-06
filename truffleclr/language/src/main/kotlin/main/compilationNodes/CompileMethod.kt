@@ -21,6 +21,6 @@ class CompileMethod(val method: IlMethod, val initialize: Initialize,
     }
 
     fun install() {
-        (type.members.getValue(method.toString()) as Method).setCompiler(::compile)
+        (type.members.getValue(method.key()) as Method).setCompiler(::compile)
     }
 }

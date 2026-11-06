@@ -2,145 +2,66 @@ package parser.cil
 
 import Cil.CilBaseVisitor
 import Cil.CilParser
-import org.antlr.v4.runtime.ParserRuleContext
-import org.antlr.v4.runtime.tree.ParseTree
 import metadata.IlAppDomain
 import metadata.IlAssembly
 import metadata.IlModule
 import metadata.IlType
 import runtime.CoreTypeInfo
-import java.util.*
+import runtime.CorElementType
 
-
-/**
- * The top level visitor, used to collect the available classes and metadata about the assembly, the module and namespaces.
- *
- */
+/** Register every declaration before resolving signatures, including nested types. */
 @kotlin.ExperimentalUnsignedTypes
-class DeclVisitor(var appDomain: IlAppDomain) : Cil.CilBaseVisitor<Unit>() {
-    lateinit var module: IlModule
+class DeclVisitor(val appDomain: IlAppDomain) : CilBaseVisitor<Unit>() {
     lateinit var assembly: IlAssembly
-    private val namespaces = Stack<String>()
-
-
-    val lateClasses: Queue<CilParser.ClassContext> = LinkedList()
-
-    val decl_children: Queue<Pair<ClassVisitor, ParserRuleContext>> = LinkedList()
-
-    fun layerVisit() {
-        while (lateClasses.isNotEmpty()) {
-            transformClass(lateClasses.remove())
-        }
-
-        for ((visitor, tree) in decl_children) {
-            tree.accept(visitor)
-        }
-    }
-
+    private val namespaces = mutableListOf<String>()
+    private val classes = mutableListOf<Triple<IlType, CilParser.ClassHeadContext, CilParser.ClassDeclsContext>>()
 
     override fun visitAssembly(ctx: CilParser.AssemblyContext) {
-        val assembly = ctx.assemblyHead().dottedName().text
-        this.assembly = IlAssembly(assembly)
-        appDomain.assemblies.add(this.assembly)
+        assembly = IlAssembly(ctx.assemblyHead().dottedName().text)
+        appDomain.assemblies.add(assembly)
     }
 
     override fun visitModule(ctx: CilParser.ModuleContext) {
-        val module = ctx.moduleHead().dottedName().text
-        this.module = IlModule(module)
-        assembly.modules.add(this.module)
+        assembly.modules.add(IlModule(ctx.moduleHead().dottedName().text))
     }
 
     override fun visitNamespace(ctx: CilParser.NamespaceContext) {
-        namespaces.push(ctx.nameSpaceHead().dottedName().text)
-        for (decl in ctx.decls().decl()) {
-            (decl as ParseTree).accept(this)
-        }
-        namespaces.pop()
+        namespaces.add(ctx.nameSpaceHead().dottedName().text)
+        visit(ctx.decls())
+        namespaces.removeAt(namespaces.lastIndex)
     }
 
-    /**
-     * When visiting a class inside of a namespace.
-     */
-    override fun visitClass(ctx: CilParser.ClassContext) = transformClass(ctx)
+    override fun visitClass(ctx: CilParser.ClassContext) {
+        declare(ctx.classHead(), ctx.classDecls(), namespaces.joinToString(".").let { if (it.isEmpty()) "" else "$it." })
+    }
 
-    /**
-     * Used to visit the class's sub classes this way classes can be all visited in this visitor.
-     * Also resolves the dependency tree created form inheritance.
-     * It stores classes that don't have their parent parsed already to be parsed later when it is available.
-     * Instead of resolving dependencies it just parses all the available classes and then retries.
-     */
-    private fun transformClass(ctx: CilParser.ClassContext) {
-        var head = ctx.classHead()
-        val name = if (namespaces.isNotEmpty()) {
-            "${namespaces.peek()}."
-        } else {
-            ""
-        } + head.classHeadBegin().dottedName().text
-
-        val extends: String? = head.extendsClause().typeSpec()?.toClassName()
-
-        val extendsType = if (extends == null) {
-            null
-        } else if (assembly.types.contains(extends)) {
-            assembly.types.getValue(extends)
-        } else if (appDomain.assemblies.map { it.types }.any { it.contains(extends) }) { // Very bad code but I don't have a global table of types
-            appDomain.assemblies.map { it.types }.first { it.contains(extends) }.getValue(extends)
-        } else {
-            lateClasses.add(ctx)
-            return
-        }
-
-        val corType = if(CoreTypeInfo.typeByName.containsKey(name)) {
-            CoreTypeInfo.typeByName.getValue(name).type
-        }else{
-            extendsType!!.type
-        }
-        val type = IlType(name, corType)
-
-        type.extends = extendsType
+    private fun declare(head: CilParser.ClassHeadContext, body: CilParser.ClassDeclsContext, prefix: String) {
+        val name = prefix + head.classHeadBegin().dottedName().text.trim('\'')
+        val type = IlType(name, CoreTypeInfo.typeByName[name]?.type ?: CorElementType.OBJECT)
         type.attribtes = head.classHeadBegin().classAttr().map { it.text }.toSet()
-
-
-        assembly.types.put(name, type)
-        decl_children.add(Pair(ClassVisitor(appDomain, type), ctx.classDecls()))
-        this.visit(ctx.classDecls())
-    }
-
-
-    /**
-     * When visiting a class inside of another class.
-     */
-    override fun visitClass_class(ctx: CilParser.Class_classContext) {
-        var head = ctx.classHead()
-        val name = decl_children.last().first.type.name + "/" + head.classHeadBegin().dottedName().text
-
-        val extends: String? = head.extendsClause().typeSpec()?.toClassName()
-
-        val extendsType = if (extends == null) {
-            null
-        } else if (assembly.types.contains(extends)) {
-            assembly.types.getValue(extends)
-        } else if (appDomain.assemblies.map { it.types }.any { it.contains(extends) }) { // Very bad code but I don't have a global table of types
-            appDomain.assemblies.map { it.types }.first { it.contains(extends) }.getValue(extends)
-        } else {
-            // TODO: add to the queue too
-            error("Internal classes can't inherit from non initialized classes")
+        type.isInterface = "interface" in type.attribtes
+        type.genericParameters = head.classHeadBegin().typarsClause().parameterNames()
+        type.isGeneric = type.genericParameters.isNotEmpty()
+        check(assembly.types.put(name, type) == null) { "Duplicate type $name" }
+        classes.add(Triple(type, head, body))
+        for (child in body.classDecl().filterIsInstance<CilParser.Class_classContext>()) {
+            declare(child.classHead(), child.classDecls(), "$name/")
         }
-
-        val corType = extendsType!!.type
-
-        val type = IlType(name, corType)
-
-        type.extends = extendsType
-        type.attribtes = head.classHeadBegin().classAttr().map { it.text }.toSet()
-
-        assembly.types.put(name, type)
-        decl_children.add(Pair(ClassVisitor(appDomain, type), ctx.classDecls()))
     }
 
+    fun layerVisit() {
+        for ((type, head, _) in classes) {
+            val base = head.extendsClause().typeSpec()?.toClassName()
+                ?: if (type.name != "System.Object") "System.Object" else null
+            type.extends = base?.let { appDomain.getType(it.normalizeParameters(type.genericParameters)) }
+            fun interfaces(list: CilParser.ImplListContext?): List<IlType> = if (list == null) emptyList() else
+                interfaces(list.implList()) + appDomain.getType(list.typeSpec().toClassName().normalizeParameters(type.genericParameters))
+            type.interfaces = interfaces(head.implClause().implList())
+        }
+        for ((type, _, body) in classes) body.accept(ClassVisitor(appDomain, type))
+    }
 
     override fun visitMethod(ctx: CilParser.MethodContext) {
-        TODO("Implement methods outside of classes")
+        error("Methods outside classes are unsupported")
     }
-
 }

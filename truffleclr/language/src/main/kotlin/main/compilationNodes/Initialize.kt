@@ -13,11 +13,56 @@ import runtime.*
 class Initialize(appDomain: IlAppDomain, val context: ClrContext, val language: TruffleLanguage<*>) {
     private val compileChildren = mutableListOf<CompileMethod>()
     val internalMethods by lazy { InternalTable.staticMethods() }
+    private val metadataByType = linkedMapOf<Type, IlType>()
 
     init {
         for (assembly in appDomain.assemblies) {
             assembly.types.values.forEach { processType(it) }
         }
+        val mapped = mutableSetOf<Type>()
+        fun mapInterfaces(type: Type) {
+            if (type in mapped) return
+            val metadata = metadataByType.getValue(type)
+            type.baseType?.let { mapInterfaces(it) }
+            val declared = metadata.interfaces.map { processType(it) }
+            declared.forEach { mapInterfaces(it) }
+            type.interfaces = ((type.baseType?.interfaces?.toList() ?: emptyList()) +
+                declared.flatMap { listOf(it) + it.interfaces }).distinct().toTypedArray()
+            type.baseType?.interfaceMethods?.forEach { (signature, implementation) ->
+                type.interfaceMethods[signature] = if (implementation.virtualSlot >= 0)
+                    type.virtualTable[implementation.virtualSlot] else implementation
+            }
+            // A newly declared interface (including an inherited interface) can be
+            // reimplemented; an inherited mapping otherwise keeps its original slot.
+            for (iface in declared.flatMap { listOf(it) + it.interfaces }.distinct()) {
+                for (declaration in iface.members.values.filterIsInstance<Method>()) {
+                    if (declaration.metadata.static) continue
+                    // Inheritance depth wins before signature preference. A base
+                    // definition must never displace a derived closed override.
+                    val implementation = generateSequence(type) { it.baseType }.mapNotNull { owner ->
+                        val candidates = owner.members.values.filterIsInstance<Method>().filter {
+                            !it.metadata.static && it.metadata.isPublic &&
+                                it.metadata.toString(false) == declaration.metadata.toString(false)
+                        }
+                        candidates.firstOrNull { it.metadata.definitionSignature == declaration.metadata.definitionSignature }
+                            ?: candidates.firstOrNull()
+                    }.firstOrNull()
+                    if (implementation != null) type.interfaceMethods[declaration.metadata.key()] =
+                        if (implementation.virtualSlot >= 0) type.virtualTable[implementation.virtualSlot] else implementation
+                }
+            }
+            for (implementation in type.members.values.filterIsInstance<Method>()) {
+                for (signature in implementation.metadata.overrides) {
+                    val declaration = type.interfaces.asSequence()
+                        .mapNotNull { it.members[signature] as? Method }.firstOrNull() ?: continue
+                    check(!implementation.metadata.static) { "Static interface override: ${implementation.metadata}" }
+                    type.interfaceMethods[declaration.metadata.key()] = implementation
+                }
+            }
+            mapped.add(type)
+        }
+        // processType also discovers interface-only dependencies, before mapping.
+        for (type in metadataByType.keys.toList()) mapInterfaces(type)
         // Field types can refer forward or back to their owner. Resolve only after
         // every shape exists; no recursive processType calls for field signatures.
         for (type in context.types.values) {
@@ -51,18 +96,29 @@ class Initialize(appDomain: IlAppDomain, val context: ClrContext, val language: 
         val base = metadata.extends?.let { processType(it) }
         val type = Type(metadata.fullName, base)
         context.types[metadata.fullName] = type
+        metadataByType[type] = metadata
+        type.isInterface = metadata.isInterface
+        metadata.interfaces.forEach { processType(it) }
         val virtualTable = base?.virtualTable?.toMutableList() ?: mutableListOf()
         for (method in metadata.methods.values) {
             val member = Method(method)
-            type.members[method.toString()] = member
+            type.members[method.key()] = member
             compileChildren.add(CompileMethod(method, this, language, type))
             if (method.name == ".cctor") type.initializer = member
-            if (method.virtual) {
-                val inherited = if (method.newSlot) -1 else
-                    virtualTable.indexOfLast { it.metadata.toString(false) == method.toString(false) }
-                member.virtualSlot = if (inherited < 0) virtualTable.size else inherited
-                if (inherited < 0) virtualTable.add(member) else virtualTable[inherited] = member
+            require(!method.virtual || method.genericParameters.isEmpty()) {
+                "Generic virtual methods are unsupported: $method"
             }
+            val overridden = method.overrides.mapNotNull { signature ->
+                generateSequence(base) { it.baseType }.mapNotNull { it.members[signature] as? Method }.firstOrNull()
+            }
+            for (declaration in overridden) {
+                check(!method.static && declaration.virtualSlot >= 0) { "Invalid virtual override: $method -> $declaration" }
+            }
+            if (method.virtual) {
+                member.virtualSlot = overridden.firstOrNull()?.virtualSlot ?: virtualTable.size
+                if (member.virtualSlot == virtualTable.size) virtualTable.add(member)
+            }
+            for (declaration in overridden) virtualTable[declaration.virtualSlot] = member
         }
         type.virtualTable = virtualTable.toTypedArray()
         base?.let { type.instanceFields.putAll(it.instanceFields) }

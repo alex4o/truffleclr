@@ -6,6 +6,13 @@ import metadata.instruction.Instruction
 
 // TODO: Split into two distinct method types the Runtime one and the parsing one.
 class IlMethod(var name: String, var arguments: List<Pair<String, IlType>>) {
+    var definitionSignature: String? = null
+    fun key(): String = definitionSignature?.let { "$memberOf::$it${genericSuffix()}" } ?: toString()
+
+    var genericParameters: List<String> = emptyList()
+    var genericArguments: List<IlType> = emptyList()
+    val overrides = mutableListOf<String>()
+    val overrideReferences = mutableListOf<IlMethod>()
     val exceptionClauses = mutableListOf<ExceptionClause>()
     var maxstack: Int = 0
     var locals: List<IlType> = mutableListOf()
@@ -17,6 +24,7 @@ class IlMethod(var name: String, var arguments: List<Pair<String, IlType>>) {
 
     var memberOf: IlType? = null
 
+    var isPublic = false
     var virtual = false
     var newSlot = false
     var static = false
@@ -25,10 +33,16 @@ class IlMethod(var name: String, var arguments: List<Pair<String, IlType>>) {
 
 
     override fun toString(): String {
-          return "$returnType $memberOf::$name(${arguments.map { it.second }.joinToString(",")})"
+          return "$returnType $memberOf::$name${genericSuffix()}(${arguments.map { it.second }.joinToString(",")})"
+    }
+
+    private fun genericSuffix(): String = when {
+        genericArguments.isNotEmpty() -> genericArguments.joinToString(",", "<", ">")
+        genericParameters.isNotEmpty() -> "<${genericParameters.size}>"
+        else -> ""
     }
 
     fun toString(memberOf: Boolean = false) : String {
-        return "$returnType $name(${arguments.map { it.second }.joinToString(",")})"
+        return "$returnType $name${genericSuffix()}(${arguments.map { it.second }.joinToString(",")})"
     }
 }

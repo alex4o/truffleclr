@@ -63,13 +63,15 @@ fun test(methodRef: MethodRefContext) {
 /**
  * Get the class name for a TypeSpec
  */
+fun SlashedNameContext.canonicalName(): String = dottedName().joinToString("/") { it.text.trim('\'') }
+
 fun TypeSpecContext.toClassName(): String {
     return match(this) {
         case(type()) {
             toParsedType()
         }
         case(className()) {
-            slashedName().text
+            slashedName().canonicalName()
         }
         default {
             error("Unable to determine typeSpec for $parent (line: ${start.line})")
@@ -80,26 +82,42 @@ fun TypeSpecContext.toClassName(): String {
 /**
  * Get the metadata of a already parsed class from a TypeContext.
  */
-fun TypeContext.getType(appDomain: IlAppDomain): IlType {
-    return if (this is TypeManageRefContext) {
-        this.type().getType(appDomain).makeByRef()
-    } else if (this is TypeArrayContext) {
-        this.type().getType(appDomain).makeArray(1)
-    } else {
-        appDomain.getType(this.toClassName())
+fun TypeContext.getType(appDomain: IlAppDomain, typeParameters: List<String> = emptyList(), methodParameters: List<String> = emptyList()): IlType =
+    appDomain.getType(toClassName().normalizeParameters(typeParameters, methodParameters))
+
+fun TyparsClauseContext.parameterNames(): List<String> =
+    generateSequence(typars()) { it.typarsRest()?.typars() }.map { parameter ->
+        var attributes: TyparAttribsContext? = parameter.typarAttribs()
+        while (attributes != null) {
+            val variance = attributes.typarAttrib()?.text
+            if (variance == "+" || variance == "-") {
+                throw UnsupportedOperationException("Generic parameter variance '$variance' is not supported: ${parameter.dottedName().text}")
+            }
+            attributes = attributes.typarAttribs()
+        }
+        parameter.dottedName().text.trim('\'')
+    }.toList()
+
+fun String.normalizeParameters(typeParameters: List<String>, methodParameters: List<String> = emptyList()): String =
+    Regex("(!!?)([A-Za-z_][A-Za-z_0-9]*)").replace(this) { match ->
+        val parameters = if (match.groupValues[1] == "!!") methodParameters else typeParameters
+        val index = parameters.indexOf(match.groupValues[2])
+        require(index >= 0) { "Unknown generic parameter "+match.value }
+        match.groupValues[1] + index
     }
-}
 
 /**
  * Parse the class name from a TypeContext
  */
 fun TypeContext.toClassName(): String {
     return when (this) {
+        is TypeGenericContext -> type().toClassName() + tyArgs1().tyArgs2().type().joinToString(",", "<", ">") { it.toClassName() }
+        is TypeU1Context, is TypeU2Context, is TypeU3Context, is TypeU4Context -> text
         is TypeManageRefContext -> type().toClassName() + "&"
         is TypeArrayContext -> type().toClassName() + "[]"
         is TypeNativeContext -> "System.IntPtr"
         is TypeClassContext -> {
-            className()?.slashedName()?.text ?: "System.Object"
+            className()?.slashedName()?.canonicalName() ?: "System.Object"
         }
         is TypePrimitiveContext -> {
             when (text.trim()) {
@@ -122,7 +140,7 @@ fun TypeContext.toClassName(): String {
             }
         }
         is TypeValueTypeContext -> {
-            this.className().slashedName().text
+            this.className().slashedName().canonicalName()
         }
         is TypeVoidContext -> {
             "System.Void"
@@ -150,6 +168,19 @@ fun MethodVisitor.extractFromMethodRefTest(methodRef: MethodRefContext): IlMetho
 
     val className: String = methodRef.typeSpec().toClassName()
 
+    val ownerDefinition = appDomain.getType(className.substringBefore('<'))
+    val signature = methodRef.type().text + methodRef.sigArgs0().text
+    val namedParameters = Regex("!!([A-Za-z_][A-Za-z_0-9]*)").findAll(signature).map { it.groupValues[1] }.toSet()
+    val methodParameters = if (namedParameters.isEmpty()) emptyList() else {
+        val arity = methodRef.tyArgs0()?.tyArgs1()?.tyArgs2()?.type()?.size ?: 0
+        val count = methodRef.sigArgs0().sigArgs1()?.sigArg()?.size ?: 0
+        val candidates = ownerDefinition.methods.values.filter {
+            it.name == methodName && it.genericParameters.size == arity && it.arguments.size == count &&
+                it.genericParameters.containsAll(namedParameters)
+        }.map { it.genericParameters }.distinct()
+        require(candidates.size == 1) { "Cannot resolve named generic parameters in "+methodRef.text }
+        candidates.single()
+    }
     val arguments = if (methodRef.sigArgs0().sigArgs1() != null) {
         methodRef.sigArgs0().sigArgs1().sigArg().map {
             Pair(
@@ -157,7 +188,7 @@ fun MethodVisitor.extractFromMethodRefTest(methodRef: MethodRefContext): IlMetho
                     ""
                 } else {
                     it.id().text
-                }, it.type().getType(appDomain)
+                }, it.type().getType(appDomain, ownerDefinition.genericParameters, methodParameters)
             )
         }
     } else {
@@ -165,12 +196,13 @@ fun MethodVisitor.extractFromMethodRefTest(methodRef: MethodRefContext): IlMetho
     }
 
     val method = IlMethod(methodName, arguments)
-    method.memberOf = appDomain.getType(className)
-    method.returnType = methodRef.type().getType(appDomain)
-
-//    method.static = methodRef.callConv().K_INSTANCE().isEmpty()
-
-    return appDomain.getType(className).getMethod(method.toString())
+    method.memberOf = appDomain.getType(className.normalizeParameters(this.method.memberOf!!.genericParameters, this.method.genericParameters))
+    method.returnType = methodRef.type().getType(appDomain, ownerDefinition.genericParameters, methodParameters)
+    method.static = methodRef.callConv().K_INSTANCE().isEmpty()
+    method.genericArguments = methodRef.tyArgs0()?.tyArgs1()?.tyArgs2()?.type()?.map {
+        appDomain.getType(it.toClassName().normalizeParameters(this.method.memberOf!!.genericParameters, this.method.genericParameters))
+    } ?: emptyList()
+    return method
 }
 
 class ParsedType() {

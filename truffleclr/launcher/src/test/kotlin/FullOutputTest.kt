@@ -24,7 +24,23 @@ class FullOutputTest {
         assertLinesEquals(expected, output)
     }
 
+    @DisplayName("Rejects unsupported IL declarations with a clear error")
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("rejectedFiles")
+    fun rejectFile(file: String) {
+        val expected = Files.readString(Paths.get("./test/rejected/$file.error")).trim()
+        val failure = Assertions.assertThrows(org.graalvm.polyglot.PolyglotException::class.java) {
+            testRunProgram("./test/rejected/$file.il", "HelloWorld.Program")
+        }
+        Assertions.assertTrue(failure.message.orEmpty().contains(expected), failure.message)
+    }
+
     companion object {
+        @JvmStatic
+        fun rejectedFiles(): Stream<String> =
+            Files.list(Paths.get("./test/rejected/")).filter { it.toString().endsWith(".il") }
+                .map { it.fileName.toString().removeSuffix(".il") }
+
         @JvmStatic
         fun testFiles(): Stream<String> {
             return Files.walk(Paths.get("./test/expected/")).filter { Files.isRegularFile(it) }

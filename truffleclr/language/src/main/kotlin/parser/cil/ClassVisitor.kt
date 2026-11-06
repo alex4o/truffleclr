@@ -17,6 +17,8 @@ import java.util.*
 @kotlin.ExperimentalUnsignedTypes
 class ClassVisitor(var appDomain: IlAppDomain, var type: IlType) : Cil.CilBaseVisitor<Any>() {
 
+    override fun visitClass_class(ctx: CilParser.Class_classContext): Any = type
+
     companion object {
         val class_children: Queue<Pair<CilBaseVisitor<*>, ParserRuleContext>> = LinkedList()
 
@@ -49,10 +51,11 @@ class ClassVisitor(var appDomain: IlAppDomain, var type: IlType) : Cil.CilBaseVi
             case(this.D_CTOR()) { ".ctor" }
         }
 
+        val parameters = ctx.methodHead().typarsClause().parameterNames()
         var arguments: List<Pair<String, IlType>> = mutableListOf<Pair<String, IlType>>()
 
         if (ctx.methodHead().sigArgs0().sigArgs1() != null) {
-            arguments = ctx.methodHead().sigArgs0().sigArgs1().sigArg().map { Pair(it.id().text, it.type().getType(appDomain)) }
+            arguments = ctx.methodHead().sigArgs0().sigArgs1().sigArg().map { Pair(it.id()?.text ?: "", it.type().getType(appDomain, type.genericParameters, parameters)) }
         }
 
         val method = IlMethod(
@@ -60,14 +63,16 @@ class ClassVisitor(var appDomain: IlAppDomain, var type: IlType) : Cil.CilBaseVi
             arguments
         )
 
+        method.genericParameters = parameters
         val attributes = ctx.methodHead().methAttr().map { it.text }.toSet()
+        method.isPublic = "public" in attributes
         method.static = "static" in attributes
         method.virtual = "virtual" in attributes
         method.newSlot = "newslot" in attributes
         method.abstract = ctx.methodHead().methAttr().map { it.text }.toSet().contains("abstract")
         method.internal = ctx.methodHead().implAttr().map { it.text }.toSet().contains("internalcall")
         method.memberOf = type
-        method.returnType = ctx.methodHead().type().getType(appDomain)
+        method.returnType = ctx.methodHead().type().getType(appDomain, type.genericParameters, parameters)
         type.methods[method.toString()] = method
 
         class_children.add(Pair(MethodVisitor(appDomain, method), ctx.methodDecls()))
@@ -79,7 +84,7 @@ class ClassVisitor(var appDomain: IlAppDomain, var type: IlType) : Cil.CilBaseVi
      * Decodes the type of a field and its initial value.
      */
     override fun visitClass_field(ctx: CilParser.Class_fieldContext): Any {
-        var name = ctx.fieldDecl().dottedName().text
+        val name = ctx.fieldDecl().dottedName().text.trim('\'')
 
         val value: Any = if (ctx.fieldDecl().initOpt().fieldInit() != null) {
             match<Any, CilParser.FieldInitContext>(ctx.fieldDecl().initOpt().fieldInit()) {
@@ -145,7 +150,7 @@ class ClassVisitor(var appDomain: IlAppDomain, var type: IlType) : Cil.CilBaseVi
             CTSNull
         }
 
-        type.fields[name] = IlField(name, ctx.fieldDecl().type().getType(appDomain), value,
+        type.fields[name] = IlField(name, ctx.fieldDecl().type().getType(appDomain, type.genericParameters), value,
             ctx.fieldDecl().fieldAttr().any { it.text == "static" })
 
         return type

@@ -86,6 +86,7 @@ class Clr : TruffleLanguage<ClrContext>() {
 
 
         parseFile(appDomain, CharStreams.fromReader(request.source.reader))
+        Specialize(appDomain).run()
         val context = contextReference.get(null)
 
         return Initialize(appDomain, context, this).callTarget

@@ -15,6 +15,7 @@ import metadata.IlMethod
 /** Metadata owns a lazy target; every caller owns its own call node. */
 @ExportLibrary(InteropLibrary::class)
 class Method(val metadata: IlMethod, private var compiler: (() -> CallTarget)? = null) : TruffleObject {
+    val dispatchKey: String = metadata.key()
     var virtualSlot: Int = -1
     @Volatile private var target: CallTarget? = null
     val callTarget: CallTarget
