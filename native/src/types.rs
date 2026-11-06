@@ -1,9 +1,13 @@
 use dotnetdll::prelude::*;
 use serde_json::{Value, json};
+use std::{collections::HashMap, ops::Range};
 
 pub struct Encoder<'r, 'a> {
     pub res: &'r Resolution<'a>,
     pub methods: &'r [MethodIndex],
+    pub method_ids: &'r HashMap<MethodIndex, usize>,
+    pub type_ids: &'r HashMap<TypeIndex, usize>,
+    pub type_methods: &'r [Range<usize>],
 }
 
 impl Encoder<'_, '_> {

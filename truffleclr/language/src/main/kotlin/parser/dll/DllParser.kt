@@ -24,7 +24,10 @@ internal object LoadingTrace {
         if (!java.lang.Boolean.getBoolean("clr.traceLoading")) return action()
         val start = System.nanoTime()
         try { return action() }
-        finally { System.err.println("[clr.loading] $stage: ${(System.nanoTime() - start) / 1_000_000.0} ms") }
+        finally {
+            val end = System.nanoTime()
+            System.err.println("[clr.loading] $stage start_ns=$start end_ns=$end duration_ms=${(end - start) / 1_000_000.0}")
+        }
     }
 }
 
@@ -35,7 +38,9 @@ object DllParser {
         try {
             domain.own(handle)
             LoadingTrace.measure("map $source") {
-                DllMetadataMapper(domain, handle, source).map(readJson(handle.metadata()))
+                val json = handle.index()
+                val root = LoadingTrace.measure("Gson decode $source") { readJson(json) }
+                LoadingTrace.measure("Kotlin mapping $source") { DllMetadataMapper(domain, handle, source).map(root) }
             }
         } catch (failure: Throwable) {
             try { handle.close() } catch (cleanup: Throwable) { failure.addSuppressed(cleanup) }
@@ -67,8 +72,11 @@ internal class DllMetadataMapper(
         assembly.modules.add(IlModule(root.text("module")))
         val declarations = root.items("types").filter { declaration ->
             val module = declaration.getAsJsonObject("type").text("name") == "<Module>"
-            require(!module || (declaration.items("fields").isEmpty() && declaration.items("methods").isEmpty())) {
-                "Global module fields/methods are unsupported"
+            if (module) {
+                val members = DllParser.readJson(handle.type(declaration.get("id").asLong))
+                require(members.items("fields").isEmpty() && members.items("methods").isEmpty()) {
+                    "Global module fields/methods are unsupported"
+                }
             }
             !module
         }
@@ -77,10 +85,8 @@ internal class DllMetadataMapper(
             val name = typeName(declaration.getAsJsonObject("type"))
             require(domain.assemblies.none { name in it.types }) { "Duplicate type across loaded assemblies: $name" }
             val type = IlType(name, CoreTypeInfo.typeByName[name]?.type ?: CorElementType.OBJECT)
-            if (declaration.flag("variant")) unsupported("generic variance on $name")
             type.genericParameters = declaration.getAsJsonArray("generic").map { it.asString }
             type.isGeneric = type.genericParameters.isNotEmpty()
-            type.isInterface = declaration.get("flags").asLong and 0x20L != 0L
             check(assembly.types.put(name, type) == null) { "Duplicate DLL type: $name" }
         }
         definitions = assembly.types.toMap()
@@ -89,56 +95,75 @@ internal class DllMetadataMapper(
         registered = true
         for (declaration in declarations) {
             val owner = assembly.types.getValue(typeName(declaration.getAsJsonObject("type")))
-            owner.extends = declaration.optional("extends")?.let { type(it.asJsonObject) }
-                ?: if (owner.name != "System.Object") domain.getType("System.Object") else null
-            owner.interfaces = declaration.items("implements").map(::type)
-            for (field in declaration.items("fields")) {
-                modifiers(field)
-                if (field.optional("initial_value") != null) unsupported("RVA field ${owner.name}::${field.text("name")}")
-                if (field.optional("offset") != null) unsupported("explicit field layout on ${owner.name}")
-                var fieldType = type(field.getAsJsonObject("type"))
-                if (field.flag("by_ref")) fieldType = fieldType.makeByRef()
-                val name = field.text("name")
-                check(owner.fields.put(name, IlField(name, fieldType,
-                    field.optional("constant")?.let { constant(it.asJsonObject) } ?: CTSNull,
-                    field.flag("static"))) == null) { "Duplicate DLL field: $owner::$name" }
-            }
-            for (declarationMethod in declaration.items("methods")) {
-                if (declarationMethod.optional("pinvoke") != null) unsupported("P/Invoke method ${declarationMethod.text("name")}")
-                val method = signature(declarationMethod.text("name"), owner,
-                    declarationMethod.getAsJsonObject("signature"))
-                method.genericParameters = declarationMethod.getAsJsonArray("generic").map { it.asString }
-                method.virtual = declarationMethod.flag("virtual")
-                method.abstract = declarationMethod.flag("abstract")
-                method.internal = declarationMethod.flag("internal_call")
-                method.newSlot = declarationMethod.flag("new_slot")
-                method.isPublic = declarationMethod.get("accessibility").asInt == 6
-                val id = declarationMethod.get("id").asLong
-                require(id >= 0 && methods.put(id, method) == null) { "Duplicate or invalid DLL method id: $id" }
-                check(owner.methods.put(method.toString(), method) == null) { "Duplicate DLL method: $method" }
-                method.deferBody {
-                    LoadingTrace.measure("body $source method=$id $method") {
-                        val body = DllParser.readJson(handle.body(id))
-                        require(body.get("method_id").asLong == id) { "DLL method body id mismatch" }
-                        DllBodyMapper(this).map(method, body)
-                    }
-                }
-            }
-        }
-        for (declaration in declarations) {
-            for (methodImpl in declaration.items("overrides")) {
-                val implementation = methodImpl.getAsJsonObject("implementation")
-                require(implementation.text("kind") == "method" && implementation.has("id")) {
-                    "MethodImpl implementation must be a local method definition"
-                }
-                val method = methods.getValue(implementation.get("id").asLong)
-                method.overrideReferences.add(methodReference(methodImpl.getAsJsonObject("declaration")))
+            val id = declaration.get("id").asLong
+            require(id >= 0) { "Invalid DLL type id: $id" }
+            owner.deferMetadata {
+                val json = handle.type(id)
+                val members = LoadingTrace.measure("Gson type $source id=$id") { DllParser.readJson(json) }
+                require(members.get("id").asLong == id) { "DLL type id mismatch" }
+                LoadingTrace.measure("Kotlin type $source id=$id") { mapType(owner, members) }
             }
         }
         root.optional("entry_point")?.asJsonObject?.let {
             if (it.text("kind") != "method") unsupported("multi-module entry point")
-            domain.entryPoint = methods.getValue(it.get("id").asLong)
+            val entry = it
+            val entryId = entry.get("id").asLong
+            val owner = declarations.single { it.get("id").asLong == entry.get("owner_id").asLong }
+            val ownerName = typeName(owner.getAsJsonObject("type"))
+            domain.entryTypeName = ownerName
+            domain.deferEntryPoint {
+                definitions.getValue(ownerName).ensureMetadata()
+                methods.getValue(entryId)
+            }
             domain.entryAssembly = assembly
+        }
+    }
+
+    private fun mapType(owner: IlType, declaration: JsonObject) {
+        owner.isInterface = declaration.get("flags").asLong and 0x20L != 0L
+        if (declaration.flag("variant")) unsupported("generic variance on ${owner.name}")
+        owner.extends = declaration.optional("extends")?.let { type(it.asJsonObject) }
+            ?: if (owner.name != "System.Object") domain.getType("System.Object") else null
+        owner.interfaces = declaration.items("implements").map(::type)
+        for (field in declaration.items("fields")) {
+            modifiers(field)
+            if (field.optional("initial_value") != null) unsupported("RVA field ${owner.name}::${field.text("name")}")
+            if (field.optional("offset") != null) unsupported("explicit field layout on ${owner.name}")
+            var fieldType = type(field.getAsJsonObject("type"))
+            if (field.flag("by_ref")) fieldType = fieldType.makeByRef()
+            val name = field.text("name")
+            check(owner.fields.put(name, IlField(name, fieldType,
+                field.optional("constant")?.let { constant(it.asJsonObject) } ?: CTSNull,
+                field.flag("static"))) == null) { "Duplicate DLL field: $owner::$name" }
+        }
+        for (declarationMethod in declaration.items("methods")) {
+            if (declarationMethod.optional("pinvoke") != null) unsupported("P/Invoke method ${declarationMethod.text("name")}")
+            val method = signature(declarationMethod.text("name"), owner,
+                declarationMethod.getAsJsonObject("signature"))
+            method.genericParameters = declarationMethod.getAsJsonArray("generic").map { it.asString }
+            method.virtual = declarationMethod.flag("virtual")
+            method.abstract = declarationMethod.flag("abstract")
+            method.internal = declarationMethod.flag("internal_call")
+            method.newSlot = declarationMethod.flag("new_slot")
+            method.isPublic = declarationMethod.get("accessibility").asInt == 6
+            val id = declarationMethod.get("id").asLong
+            require(id >= 0 && methods.put(id, method) == null) { "Duplicate or invalid DLL method id: $id" }
+            check(owner.methods.put(method.toString(), method) == null) { "Duplicate DLL method: $method" }
+            method.deferBody {
+                LoadingTrace.measure("body $source method=$id $method") {
+                    val body = DllParser.readJson(handle.body(id))
+                    require(body.get("method_id").asLong == id) { "DLL method body id mismatch" }
+                    DllBodyMapper(this).map(method, body)
+                }
+            }
+        }
+        for (methodImpl in declaration.items("overrides")) {
+            val implementation = methodImpl.getAsJsonObject("implementation")
+            require(implementation.text("kind") == "method" && implementation.has("id")) {
+                "MethodImpl implementation must be a local method definition"
+            }
+            val method = methods.getValue(implementation.get("id").asLong)
+            method.overrideReferences.add(methodReference(methodImpl.getAsJsonObject("declaration")))
         }
     }
 

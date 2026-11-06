@@ -36,7 +36,7 @@ public final class ClrException extends AbstractTruffleException {
 
     @TruffleBoundary
     public static ClrException create(String name, String message) {
-        Type type = Clr.contextReference.get(null).getTypes().get("System." + name);
+        Type type = Clr.contextReference.get(null).readMember("System." + name);
         ClrObject object = type.newValue();
         type.resolveField("_message").writeRaw(object, message);
         return new ClrException(object);

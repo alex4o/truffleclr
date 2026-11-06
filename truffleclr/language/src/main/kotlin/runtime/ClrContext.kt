@@ -57,19 +57,22 @@ class ClrContext(): TruffleObject {
     @ExportMessage
     @CompilerDirectives.TruffleBoundary
     fun readMember(member: String): Type {
+        domains.firstOrNull { domain ->
+            member in domain.availableTypes || domain.assemblies.any { member in it.types }
+        }?.materializeType?.invoke(member)
         return types.getValue(member)
     }
 
     @ExportMessage
     @CompilerDirectives.TruffleBoundary
     fun isMemberReadable(member: String): Boolean {
-        return types.containsKey(member)
+        return types.containsKey(member) || domains.any { member in it.availableTypes }
     }
 
     @ExportMessage
     @CompilerDirectives.TruffleBoundary
     fun getMembers(includeInternal: Boolean): Any? {
-        return Keys(types.keys.toTypedArray())
+        return Keys((types.keys + domains.flatMap { it.availableTypes }).toTypedArray())
     }
 
     fun isInstance(obj: TruffleObject?): Boolean {

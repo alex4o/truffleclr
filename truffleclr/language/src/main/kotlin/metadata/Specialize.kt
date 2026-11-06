@@ -8,6 +8,7 @@ import metadata.instruction.*
 class Specialize(private val domain: IlAppDomain) {
     private val definitions = domain.assemblies.flatMap { it.types.values }.associateBy { it.name }
     private val types = linkedMapOf<String, IlType>()
+    private var failure: Throwable? = null
     private val origins = mutableMapOf<IlType, Pair<IlType, List<IlType>>>()
     private val pending = ArrayDeque<() -> Unit>()
     private val methods = mutableMapOf<Triple<IlMethod, IlType, List<IlType>>, IlMethod>()
@@ -17,12 +18,20 @@ class Specialize(private val domain: IlAppDomain) {
 
     /** Signatures and MethodImpl declarations never require decoding IL bodies. */
     private fun publish() {
-        while (pending.isNotEmpty()) pending.removeFirst().invoke()
-        for ((assembly, owned) in assemblyOwners) {
-            assembly.types = types.filterValues { origins.getValue(it).first in owned }.toMutableMap()
+        failure?.let { throw it }
+        try {
+            while (pending.isNotEmpty()) pending.removeFirst().invoke()
+            for ((assembly, owned) in assemblyOwners) {
+                assembly.types = types.filterValues { origins.getValue(it).first in owned }.toMutableMap()
+            }
+            // Shape validation must succeed before any path can reuse this publication.
+            domain.metadataChanged?.invoke()
+            publishedTypes = types.size
+            publishedMethods = methods.size
+        } catch (error: Throwable) {
+            failure = error
+            throw error
         }
-        publishedTypes = types.size
-        publishedMethods = methods.size
     }
 
     private fun substitute(name: String, typeArgs: List<IlType>, methodArgs: List<IlType>): String =
@@ -35,6 +44,7 @@ class Specialize(private val domain: IlAppDomain) {
         }
 
     private fun type(name: String, typeArgs: List<IlType> = emptyList(), methodArgs: List<IlType> = emptyList()): IlType {
+        failure?.let { throw it }
         val closedName = substitute(name, typeArgs, methodArgs)
         if (closedName.startsWith("System.Func`") || closedName.startsWith("System.Action`")) {
             throw UnsupportedOperationException("Delegates are unsupported: $closedName")
@@ -47,7 +57,10 @@ class Specialize(private val domain: IlAppDomain) {
             throw UnsupportedOperationException("Unsupported async/threading API: $closedName; only single-threaded Task awaiters are supported")
         }
         if (closedName.endsWith("&")) return type(closedName.dropLast(1)).makeByRef()
-        if (closedName.endsWith("[]")) return type(closedName.dropLast(2)).makeArray(1)
+        if (closedName.endsWith("[]")) {
+            type("System.Array")
+            return type(closedName.dropLast(2)).makeArray(1)
+        }
         types[closedName]?.let { return it }
         val instance = domain.getType(closedName).genericInstance
         val definitionName = instance?.definition ?: closedName
@@ -55,6 +68,7 @@ class Specialize(private val domain: IlAppDomain) {
         val args = instance?.arguments?.map { type(it) } ?: emptyList()
         require(args.size == definition.genericParameters.size) { "Generic arity mismatch: $closedName" }
         check(types.size < 10000) { "Generic specialization exceeded 10000 types (expanding recursive instantiation): $closedName" }
+        definition.ensureMetadata()
         val closed = IlType(closedName, definition.type)
         closed.genericInstance = instance
         types[closedName] = closed
@@ -114,7 +128,11 @@ class Specialize(private val domain: IlAppDomain) {
             closed.exceptionClauses.addAll(definition.exceptionClauses.map { it.copy(catchType = it.catchType?.let { name -> type(name, typeArgs, args).name }) })
             closed.instructions = definition.instructions.map { instruction ->
                 val result = when (instruction) {
-                    is InstructionType -> InstructionType(instruction.instruction, type(instruction.type, typeArgs, args).name)
+                    is InstructionString -> instruction.also { type("System.String") }
+                    is InstructionType -> {
+                        if (instruction.instruction == "newarr") type("System.Array")
+                        InstructionType(instruction.instruction, type(instruction.type, typeArgs, args).name)
+                    }
                     is InstructionField -> InstructionField(instruction.instruction, instruction.type,
                         type(instruction.member, typeArgs, args).name, instruction.name)
                     is InstructionMethod -> InstructionMethod(instruction.instruction, resolve(instruction.method, typeArgs, args), instruction.callConv)
@@ -123,12 +141,7 @@ class Specialize(private val domain: IlAppDomain) {
                 if (result !== instruction) result.instructionArgs.addAll(instruction.instructionArgs)
                 result
             }.toMutableList()
-            if (types.size != publishedTypes || methods.size != publishedMethods) {
-                publish()
-                // Newly discovered closed owners/methods must have runtime shapes and
-                // lazy targets before CilCompiler resolves its bytecode constants.
-                domain.metadataChanged?.invoke()
-            }
+            if (types.size != publishedTypes || methods.size != publishedMethods) publish()
         }
         // Text IL was already decoded by ANTLR; retain its declaration-time
         // validation. Native definitions have no instructions until first compile.
@@ -194,7 +207,23 @@ class Specialize(private val domain: IlAppDomain) {
     }
 
     fun run() {
-        for (definition in definitions.values) if (definition.genericParameters.isEmpty()) type(definition.name)
+        domain.availableTypes = definitions.values.filter { it.genericParameters.isEmpty() }.map { it.name }.toSet()
+        domain.materializeType = { name ->
+            failure?.let { throw it }
+            try {
+                type(name)
+                if (types.size != publishedTypes || methods.size != publishedMethods) publish()
+            } catch (error: Throwable) {
+                // Never publish partially specialized metadata after a failed host lookup.
+                failure = error
+                throw error
+            }
+        }
+        // Text IL retains eager declaration validation; native type members remain lazy.
+        for (definition in definitions.values) {
+            if (!definition.hasDeferredMetadata && definition.genericParameters.isEmpty()) type(definition.name)
+        }
+        domain.entryTypeName?.let { type(it) }
         publish()
     }
 }

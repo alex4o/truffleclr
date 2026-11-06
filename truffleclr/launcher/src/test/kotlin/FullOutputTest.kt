@@ -1,5 +1,6 @@
 package tests
 
+import com.google.gson.Gson
 import org.graalvm.polyglot.Context
 import org.graalvm.polyglot.Engine
 import org.graalvm.polyglot.PolyglotException
@@ -15,6 +16,12 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.stream.Stream
+import java.net.URLClassLoader
+import java.nio.file.attribute.PosixFilePermissions
+import java.util.concurrent.TimeUnit
+import java.util.zip.CRC32
+import parser.dll.NativeDll
+import org.junit.jupiter.api.Assumptions
 
 class FullOutputTest {
     @DisplayName("Runs a program and compares its output line by line")
@@ -79,6 +86,115 @@ class FullOutputTest {
             testRunProgram("./test/rejected/generic_variance.dll", "HelloWorld.Program")
         }
         Assertions.assertTrue(failure.message.orEmpty().contains("variance"), failure.message)
+    }
+
+    @Test
+    fun nativeLoaderMaterializesUnrelatedHostTypeOnDemand() {
+        Context.newBuilder("clr").allowAllAccess(true).build().use { context ->
+            context.eval(programSource(File("./test/dll/native_loader_lazy.dll")))
+            val bindings = context.getBindings("clr")
+            // Enumerating the index must not materialize the unused malformed type.
+            Assertions.assertTrue(bindings.memberKeys.containsAll(listOf("HelloWorld.Unrelated", "HelloWorld.Recursive")))
+            val program = bindings.getMember("HelloWorld.Program")
+            Assertions.assertEquals(7, program.getMember(program.memberKeys.single { it.contains("Main(") }).execute().asInt())
+            val unrelated = bindings.getMember("HelloWorld.Unrelated")
+            Assertions.assertEquals(42, unrelated.getMember(unrelated.memberKeys.single { it.contains("Answer(") }).execute().asInt())
+        }
+    }
+
+    @ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans = [false, true])
+    fun nativeLoaderFailsClosedAfterTypeLayoutFailure(bodyFirst: Boolean) {
+        Context.newBuilder("clr").allowAllAccess(true).build().use { context ->
+            context.eval(programSource(File("./test/dll/native_loader_lazy.dll")))
+            val bindings = context.getBindings("clr")
+            val program = bindings.getMember("HelloWorld.Program")
+            val touchBad = program.getMember(program.memberKeys.single { it.contains("TouchBad(") })
+            Assertions.assertEquals(7, program.getMember(program.memberKeys.single { it.contains("Main(") }).execute().asInt())
+            fun assertLayoutFailure(action: () -> Unit) {
+                val failure = Assertions.assertThrows(PolyglotException::class.java, action)
+                Assertions.assertTrue(failure.message.orEmpty().contains("Recursive value-type layout"), failure.message)
+            }
+            if (bodyFirst) assertLayoutFailure { touchBad.execute() }
+            else assertLayoutFailure { bindings.getMember("HelloWorld.Recursive") }
+            // Runtime refresh inserted this shape before detecting its recursive field.
+            assertLayoutFailure { bindings.getMember("HelloWorld.Recursive") }
+            // This method value was published before failure, but its body is still lazy.
+            assertLayoutFailure { touchBad.execute() }
+        }
+    }
+
+    @Test
+    @Suppress("UNCHECKED_CAST")
+    fun nativeLoaderFullMetadataBoundsRvaFieldData() {
+        val gson = Gson()
+        fun json(text: String) = gson.fromJson(text, Map::class.java) as Map<String, Any?>
+        fun types(root: Map<String, Any?>) = root.getValue("types") as List<Map<String, Any?>>
+        NativeDll(File("./test/dll/native_loader_rva.dll").readBytes()).use { dll ->
+            val index = json(dll.index())
+            val full = json(dll.metadata())
+            Assertions.assertEquals(5, types(full).size)
+            Assertions.assertEquals(types(index).map { it["id"] to it["type"] }, types(full).map { it["id"] to it["type"] })
+            Assertions.assertEquals(index["entry_point"], full["entry_point"])
+            val fields = types(full).flatMap { it.getValue("fields") as List<Map<String, Any?>> }
+            val initialized = fields.filter { it["initial_value"] != null }
+            val data = initialized.map { field ->
+                (field.getValue("initial_value") as List<Number>).map { it.toInt() }
+            }
+            Assertions.assertEquals(listOf(1, 4, 5, 12), data.map { it.size }.sorted())
+            Assertions.assertTrue(data.contains(listOf(0x7b)))
+            Assertions.assertTrue(data.contains(listOf(4, 3, 2, 1)))
+            Assertions.assertTrue(data.contains(listOf(3, 1, 4, 1, 5)))
+            Assertions.assertTrue(data.contains(listOf(4, 3, 2, 1, 0x44, 0x33, 0x22, 0x11, 0x88, 0x77, 0x66, 0x55)))
+            for (type in types(full)) {
+                Assertions.assertEquals(type, json(dll.type((type.getValue("id") as Number).toLong())))
+                val methods = type.getValue("methods") as List<Map<String, Any?>>
+                Assertions.assertTrue(methods.none { it.containsKey("body") })
+            }
+            Assertions.assertEquals(index, json(dll.index()))
+        }
+    }
+
+    @Test
+    fun nativeLoaderRejectsWritableCachedLibraryInFreshJvm() {
+        val home = Files.createTempDirectory("truffleclr-cache-test-")
+        try {
+            Assumptions.assumeTrue(home.fileSystem.supportedFileAttributeViews().contains("posix"))
+            val name = System.mapLibraryName("dllreader")
+            val bytes = NativeDll::class.java.getResourceAsStream("/native/$name")!!.use { it.readAllBytes() }
+            val checksum = CRC32().apply { update(bytes) }
+            val directory = home.resolve(".truffleclr/native/" + java.lang.Long.toHexString(checksum.value) + "-" + bytes.size)
+            Files.createDirectories(directory, PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwx------")))
+            val cached = Files.write(directory.resolve(name), bytes)
+            Files.setPosixFilePermissions(cached, PosixFilePermissions.fromString("rw-rw----"))
+            // Gradle's worker java.class.path alone omits the test runtime URLs.
+            val classpath = (System.getProperty("java.class.path").split(File.pathSeparator) +
+                generateSequence(javaClass.classLoader) { it.parent }.filterIsInstance<URLClassLoader>()
+                    .flatMap { it.urLs.asSequence() }.map { File(it.toURI()).path }.toList())
+                .distinct().joinToString(File.pathSeparator)
+            val log = home.resolve("launcher.log").toFile()
+            val process = ProcessBuilder(
+                File(System.getProperty("java.home"), "bin/java").path,
+                "--enable-native-access=ALL-UNNAMED", "--sun-misc-unsafe-memory-access=allow",
+                "-Duser.home=$home", "-Dclr.traceLoading=true", "-cp", classpath,
+                "AppKt", "--class", "HelloWorld.Program", "./test/dll/loop.dll"
+            ).redirectErrorStream(true).redirectOutput(log).start()
+            try {
+                Assertions.assertTrue(process.waitFor(60, TimeUnit.SECONDS), "Launcher timed out; see $log")
+                val output = log.readText()
+                Assertions.assertEquals(0, process.exitValue(), output)
+                Assertions.assertTrue(output.contains("native cache unavailable: Writable native cache file:"), output)
+                Assertions.assertEquals(File("./test/expected/loop.out").readLines(), output.lines().filter { it == "Hello" })
+                Assertions.assertTrue(output.contains("Completed in:"), output)
+                Assertions.assertArrayEquals(bytes, Files.readAllBytes(cached))
+                Assertions.assertEquals(PosixFilePermissions.fromString("rw-rw----"), Files.getPosixFilePermissions(cached),
+                    "The loader must leave the unsafe cache entry untouched")
+            } finally {
+                if (process.isAlive) process.destroyForcibly().waitFor()
+            }
+        } finally {
+            home.toFile().deleteRecursively()
+        }
     }
 
     companion object {

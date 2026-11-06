@@ -8,6 +8,8 @@ Library name: `dllreader` (`libdllreader.dylib`, `libdllreader.so`, `dllreader.d
 void *dll_open(const uint8_t *bytes, size_t len);
 char *dll_last_error(void);
 char *dll_metadata(const void *handle);
+char *dll_index(const void *handle);
+char *dll_type(const void *handle, uint64_t type_id);
 char *dll_body(const void *handle, uint64_t method_id);
 void dll_free(char *json);
 void dll_close(void *handle);
@@ -22,12 +24,28 @@ Handles retain both backing bytes and a lazy Resolution until close. Metadata
 never requests bodies; `dll_body` requests and caches decoding via method_body.
 C ABI panics are caught (not invalid pointers, OOM aborts, or process signals).
 
+## Lazy metadata
+
+`dll_index` returns the metadata assembly envelope below, but each `types` entry
+contains only `{id,type,generic}`: structured names and generic parameter names
+(and therefore arity), without member signatures. A method entry point includes
+`owner_id`, the type ID needed to load its declaration. `dll_type` returns one
+full type object by zero-based type ID, or an error for an invalid ID. Type and
+method IDs are stable across index, type, full metadata and body calls.
+
+`dll_metadata` remains the full assembly export. All metadata operations leave
+method bodies lazy. Custom attributes are also left undecoded (not exported).
+RVA field initial values are bounded to their primitive width or positive declared
+class-layout size, never the remaining PE section. Unsupported RVA layouts and
+truncated data produce explicit errors when that type is requested (or during
+the full export), without preventing the lightweight index from loading.
+
 ## Metadata
 
 ```text
 {
  schema_version:1, assembly:string|null, module:string,
- entry_point:{kind:"method",id:MethodId}|{kind:"file",name:string}|null,
+ entry_point:{kind:"method",id:MethodId,owner_id:integer}|{kind:"file",name:string}|null,
  types:[{
   id:integer, type:Type,
   extends:Type|null, implements:[Type], generic:[string], variant:bool, flags:uint32,

@@ -13,6 +13,8 @@ class IlAppDomain : AutoCloseable {
         if (closed) return
         closed = true
         metadataChanged = null
+        materializeType = null
+        entryPointLoader = null
         var failure: Throwable? = null
         for (resource in resources.asReversed()) {
             try {
@@ -28,7 +30,16 @@ class IlAppDomain : AutoCloseable {
     private val references = mutableMapOf<String, IlType>()
     internal var metadataChanged: (() -> Unit)? = null
     var assemblies: MutableList<IlAssembly> = mutableListOf()
-    lateinit var entryPoint: IlMethod
+    internal var materializeType: ((String) -> Unit)? = null
+    internal var availableTypes: Set<String> = emptySet()
+    var entryTypeName: String? = null
+    private var entryPointLoader: (() -> IlMethod)? = null
+    private var loadedEntryPoint: IlMethod? = null
+    var entryPoint: IlMethod
+        get() = loadedEntryPoint ?: checkNotNull(entryPointLoader) { "Assembly has no entry point" }.invoke().also { loadedEntryPoint = it }
+        set(value) { loadedEntryPoint = value; entryTypeName = value.memberOf?.name }
+
+    fun deferEntryPoint(loader: () -> IlMethod) { entryPointLoader = loader }
     lateinit var entryAssembly: IlAssembly
 
     fun getType(id: String): IlType {

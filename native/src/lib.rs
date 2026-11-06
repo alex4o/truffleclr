@@ -7,7 +7,9 @@ use dotnetdll::prelude::*;
 use serde_json::{Value, json};
 use std::{
     cell::RefCell,
+    collections::HashMap,
     ffi::{CString, c_char},
+    ops::Range,
     panic::{AssertUnwindSafe, catch_unwind},
 };
 use types::Encoder;
@@ -17,6 +19,9 @@ use types::Encoder;
 pub struct DllHandle {
     resolution: Resolution<'static>,
     methods: Vec<MethodIndex>,
+    method_ids: HashMap<MethodIndex, usize>,
+    type_ids: HashMap<TypeIndex, usize>,
+    type_methods: Vec<Range<usize>>,
     _bytes: Box<[u8]>,
 }
 
@@ -26,13 +31,39 @@ impl DllHandle {
         // SAFETY: the boxed allocation does not move when the handle moves. The
         // private resolution cannot escape, and field drop order frees it first.
         let input: &'static [u8] = unsafe { std::mem::transmute::<&[u8], &'static [u8]>(&bytes) };
-        let resolution =
-            Resolution::parse(input, ReadOptions::default().with_lazy_method_bodies(true))
-                .map_err(|e| e.to_string())?;
+        let resolution = Resolution::parse(
+            input,
+            ReadOptions::default()
+                .with_lazy_method_bodies(true)
+                .with_lazy_attributes(true),
+        )
+        .map_err(|e| e.to_string())?;
         let methods = metadata::method_indices(&resolution);
+        let method_ids = methods.iter().enumerate().map(|(id, &i)| (i, id)).collect();
+        let type_ids: HashMap<_, _> = resolution
+            .enumerate_type_definitions()
+            .enumerate()
+            .map(|(id, (i, _))| (i, id))
+            .collect();
+        let mut counts = vec![0; type_ids.len()];
+        for i in &methods {
+            counts[type_ids[&i.parent_type()]] += 1;
+        }
+        let mut start = 0;
+        let type_methods = counts
+            .into_iter()
+            .map(|count| {
+                let range = start..start + count;
+                start += count;
+                range
+            })
+            .collect();
         Ok(Self {
             resolution,
             methods,
+            method_ids,
+            type_ids,
+            type_methods,
             _bytes: bytes,
         })
     }
@@ -41,11 +72,20 @@ impl DllHandle {
         Encoder {
             res: &self.resolution,
             methods: &self.methods,
+            method_ids: &self.method_ids,
+            type_ids: &self.type_ids,
+            type_methods: &self.type_methods,
         }
     }
 
-    pub fn metadata(&self) -> Value {
+    pub fn metadata(&self) -> Result<Value, String> {
         self.encoder().metadata()
+    }
+    pub fn index(&self) -> Value {
+        self.encoder().index()
+    }
+    pub fn type_metadata(&self, id: usize) -> Result<Value, String> {
+        self.encoder().type_metadata(id)
     }
     pub fn body(&self, id: usize) -> Result<Value, String> {
         self.encoder().body(id)
@@ -117,7 +157,27 @@ pub extern "C" fn dll_last_error() -> *mut c_char {
 pub unsafe extern "C" fn dll_metadata(handle: *const DllHandle) -> *mut c_char {
     json_call(|| {
         let h = unsafe { handle.as_ref() }.ok_or("null DLL handle")?;
-        Ok(h.metadata())
+        h.metadata()
+    })
+}
+
+/// # Safety
+/// Handle must be null or a live handle returned by dll_open. Do not race close.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn dll_index(handle: *const DllHandle) -> *mut c_char {
+    json_call(|| {
+        let h = unsafe { handle.as_ref() }.ok_or("null DLL handle")?;
+        Ok(h.index())
+    })
+}
+
+/// # Safety
+/// Handle must be null or a live handle returned by dll_open. Do not race close.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn dll_type(handle: *const DllHandle, type_id: u64) -> *mut c_char {
+    json_call(|| {
+        let h = unsafe { handle.as_ref() }.ok_or("null DLL handle")?;
+        h.type_metadata(usize::try_from(type_id).map_err(|_| "type id exceeds platform size")?)
     })
 }
 

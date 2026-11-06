@@ -43,6 +43,19 @@ The same command accepts `test/loop.il` for the text format. DLL input uses the
 `clr` language with MIME type `application/x-dotnet-assembly`.
 Help: `launcher/build/install/launcher/bin/launcher --help`.
 
+DLL type members, runtime shapes and method bodies are loaded on demand. The
+native library is cached under `~/.truffleclr/native/` on POSIX filesystems;
+first extraction still incurs OS verification, while subsequent JVMs reuse the
+verified library. Set `JAVA_OPTS=-Dclr.traceLoading=true` for timestamped native
+open/load, JSON transfer/decode, mapping, specialization and initialization
+phases. Cache-hit measurements are fresh JVM launches, not warm engine reuse.
+
+For performance comparisons, disassemble the same DLL rather than comparing
+unrelated compiler output. Report eval, first execution and warmed execution
+separately: ANTLR class loading can trigger a metadata GC and change G1 heap
+growth, so a first-execution difference alone does not prove different guest
+code. Use the same heap policy for controlled comparisons.
+
 ## Testing
 
 `./gradlew :launcher:test` runs each available `test/dll/<name>.dll` and
