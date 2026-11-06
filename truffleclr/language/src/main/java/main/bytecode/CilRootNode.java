@@ -5,12 +5,11 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.bytecode.*;
 import com.oracle.truffle.api.dsl.*;
 import com.oracle.truffle.api.nodes.*;
-import com.oracle.truffle.api.object.*;
-import com.oracle.truffle.api.library.CachedLibrary;
+import runtime.Type;
+import runtime.Field;
 import main.Clr;
 import runtime.Method;
 import runtime.ClrObject;
-import runtime.ClrDynamicObject;
 import runtime.CorElementType;
 import nodes.expressions.array.*;
 import nodes.expressions.CompareCondition;
@@ -228,35 +227,36 @@ public abstract class CilRootNode extends RootNode implements BytecodeRootNode {
     public static final class Invoke4 {
         @Specialization static Object invoke(Method method, Object v0, Object v1, Object v2, Object v3, @Cached("create(method.getCallTarget())") DirectCallNode call) { return call.call(v0, v1, v2, v3); }
     }
+    @Operation @ConstantOperand(type = Method.class)
+    public static final class InvokeNonVirtual {
+        @Specialization static Object execute(Method method, @Variadic Object[] args,
+                @Cached("create(method.getCallTarget())") DirectCallNode call) {
+            if (args[0] == null || args[0] == types.CTSNull.INSTANCE) throw new NullPointerException("callvirt receiver");
+            return call.call(args);
+        }
+    }
     @Operation @ConstantOperand(type = int.class)
     public static final class InvokeVirtual {
-        static Shape shape(Object[] args) { return ((DynamicObject) args[0]).getShape(); }
-        static com.oracle.truffle.api.CallTarget target(Shape shape, int index) {
-            return ((ClrObject) shape.getDynamicType()).getVirtualTable()[index].getCallTarget();
+        static Type type(Object[] args) { return ((ClrObject) args[0]).getType(); }
+        static com.oracle.truffle.api.CallTarget target(Type type, int index) {
+            return type.getVirtualTable()[index].getCallTarget();
         }
-        @Specialization(guards = "shape(args) == cachedShape", limit = "5")
+        @Specialization(guards = "type(args) == cachedType", limit = "5")
         static Object cached(int index, @Variadic Object[] args,
-                @Cached("shape(args)") Shape cachedShape,
-                @Cached("create(target(cachedShape, index))") DirectCallNode call) { return call.call(args); }
+                @Cached("type(args)") Type cachedType,
+                @Cached("create(target(cachedType, index))") DirectCallNode call) { return call.call(args); }
         @Specialization(replaces = "cached")
         static Object generic(int index, @Variadic Object[] args,
-                @Cached IndirectCallNode call) { return call.call(target(shape(args), index), args); }
+                @Cached IndirectCallNode call) { return call.call(target(type(args), index), args); }
     }
-    @Operation @ConstantOperand(type = Shape.class) @ConstantOperand(type = Method.class)
+    @Operation @ConstantOperand(type = Type.class) @ConstantOperand(type = Method.class)
     @ConstantOperand(type = int.class, name = "argumentCount")
     public static final class ObjectNew {
-        static Shape allocationShape(Shape shape) { return ((ClrObject) shape.getDynamicType()).getAllocationShape(); }
-        static Object[] names(Shape shape) { return ((ClrObject) shape.getDynamicType()).getFieldDefaults().keySet().toArray(); }
-        static Object[] defaults(Shape shape) { return ((ClrObject) shape.getDynamicType()).getFieldDefaults().values().toArray(); }
         @Specialization @ExplodeLoop
-        static Object execute(Shape shape, Method ctor, int argumentCount, @Variadic Object[] args,
-                @Cached("allocationShape(shape)") Shape allocationShape,
-                @Cached(value = "names(shape)", dimensions = 1) Object[] names,
-                @Cached(value = "defaults(shape)", dimensions = 1) Object[] defaults,
-                @CachedLibrary(limit = "5") DynamicObjectLibrary objects,
+        static Object execute(Type type, Method ctor, int argumentCount, @Variadic Object[] args,
                 @Cached("create(ctor.getCallTarget())") DirectCallNode call) {
-            ClrDynamicObject object = new ClrDynamicObject(allocationShape);
-            for (int i = 0; i < names.length; i++) objects.put(object, names[i], defaults[i]);
+            type.ensureInitialized();
+            ClrObject object = type.getShape().getFactory().create(type);
             Object[] arguments = new Object[argumentCount + 1];
             arguments[0] = object;
             for (int i = 0; i < argumentCount; i++) arguments[i + 1] = args[i];
@@ -264,51 +264,51 @@ public abstract class CilRootNode extends RootNode implements BytecodeRootNode {
             return object;
         }
     }
-    @Operation @ConstantOperand(type = String.class)
+    @Operation @ConstantOperand(type = Field.class)
     public static final class FieldLoad {
-        @Specialization(limit = "5") static Object execute(String key, DynamicObject receiver,
-                @CachedLibrary("receiver") DynamicObjectLibrary objects) { return objects.getOrDefault(receiver, key, null); }
+        @Specialization static Object execute(Field field, ClrObject receiver) { return field.read(receiver); }
     }
-    @Operation @ConstantOperand(type = String.class)
+    @Operation @ConstantOperand(type = Field.class)
     public static final class FieldLoadInt {
-        @Specialization(limit = "5", rewriteOn = UnexpectedResultException.class)
-        static int typed(String key, DynamicObject receiver, @CachedLibrary("receiver") DynamicObjectLibrary objects) throws UnexpectedResultException {
-            return objects.getIntOrDefault(receiver, key, null);
-        }
-        @Specialization(limit = "5", replaces = "typed")
-        static Object generic(String key, DynamicObject receiver, @CachedLibrary("receiver") DynamicObjectLibrary objects) {
-            return objects.getOrDefault(receiver, key, null);
-        }
+        @Specialization static int execute(Field field, ClrObject receiver) { return field.getInt(receiver); }
     }
-    @Operation @ConstantOperand(type = String.class)
+    @Operation @ConstantOperand(type = Field.class)
     public static final class FieldLoadDouble {
-        @Specialization(limit = "5", rewriteOn = UnexpectedResultException.class)
-        static double typed(String key, DynamicObject receiver, @CachedLibrary("receiver") DynamicObjectLibrary objects) throws UnexpectedResultException {
-            return objects.getDoubleOrDefault(receiver, key, null);
-        }
-        @Specialization(limit = "5", replaces = "typed")
-        static Object generic(String key, DynamicObject receiver, @CachedLibrary("receiver") DynamicObjectLibrary objects) {
-            return objects.getOrDefault(receiver, key, null);
-        }
+        @Specialization static double execute(Field field, ClrObject receiver) { return field.getDouble(receiver); }
     }
-    @Operation @ConstantOperand(type = String.class)
+    @Operation @ConstantOperand(type = Field.class)
     public static final class FieldStore {
-        @Specialization(limit = "5") static void writeInt(String key, DynamicObject receiver, int value,
-                @CachedLibrary("receiver") DynamicObjectLibrary objects) { objects.putInt(receiver, key, value); }
-        @Specialization(limit = "5") static void writeDouble(String key, DynamicObject receiver, double value,
-                @CachedLibrary("receiver") DynamicObjectLibrary objects) { objects.putDouble(receiver, key, value); }
-
-        @Specialization(limit = "5") static void execute(String key, DynamicObject receiver, Object value,
-                @CachedLibrary("receiver") DynamicObjectLibrary objects) { objects.put(receiver, key, value); }
+        static boolean isInt(Field field) { return field.getStorageType() == int.class; }
+        static boolean isDouble(Field field) { return field.getStorageType() == double.class; }
+        @Specialization(guards = "isInt(field)")
+        static void writeInt(Field field, ClrObject receiver, int value) { field.setInt(receiver, value); }
+        @Specialization(guards = "isDouble(field)")
+        static void writeDouble(Field field, ClrObject receiver, double value) { field.setDouble(receiver, value); }
+        @Specialization static void execute(Field field, ClrObject receiver, Object value) { field.write(receiver, value); }
+    }
+    @Operation @ConstantOperand(type = Field.class)
+    public static final class StaticLoad {
+        @Specialization static Object execute(Field field) {
+            field.getOwner().ensureInitialized();
+            return field.read(field.getOwner().getStaticObject());
+        }
     }
     @Operation public static final class Box {
         @Specialization static Object execute(int value) { return value; }
+    }
+    @Operation @ConstantOperand(type = Type.class)
+    public static final class InitializeType {
+        @Specialization static void execute(Type type) { type.ensureInitialized(); }
     }
     @Operation @ConstantOperand(type = main.compilationNodes.Initialize.class)
     public static final class InitializeContext {
         @Specialization static void initialize(main.compilationNodes.Initialize initializer) { initializer.install(); }
     }
-    @Operation public static final class StaticStore {
-        @Specialization static void execute(Object value) { throw new kotlin.NotImplementedError("Not implemented"); }
+    @Operation @ConstantOperand(type = Field.class)
+    public static final class StaticStore {
+        @Specialization static void execute(Field field, Object value) {
+            field.getOwner().ensureInitialized();
+            field.write(field.getOwner().getStaticObject(), value);
+        }
     }
 }

@@ -15,6 +15,8 @@ class IlMethod(var name: String, var arguments: List<Pair<String, IlType>>) {
 
     var memberOf: IlType? = null
 
+    var virtual = false
+    var newSlot = false
     var static = false
     var internal = false
     var abstract = false

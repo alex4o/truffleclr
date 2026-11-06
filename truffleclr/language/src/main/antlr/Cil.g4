@@ -24,7 +24,7 @@ K_BYTEARRAY: 'bytearray';
 
 K_UINT: 'uint';
 K_UINT8: 'uint8';
-K_UINT16: 'uin16';
+K_UINT16: 'uint16';
 K_UINT32: 'uint32';
 K_UINT64: 'uint64';
 K_FLAGS: 'flags';

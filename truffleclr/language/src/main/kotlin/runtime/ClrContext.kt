@@ -2,7 +2,6 @@ package runtime
 
 import com.oracle.truffle.api.CompilerDirectives
 import com.oracle.truffle.api.TruffleLanguage
-import com.oracle.truffle.api.`object`.Shape
 import com.oracle.truffle.api.interop.InteropLibrary
 import com.oracle.truffle.api.interop.TruffleObject
 import com.oracle.truffle.api.library.ExportLibrary
@@ -16,10 +15,6 @@ class ClrContext(): TruffleObject {
     val output by lazy { java.io.PrintStream(env.out()) }
     val types: MutableMap<String, Type> = mutableMapOf()
 
-    val baseObject: Shape = Shape.newBuilder()
-        .layout(ClrDynamicObject::class.java, java.lang.invoke.MethodHandles.lookup())
-        .dynamicType(ClrObject("System.Object"))
-        .build()
 
 
     @ExportMessage
