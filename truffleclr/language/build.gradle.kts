@@ -15,7 +15,6 @@ dependencies {
     antlr(libs.antlr.tool)
     implementation(libs.antlr.runtime)
     implementation(libs.truffle.api)
-    implementation(libs.graphviz)
     kapt(libs.truffle.dsl.processor)
 }
 

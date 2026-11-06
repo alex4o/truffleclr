@@ -9,6 +9,8 @@ import runtime.CorElementType.*
 
 @NodeChild("sizeNode")
 abstract class NewArray(@CompilerDirectives.CompilationFinal @JvmField val type: CorElementType) : ExpressionNode() {
+    abstract fun executeOperands(frame: com.oracle.truffle.api.frame.VirtualFrame, value0: Any?): Any?
+
 
     @CompilerDirectives.CompilationFinal
     val builder: (Int) -> Any = when(type) {

@@ -5,7 +5,6 @@ import Cil.CilParser
 import com.oracle.truffle.api.CallTarget
 import com.oracle.truffle.api.TruffleLanguage
 import com.oracle.truffle.api.debug.DebuggerTags
-import com.oracle.truffle.api.frame.FrameDescriptor
 import com.oracle.truffle.api.instrumentation.ProvidedTags
 import com.oracle.truffle.api.instrumentation.StandardTags
 import main.compilationNodes.Initialize
@@ -40,10 +39,6 @@ class Clr : TruffleLanguage<ClrContext>() {
         @JvmField
         val contextReference: ContextReference<ClrContext> = ContextReference.create(Clr::class.java)
     }
-
-    // TODO: Remove without breaking debug
-    // it is a bad idea to store the context globally
-    lateinit var tmp: ClrContext
 
     override fun createContext(env: Env): ClrContext {
         val context = ClrContext()
@@ -92,10 +87,8 @@ class Clr : TruffleLanguage<ClrContext>() {
 
         parseFile(appDomain, CharStreams.fromReader(request.source.reader))
         val context = contextReference.get(null)
-        tmp = context
 
-        val frameDescriptor = FrameDescriptor.newBuilder().build()
-        return Initialize(appDomain, context, frameDescriptor, this).callTarget
+        return Initialize(appDomain, context, this).callTarget
     }
 
     /** Returns the global scope exposed by `Context.getBindings`. */

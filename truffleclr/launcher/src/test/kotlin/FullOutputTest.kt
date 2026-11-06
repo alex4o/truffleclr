@@ -27,6 +27,17 @@ class FullOutputTest {
         assertLinesEquals(expected, output)
     }
 
+    @Test
+    fun unsupportedMethodFailsOnlyWhenCalled() {
+        Context.newBuilder().allowAllAccess(true).build().use { context ->
+            context.eval(Source.newBuilder("clr", File("./test/virtual_cache.il")).build())
+            val program = context.getBindings("clr").getMember("HelloWorld.Program")
+            val method = program.getMember(program.memberKeys.single { it.contains("Unsupported(") })
+            val error = Assertions.assertThrows(org.graalvm.polyglot.PolyglotException::class.java) { method.execute() }
+            Assertions.assertTrue(error.message.orEmpty().contains("not implemented: not"))
+        }
+    }
+
     companion object {
         @JvmStatic
         fun testFiles(): Stream<String> {
@@ -57,10 +68,11 @@ fun testRunProgram(file: String, klass: String, args: Array<String> = arrayOf())
 
     main.execute(args)
     context.close()
-    return out.toString("utf-8").lines()
+    return out.toString("utf-8").removeSuffix("\n").lines()
 }
 
 fun assertLinesEquals(expected: Iterable<String>, output: Iterable<String>) {
+    Assertions.assertEquals(expected.count(), output.count(), "Output line count")
     expected.zip(output).forEachIndexed() { line, (expectedLine, outpuLine) ->
         Assertions.assertEquals(expectedLine, outpuLine, "Error on line $line")
     }
