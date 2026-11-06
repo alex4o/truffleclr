@@ -37,14 +37,14 @@
   .ver 1:0:0:0
 }
 .module p.dll
-// MVID: {dbd7fe28-8121-4f74-a9aa-f3e1c9d25e6b}
+// MVID: {b0907701-8dc3-42a3-9ce8-a67c0c4bf636}
 .custom instance void [System.Runtime]System.Runtime.CompilerServices.RefSafetyRulesAttribute::.ctor(int32) = ( 01 00 0B 00 00 00 00 00 )
 .imagebase 0x00400000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x0x100790000
+// Image base: 0x0x100824000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -307,89 +307,9 @@
 
 } // end of class HelloWorld.InitializedDerived
 
-.class public auto ansi beforefieldinit HelloWorld.FailureProbe
-       extends [System.Runtime]System.Object
-{
-  .field public static int32 Attempts
-  .field public static int32 Zero
-  .method public hidebysig specialname rtspecialname
-          instance void  .ctor() cil managed
-  {
-    // Code size       8 (0x8)
-    .maxstack  8
-    IL_0000:  ldarg.0
-    IL_0001:  call       instance void [System.Runtime]System.Object::.ctor()
-    IL_0006:  nop
-    IL_0007:  ret
-  } // end of method FailureProbe::.ctor
-
-} // end of class HelloWorld.FailureProbe
-
-.class public auto ansi HelloWorld.FailedInitialization
-       extends [System.Runtime]System.Object
-{
-  .field public static int32 Result
-  .method private hidebysig specialname rtspecialname static
-          void  .cctor() cil managed
-  {
-    // Code size       26 (0x1a)
-    .maxstack  8
-    IL_0000:  nop
-    IL_0001:  ldsfld     int32 HelloWorld.FailureProbe::Attempts
-    IL_0006:  ldc.i4.1
-    IL_0007:  add
-    IL_0008:  stsfld     int32 HelloWorld.FailureProbe::Attempts
-    IL_000d:  ldc.i4.1
-    IL_000e:  ldsfld     int32 HelloWorld.FailureProbe::Zero
-    IL_0013:  div
-    IL_0014:  stsfld     int32 HelloWorld.FailedInitialization::Result
-    IL_0019:  ret
-  } // end of method FailedInitialization::.cctor
-
-  .method public hidebysig specialname rtspecialname
-          instance void  .ctor() cil managed
-  {
-    // Code size       8 (0x8)
-    .maxstack  8
-    IL_0000:  ldarg.0
-    IL_0001:  call       instance void [System.Runtime]System.Object::.ctor()
-    IL_0006:  nop
-    IL_0007:  ret
-  } // end of method FailedInitialization::.ctor
-
-} // end of class HelloWorld.FailedInitialization
-
 .class public auto ansi beforefieldinit HelloWorld.Program
        extends [System.Runtime]System.Object
 {
-  .method public hidebysig static int32  TryFailure() cil managed
-  {
-    // Code size       11 (0xb)
-    .maxstack  1
-    .locals init (int32 V_0)
-    IL_0000:  nop
-    IL_0001:  ldsfld     int32 HelloWorld.FailedInitialization::Result
-    IL_0006:  stloc.0
-    IL_0007:  br.s       IL_0009
-
-    IL_0009:  ldloc.0
-    IL_000a:  ret
-  } // end of method Program::TryFailure
-
-  .method public hidebysig static int32  FailureAttempts() cil managed
-  {
-    // Code size       11 (0xb)
-    .maxstack  1
-    .locals init (int32 V_0)
-    IL_0000:  nop
-    IL_0001:  ldsfld     int32 HelloWorld.FailureProbe::Attempts
-    IL_0006:  stloc.0
-    IL_0007:  br.s       IL_0009
-
-    IL_0009:  ldloc.0
-    IL_000a:  ret
-  } // end of method Program::FailureAttempts
-
   .method public hidebysig static void  Main(string[] args) cil managed
   {
     .entrypoint

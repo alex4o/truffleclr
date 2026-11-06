@@ -52,7 +52,9 @@ class Initialize(appDomain: IlAppDomain, val context: ClrContext, val language: 
         }
         type.shape = if (base == null) instances.build(ClrObject::class.java, ClrObjectFactory::class.java)
             else instances.build(base.shape)
-        type.staticObject = statics.build(ClrObject::class.java, ClrObjectFactory::class.java).factory.create(type)
+        if (type.staticFields.isNotEmpty()) {
+            type.staticObject = statics.build(ClrObject::class.java, ClrObjectFactory::class.java).factory.create(type)
+        }
         return type
     }
 

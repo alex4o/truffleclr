@@ -21,31 +21,32 @@ class Field(val metadata: IlField, val owner: Type) : StaticProperty(), TruffleO
     }
     override fun getId(): String = metadata.name
 
+    // Direct enum comparisons fold during PE; Kotlin enum-switch mapping arrays do not.
     // Small integers are sign/zero extended to the CIL int32 evaluation-stack type.
-    fun read(receiver: ClrObject): Any = when (kind) {
-        CorElementType.BOOLEAN -> if (getBoolean(receiver)) 1 else 0
-        CorElementType.I1 -> getByte(receiver).toInt()
-        CorElementType.U1 -> getByte(receiver).toInt() and 0xff
-        CorElementType.I2 -> getShort(receiver).toInt()
-        CorElementType.U2 -> getShort(receiver).toInt() and 0xffff
-        CorElementType.CHAR -> getChar(receiver).code
-        CorElementType.I4, CorElementType.U4 -> getInt(receiver)
-        CorElementType.I8, CorElementType.U8, CorElementType.I, CorElementType.U -> getLong(receiver)
-        CorElementType.R4 -> getFloat(receiver)
-        CorElementType.R8 -> getDouble(receiver)
+    fun read(receiver: ClrObject): Any = when {
+        kind == CorElementType.BOOLEAN -> if (getBoolean(receiver)) 1 else 0
+        kind == CorElementType.I1 -> getByte(receiver).toInt()
+        kind == CorElementType.U1 -> getByte(receiver).toInt() and 0xff
+        kind == CorElementType.I2 -> getShort(receiver).toInt()
+        kind == CorElementType.U2 -> getShort(receiver).toInt() and 0xffff
+        kind == CorElementType.CHAR -> getChar(receiver).code
+        kind == CorElementType.I4 || kind == CorElementType.U4 -> getInt(receiver)
+        kind == CorElementType.I8 || kind == CorElementType.U8 || kind == CorElementType.I || kind == CorElementType.U -> getLong(receiver)
+        kind == CorElementType.R4 -> getFloat(receiver)
+        kind == CorElementType.R8 -> getDouble(receiver)
         else -> getObject(receiver) ?: CTSNull
     }
 
     fun write(receiver: ClrObject, value: Any) {
-        when (kind) {
-            CorElementType.BOOLEAN -> setBoolean(receiver, if (value is Boolean) value else (value as Number).toInt() != 0)
-            CorElementType.I1, CorElementType.U1 -> setByte(receiver, (value as Number).toByte())
-            CorElementType.I2, CorElementType.U2 -> setShort(receiver, (value as Number).toShort())
-            CorElementType.CHAR -> setChar(receiver, if (value is Char) value else (value as Number).toInt().toChar())
-            CorElementType.I4, CorElementType.U4 -> setInt(receiver, (value as Number).toInt())
-            CorElementType.I8, CorElementType.U8, CorElementType.I, CorElementType.U -> setLong(receiver, (value as Number).toLong())
-            CorElementType.R4 -> setFloat(receiver, (value as Number).toFloat())
-            CorElementType.R8 -> setDouble(receiver, (value as Number).toDouble())
+        when {
+            kind == CorElementType.BOOLEAN -> setBoolean(receiver, if (value is Boolean) value else (value as Number).toInt() != 0)
+            kind == CorElementType.I1 || kind == CorElementType.U1 -> setByte(receiver, (value as Number).toByte())
+            kind == CorElementType.I2 || kind == CorElementType.U2 -> setShort(receiver, (value as Number).toShort())
+            kind == CorElementType.CHAR -> setChar(receiver, if (value is Char) value else (value as Number).toInt().toChar())
+            kind == CorElementType.I4 || kind == CorElementType.U4 -> setInt(receiver, (value as Number).toInt())
+            kind == CorElementType.I8 || kind == CorElementType.U8 || kind == CorElementType.I || kind == CorElementType.U -> setLong(receiver, (value as Number).toLong())
+            kind == CorElementType.R4 -> setFloat(receiver, (value as Number).toFloat())
+            kind == CorElementType.R8 -> setDouble(receiver, (value as Number).toDouble())
             else -> setObject(receiver, if (value === CTSNull) null else value)
         }
     }

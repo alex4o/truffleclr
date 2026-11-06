@@ -77,27 +77,8 @@ namespace HelloWorld
 
     public class InitializedDerived : InitializedBase { }
 
-    public class FailureProbe
-    {
-        public static int Attempts;
-        public static int Zero;
-    }
-
-    public class FailedInitialization
-    {
-        public static int Result;
-        static FailedInitialization()
-        {
-            FailureProbe.Attempts = FailureProbe.Attempts + 1;
-            Result = 1 / FailureProbe.Zero;
-        }
-    }
-
     public class Program
     {
-        public static int TryFailure() { return FailedInitialization.Result; }
-        public static int FailureAttempts() { return FailureProbe.Attempts; }
-
         public static void Main(string[] args)
         {
             // Static field access initializes Counter before the first newobj.
