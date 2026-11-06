@@ -6,6 +6,9 @@ plugins {
 
 kotlin {
     jvmToolchain(25)
+    compilerOptions {
+        freeCompilerArgs.addAll("-Xno-param-assertions", "-Xno-call-assertions", "-Xno-receiver-assertions")
+    }
 }
 
 dependencies {
