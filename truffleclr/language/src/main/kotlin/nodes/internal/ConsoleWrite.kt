@@ -14,7 +14,9 @@ class ConsoleWrite() :
     ExpressionNode() {
 
     val stream: PrintStream
-        get() = Clr.contextReference.get(this).output
+        get() {
+            return Clr.contextReference.get(this).output
+        }
 
     @CompilerDirectives.CompilationFinal
     var type: Class<*>? = null

@@ -15,10 +15,13 @@ import nodes.ExpressionNode
 abstract class LoadField(@CompilerDirectives.CompilationFinal val property: Property) : ExpressionNode() {
     @Specialization(limit = "5")
     fun load(receiver: DynamicObject,
-             @CachedLibrary("receiver") objects: DynamicObjectLibrary): Any? =
-        objects.getOrDefault(receiver, property.key, null)
+             @CachedLibrary("receiver") objects: DynamicObjectLibrary): Any? {
+        return objects.getOrDefault(receiver, property.key, null)
+    }
 
     val label = "(ldfld  ${property.key} ... )"
 
-    override fun toString(): String = "(ldfld ${property.key} ${children.joinToString(" ")})"
+    override fun toString(): String {
+        return "(ldfld ${property.key} ${children.joinToString(" ")})"
+    }
 }

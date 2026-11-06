@@ -14,8 +14,10 @@ import runtime.ClrObject
 
 /** Create an instance, initialize inherited and declared fields, then call its constructor. */
 class NewObject(@Children var arguments: Array<ExpressionNode>, val ctor: TruffleObject, @CompilerDirectives.CompilationFinal val shape: Shape) : ExpressionNode() {
-    val context
-        get() = Clr.contextReference.get(this)
+    val context: runtime.ClrContext
+        get() {
+            return Clr.contextReference.get(this)
+        }
 
     private val instanceShape = (shape.dynamicType as ClrObject).allocationShape
 
@@ -43,5 +45,7 @@ class NewObject(@Children var arguments: Array<ExpressionNode>, val ctor: Truffl
         return createdObject
     }
 
-    override fun toString(): String = "(newobj $ctor ${arguments.joinToString(" ")})"
+    override fun toString(): String {
+        return "(newobj $ctor ${arguments.joinToString(" ")})"
+    }
 }

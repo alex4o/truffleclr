@@ -23,19 +23,29 @@ class ClrContext(): TruffleObject {
 
 
     @ExportMessage
-    fun isScope(): Boolean = true
+    fun isScope(): Boolean {
+        return true
+    }
 
     @ExportMessage
-    fun hasLanguage(): Boolean = true
+    fun hasLanguage(): Boolean {
+        return true
+    }
 
     @ExportMessage
-    fun getLanguage(): Class<out TruffleLanguage<*>> = Clr::class.java
+    fun getLanguage(): Class<out TruffleLanguage<*>> {
+        return Clr::class.java
+    }
 
     @ExportMessage
-    fun toDisplayString(allowSideEffects: Boolean): String = "global"
+    fun toDisplayString(allowSideEffects: Boolean): String {
+        return "global"
+    }
 
     @ExportMessage
-    fun hasMembers(): Boolean = true
+    fun hasMembers(): Boolean {
+        return true
+    }
 
     @ExportMessage
     @CompilerDirectives.TruffleBoundary
