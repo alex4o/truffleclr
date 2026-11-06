@@ -1,9 +1,6 @@
 // Fixture generator, not a unit test. Run in a temporary Cargo project with
 // dotnetdll = { path = "<repo>/native/vendor/dotnetdll" }.
-// cargo run -- <test-directory> <compiled-native_loader_rva.cs.dll>
-// Build the C# input in a temporary SDK library project targeting net10.0 with
-// Optimize=true, GenerateAssemblyInfo=false, GenerateTargetFrameworkAttribute=false.
-// Copy native_loader_rva.cs as its only source; dotnet build -o <temporary-output>.
+// cargo run -- <test-directory>
 // Outputs are checked in; launcher tests need neither Rust nor .NET to use them.
 use dotnetdll::prelude::*;
 
@@ -41,18 +38,16 @@ fn main() {
     });
     res.push_method(program, Method::new(Accessibility::Public,
         msig! { static int () }, "TouchBad", Some(touch)));
+    let carrier = res.push_type_definition(TypeDefinition::new(Some("HelloWorld".into()), "RvaCarrier"));
+    res[carrier].set_extends(object);
+    res.push_method(carrier, Method::new(Accessibility::Public,
+        msig! { static int () }, "Unused", Some(body::Method::new(asm! { LoadConstantInt32 0; Return; }))));
+    let mut data = Field::static_member(Accessibility::Public, "Data", ctype! { int });
+    data.initial_value = Some(vec![4, 3, 2, 1].into());
+    let data = res.push_field(carrier, data);
+    res.push_method(program, Method::new(Accessibility::Public,
+        msig! { static int () }, "ReadRva", Some(body::Method::new(vec![
+            Instruction::LoadStaticField { volatile: false, param0: data.into() }, Instruction::Return,
+        ]))));
     std::fs::write(output.join("dll/native_loader_lazy.dll"), res.write(WriteOptions::default()).unwrap()).unwrap();
-
-    let bytes = std::fs::read(&args[2]).unwrap();
-    let mut rva = Resolution::parse(&bytes, ReadOptions::default()).unwrap();
-    let owner = rva.type_definition_index(1).unwrap();
-    for (name, ty, data) in [
-        ("ByteRva", ctype! { byte }, vec![0x7b]),
-        ("IntRva", ctype! { int }, vec![0x04, 0x03, 0x02, 0x01]),
-    ] {
-        let mut field = Field::static_member(Accessibility::Public, name, ty);
-        field.initial_value = Some(data.into());
-        rva.push_field(owner, field);
-    }
-    std::fs::write(output.join("dll/native_loader_rva.dll"), rva.write(WriteOptions::default()).unwrap()).unwrap();
 }

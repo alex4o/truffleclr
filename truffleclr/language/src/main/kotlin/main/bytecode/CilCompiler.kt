@@ -82,7 +82,7 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
         "dup" -> 1 to 2
         "pop", "stloc", "starg", "stsfld", "initobj", "brtrue", "brfalse", "switch" -> 1 to 0
         "ret" -> (if (method.returnType.type == CorElementType.VOID) 0 else 1) to 0
-        "ldarg", "ldarga", "ldloc", "ldloca", "ldnull", "ldc", "ldstr", "ldsfld", "ldsflda" -> 0 to 1
+        "ldarg", "ldarga", "ldloc", "ldloca", "ldnull", "ldc", "ldstr", "ldsfld", "ldsflda", "ldtoken" -> 0 to 1
         "add", "sub", "mul", "div", "rem", "and", "or", "xor", "shl", "shr", "ceq", "clt", "cgt", "ldelem", "ldelema" -> 2 to 1
         "neg", "newarr", "isinst", "unbox", "ldind", "ldobj", "ldfld", "ldflda", "ldlen", "box", "conv", "castclass" -> 1 to 1
         "stfld", "stind", "stobj", "cpobj", "beq", "bne", "bge", "bgt", "ble", "blt" -> 2 to 0
@@ -653,6 +653,14 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
                 val value = pop(); val index = pop(); val array = pop()
                 materialize()
                 b.beginArrayStore(); load(array, index, value); b.endArrayStore()
+            }
+            "ldtoken" -> {
+                val field = (i as? InstructionFieldToken)?.field
+                    ?: throw UnsupportedOperationException("Only managed field tokens are supported")
+                val type = context.readMember("System.RuntimeFieldHandle")
+                val handle = type.newValue()
+                type.resolveField("_data").write(handle, field.initialValue?.takeIf { field.static } ?: CTSNull)
+                push { b.emitLoadConstant(handle) }
             }
             "ldflda" -> {
                 i as InstructionField

@@ -127,14 +127,21 @@ internal class DllMetadataMapper(
         owner.interfaces = declaration.items("implements").map(::type)
         for (field in declaration.items("fields")) {
             modifiers(field)
-            if (field.optional("initial_value") != null) unsupported("RVA field ${owner.name}::${field.text("name")}")
+            val initialValue = field.optional("initial_value")?.asJsonArray?.map {
+                val byte = it.asInt
+                require(byte in 0..255) { "Invalid RVA byte: $byte" }
+                byte.toByte()
+            }?.toByteArray()
+            require(initialValue == null || (field.flag("static") && !field.flag("by_ref"))) {
+                "RVA data requires a static, non-reference field"
+            }
             if (field.optional("offset") != null) unsupported("explicit field layout on ${owner.name}")
             var fieldType = type(field.getAsJsonObject("type"))
             if (field.flag("by_ref")) fieldType = fieldType.makeByRef()
             val name = field.text("name")
             check(owner.fields.put(name, IlField(name, fieldType,
                 field.optional("constant")?.let { constant(it.asJsonObject) } ?: CTSNull,
-                field.flag("static"))) == null) { "Duplicate DLL field: $owner::$name" }
+                field.flag("static"), initialValue)) == null) { "Duplicate DLL field: $owner::$name" }
         }
         for (declarationMethod in declaration.items("methods")) {
             if (declarationMethod.optional("pinvoke") != null) unsupported("P/Invoke method ${declarationMethod.text("name")}")
@@ -243,6 +250,16 @@ internal class DllMetadataMapper(
         }
         require(value.text("kind") == "method") { "Invalid DLL method reference" }
         return signature(value.text("name"), referenceOwner(value), value.getAsJsonObject("signature"))
+    }
+
+    /** Resolve metadata only: ldtoken must not create storage or run a type initializer. */
+    fun fieldToken(value: JsonObject): IlField {
+        val (fieldType, ownerName, name) = fieldReference(value)
+        val definitionName = domain.getType(ownerName).genericInstance?.definition ?: ownerName
+        val owner = definitions[definitionName] ?: domain.getType(definitionName)
+        val field = owner.fields[name] ?: unsupported("unresolved field token $ownerName::$name")
+        require(field.type.name == fieldType) { "Field token signature mismatch: $ownerName::$name" }
+        return field
     }
 
     fun fieldReference(value: JsonObject): Triple<String, String, String> {

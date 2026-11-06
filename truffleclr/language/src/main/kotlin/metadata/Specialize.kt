@@ -12,25 +12,47 @@ class Specialize(private val domain: IlAppDomain) {
     private val origins = mutableMapOf<IlType, Pair<IlType, List<IlType>>>()
     private val pending = ArrayDeque<() -> Unit>()
     private val methods = mutableMapOf<Triple<IlMethod, IlType, List<IlType>>, IlMethod>()
-    private var publishedTypes = 0
-    private var publishedMethods = 0
-    private val assemblyOwners = domain.assemblies.associateWith { it.types.values.toSet() }
+    private val newTypes = mutableListOf<IlType>()
+    private val newMethods = mutableListOf<IlMethod>()
+    private var publishing = false
+    private val assemblyOwners = domain.assemblies.flatMap { assembly ->
+        assembly.types.values.map { it to assembly }
+    }.toMap()
+
+    /** Construction failures poison interning, unlike a failed body whose
+     * successfully constructed dependencies can still be published later. */
+    private inline fun <T> construct(build: () -> T): T {
+        failure?.let { throw it }
+        val typeCount = types.size
+        val methodCount = methods.size
+        try {
+            return build()
+        } catch (error: Throwable) {
+            if (types.size != typeCount || methods.size != methodCount) failure = error
+            throw error
+        }
+    }
 
     /** Signatures and MethodImpl declarations never require decoding IL bodies. */
     private fun publish() {
         failure?.let { throw it }
+        if (publishing || (newTypes.isEmpty() && newMethods.isEmpty())) return
+        publishing = true
         try {
+            // Eager text bodies can request publication while this queue drains.
+            // Only the outermost caller installs the complete batch.
             while (pending.isNotEmpty()) pending.removeFirst().invoke()
-            for ((assembly, owned) in assemblyOwners) {
-                assembly.types = types.filterValues { origins.getValue(it).first in owned }.toMutableMap()
+            for (type in newTypes) {
+                assemblyOwners.getValue(origins.getValue(type).first).types[type.name] = type
             }
-            // Shape validation must succeed before any path can reuse this publication.
-            domain.metadataChanged?.invoke()
-            publishedTypes = types.size
-            publishedMethods = methods.size
+            domain.metadataChanged?.invoke(newTypes, newMethods)
+            newTypes.clear()
+            newMethods.clear()
         } catch (error: Throwable) {
             failure = error
             throw error
+        } finally {
+            publishing = false
         }
     }
 
@@ -43,8 +65,10 @@ class Specialize(private val domain: IlAppDomain) {
             }
         }
 
-    private fun type(name: String, typeArgs: List<IlType> = emptyList(), methodArgs: List<IlType> = emptyList()): IlType {
-        failure?.let { throw it }
+    private fun type(name: String, typeArgs: List<IlType> = emptyList(), methodArgs: List<IlType> = emptyList()): IlType =
+        construct { constructType(name, typeArgs, methodArgs) }
+
+    private fun constructType(name: String, typeArgs: List<IlType>, methodArgs: List<IlType>): IlType {
         val closedName = substitute(name, typeArgs, methodArgs)
         if (closedName.startsWith("System.Func`") || closedName.startsWith("System.Action`")) {
             throw UnsupportedOperationException("Delegates are unsupported: $closedName")
@@ -72,6 +96,7 @@ class Specialize(private val domain: IlAppDomain) {
         val closed = IlType(closedName, definition.type)
         closed.genericInstance = instance
         types[closedName] = closed
+        newTypes.add(closed)
         origins[closed] = definition to args
         closed.attribtes = definition.attribtes
         closed.polyglot = definition.polyglot
@@ -79,7 +104,7 @@ class Specialize(private val domain: IlAppDomain) {
         closed.extends = definition.extends?.let { type(it.name, args) }
         closed.interfaces = definition.interfaces.map { type(it.name, args) }
         for (field in definition.fields.values) {
-            closed.fields[field.name] = IlField(field.name, type(field.type.name, args), field.defaultValue, field.static)
+            closed.fields[field.name] = IlField(field.name, type(field.type.name, args), field.defaultValue, field.static, field.initialValue)
         }
         for (method in definition.methods.values) {
             require(!method.virtual || method.genericParameters.isEmpty()) {
@@ -90,7 +115,10 @@ class Specialize(private val domain: IlAppDomain) {
         return closed
     }
 
-    private fun method(definition: IlMethod, owner: IlType, args: List<IlType>): IlMethod {
+    private fun method(definition: IlMethod, owner: IlType, args: List<IlType>): IlMethod =
+        construct { constructMethod(definition, owner, args) }
+
+    private fun constructMethod(definition: IlMethod, owner: IlType, args: List<IlType>): IlMethod {
         val key = Triple(definition, owner, args)
         methods[key]?.let { return it }
         require(args.size == definition.genericParameters.size) { "Generic method arity mismatch: $definition" }
@@ -108,6 +136,7 @@ class Specialize(private val domain: IlAppDomain) {
         closed.internal = definition.internal
         closed.abstract = definition.abstract
         methods[key] = closed
+        newMethods.add(closed)
         check(owner.methods.put(closed.key(), closed) == null) { "Ambiguous specialized method: $closed" }
         pending.add {
             val explicit = definition.overrideReferences.map { resolve(it, typeArgs, args) }
@@ -141,7 +170,7 @@ class Specialize(private val domain: IlAppDomain) {
                 if (result !== instruction) result.instructionArgs.addAll(instruction.instructionArgs)
                 result
             }.toMutableList()
-            if (types.size != publishedTypes || methods.size != publishedMethods) publish()
+            publish()
         }
         // Text IL was already decoded by ANTLR; retain its declaration-time
         // validation. Native definitions have no instructions until first compile.
@@ -209,21 +238,16 @@ class Specialize(private val domain: IlAppDomain) {
     fun run() {
         domain.availableTypes = definitions.values.filter { it.genericParameters.isEmpty() }.map { it.name }.toSet()
         domain.materializeType = { name ->
-            failure?.let { throw it }
-            try {
-                type(name)
-                if (types.size != publishedTypes || methods.size != publishedMethods) publish()
-            } catch (error: Throwable) {
-                // Never publish partially specialized metadata after a failed host lookup.
-                failure = error
-                throw error
-            }
+            type(name)
+            publish()
         }
         // Text IL retains eager declaration validation; native type members remain lazy.
         for (definition in definitions.values) {
             if (!definition.hasDeferredMetadata && definition.genericParameters.isEmpty()) type(definition.name)
         }
         domain.entryTypeName?.let { type(it) }
+        // Replace the definition snapshot once; subsequent publications append deltas.
+        domain.assemblies.forEach { it.types.clear() }
         publish()
     }
 }

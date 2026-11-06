@@ -1,6 +1,5 @@
 package tests
 
-import com.google.gson.Gson
 import org.graalvm.polyglot.Context
 import org.graalvm.polyglot.Engine
 import org.graalvm.polyglot.PolyglotException
@@ -81,6 +80,21 @@ class FullOutputTest {
     }
 
     @Test
+    fun nativeLoaderRejectsRepeatedFailedSpecialization() {
+        Context.newBuilder("clr").allowAllAccess(true).build().use { context ->
+            context.eval(programSource(File("./test/dll/publication_failure.dll")))
+            val program = context.getBindings("clr").getMember("HelloWorld.Program")
+            fun call(name: String) = program.getMember(program.memberKeys.single { it.contains("$name(") }).execute()
+            Assertions.assertEquals(42, call("Good").asInt())
+            for (name in listOf("First", "Second")) {
+                val failure = Assertions.assertThrows(PolyglotException::class.java) { call(name) }
+                Assertions.assertTrue(failure.message.orEmpty().contains("Generic virtual methods are unsupported"), failure.message)
+            }
+            Assertions.assertEquals(42, call("Good").asInt())
+        }
+    }
+
+    @Test
     fun nativeLoaderRejectsGenericVariance() {
         val failure = Assertions.assertThrows(PolyglotException::class.java) {
             testRunProgram("./test/rejected/generic_variance.dll", "HelloWorld.Program")
@@ -125,33 +139,14 @@ class FullOutputTest {
     }
 
     @Test
-    @Suppress("UNCHECKED_CAST")
-    fun nativeLoaderFullMetadataBoundsRvaFieldData() {
-        val gson = Gson()
-        fun json(text: String) = gson.fromJson(text, Map::class.java) as Map<String, Any?>
-        fun types(root: Map<String, Any?>) = root.getValue("types") as List<Map<String, Any?>>
-        NativeDll(File("./test/dll/native_loader_rva.dll").readBytes()).use { dll ->
-            val index = json(dll.index())
-            val full = json(dll.metadata())
-            Assertions.assertEquals(5, types(full).size)
-            Assertions.assertEquals(types(index).map { it["id"] to it["type"] }, types(full).map { it["id"] to it["type"] })
-            Assertions.assertEquals(index["entry_point"], full["entry_point"])
-            val fields = types(full).flatMap { it.getValue("fields") as List<Map<String, Any?>> }
-            val initialized = fields.filter { it["initial_value"] != null }
-            val data = initialized.map { field ->
-                (field.getValue("initial_value") as List<Number>).map { it.toInt() }
+    fun nativeLoaderRejectsDirectRvaStorageAccess() {
+        Context.newBuilder("clr").allowAllAccess(true).build().use { context ->
+            context.eval(programSource(File("./test/dll/native_loader_lazy.dll")))
+            val program = context.getBindings("clr").getMember("HelloWorld.Program")
+            val failure = Assertions.assertThrows(PolyglotException::class.java) {
+                program.getMember(program.memberKeys.single { it.contains("ReadRva(") }).execute()
             }
-            Assertions.assertEquals(listOf(1, 4, 5, 12), data.map { it.size }.sorted())
-            Assertions.assertTrue(data.contains(listOf(0x7b)))
-            Assertions.assertTrue(data.contains(listOf(4, 3, 2, 1)))
-            Assertions.assertTrue(data.contains(listOf(3, 1, 4, 1, 5)))
-            Assertions.assertTrue(data.contains(listOf(4, 3, 2, 1, 0x44, 0x33, 0x22, 0x11, 0x88, 0x77, 0x66, 0x55)))
-            for (type in types(full)) {
-                Assertions.assertEquals(type, json(dll.type((type.getValue("id") as Number).toLong())))
-                val methods = type.getValue("methods") as List<Map<String, Any?>>
-                Assertions.assertTrue(methods.none { it.containsKey("body") })
-            }
-            Assertions.assertEquals(index, json(dll.index()))
+            Assertions.assertTrue(failure.message.orEmpty().contains("Runtime storage for RVA field is unsupported"), failure.message)
         }
     }
 

@@ -165,6 +165,7 @@ internal class DllBodyMapper(private val metadata: DllMetadataMapper) {
             "StoreObject" -> typed("stobj")
             "UnboxIntoAddress" -> typed("unbox")
             "UnboxIntoValue" -> typed("unbox.any")
+            "LoadTokenField" -> InstructionFieldToken(metadata.fieldToken(value.getAsJsonObject("field")))
             "LoadField" -> field("ldfld")
             "LoadFieldAddress" -> field("ldflda")
             "LoadStaticField" -> field("ldsfld")

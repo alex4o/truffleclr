@@ -18,24 +18,31 @@ class Initialize(private val appDomain: IlAppDomain, val context: ClrContext, va
     private var installed = false
 
     init {
-        refresh()
+        refresh(appDomain.assemblies.flatMap { it.types.values }, emptyList())
         appDomain.metadataChanged = ::refresh
     }
 
     /** Body specialization may discover closed types or generic method instances.
      * Never rebuild existing shapes or reset already initialized static storage.
      */
-    private fun refresh() {
-        for (assembly in appDomain.assemblies) {
-            assembly.types.values.forEach { processType(it) }
+    private fun refresh(types: List<IlType>, methods: List<metadata.IlMethod>) {
+        val newTypes = mutableListOf<Type>()
+        types.forEach { processType(it, newTypes) }
+        // New owners install all their methods with their shape. Existing owners
+        // receive only the newly closed, nonvirtual generic method instances.
+        for (method in methods) {
+            val owner = context.types.getValue(method.memberOf!!.fullName)
+            if (method.key() in owner.members) continue
+            check(!method.virtual) { "Cannot add a virtual slot after type initialization: $method" }
+            owner.members[method.key()] = Method(method)
+            addCompiler(method, owner)
         }
-        val newTypes = metadataByType.keys.filter { it !in prepared }
-        val mapped = prepared.toMutableSet()
+        val mapped = mutableSetOf<Type>()
         fun mapInterfaces(type: Type) {
-            if (type in mapped) return
+            if (type in prepared || type in mapped) return
             val metadata = metadataByType.getValue(type)
             type.baseType?.let { mapInterfaces(it) }
-            val declared = metadata.interfaces.map { processType(it) }
+            val declared = metadata.interfaces.map { context.types.getValue(it.fullName) }
             declared.forEach { mapInterfaces(it) }
             type.interfaces = ((type.baseType?.interfaces?.toList() ?: emptyList()) +
                 declared.flatMap { listOf(it) + it.interfaces }).distinct().toTypedArray()
@@ -73,7 +80,7 @@ class Initialize(private val appDomain: IlAppDomain, val context: ClrContext, va
             mapped.add(type)
         }
         // processType also discovers interface-only dependencies, before mapping.
-        for (type in metadataByType.keys.toList()) mapInterfaces(type)
+        for (type in newTypes) mapInterfaces(type)
         // Field types can refer forward or back to their owner. Resolve only after
         // every shape exists; no recursive processType calls for field signatures.
         for (type in newTypes) {
@@ -87,7 +94,7 @@ class Initialize(private val appDomain: IlAppDomain, val context: ClrContext, va
         val visiting = mutableSetOf<Type>()
         val visited = mutableSetOf<Type>()
         fun validateLayout(type: Type) {
-            if (type in visited) return
+            if (type in prepared || type in visited) return
             check(visiting.add(type)) { "Recursive value-type layout: ${type.name}" }
             for (field in type.layoutFields) field.valueType?.let { validateLayout(it) }
             visiting.remove(type)
@@ -103,22 +110,15 @@ class Initialize(private val appDomain: IlAppDomain, val context: ClrContext, va
     }
 
     /** Prepare bases first, even when the assembly declares a derived class first. */
-    private fun processType(metadata: IlType): Type {
-        context.types[metadata.fullName]?.let { type ->
-            for (method in metadata.methods.values) {
-                if (method.key() in type.members) continue
-                check(!method.virtual) { "Cannot add a virtual slot after type initialization: $method" }
-                type.members[method.key()] = Method(method)
-                addCompiler(method, type)
-            }
-            return type
-        }
-        val base = metadata.extends?.let { processType(it) }
+    private fun processType(metadata: IlType, newTypes: MutableList<Type>): Type {
+        context.types[metadata.fullName]?.let { return it }
+        val base = metadata.extends?.let { processType(it, newTypes) }
         val type = Type(metadata.fullName, base, appDomain.displayTypeName(metadata.fullName))
         context.types[metadata.fullName] = type
         metadataByType[type] = metadata
+        newTypes.add(type)
         type.isInterface = metadata.isInterface
-        metadata.interfaces.forEach { processType(it) }
+        metadata.interfaces.forEach { processType(it, newTypes) }
         val virtualTable = base?.virtualTable?.toMutableList() ?: mutableListOf()
         for (method in metadata.methods.values) {
             val member = Method(method)
@@ -146,6 +146,9 @@ class Initialize(private val appDomain: IlAppDomain, val context: ClrContext, va
         val statics = StaticShape.newBuilder(language)
         val layoutFields = base?.layoutFields?.toMutableList() ?: mutableListOf()
         for (metadataField in metadata.fields.values) {
+            require(metadataField.initialValue == null) {
+                "Runtime storage for RVA field is unsupported: ${metadata.name}::${metadataField.name}; use ldtoken/InitializeArray"
+            }
             val field = Field(metadataField, type)
             type.members[metadataField.name] = field
             if (metadataField.static) {

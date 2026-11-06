@@ -9,7 +9,8 @@ C# classes, virtual methods, statics and type initializers; structs, managed ref
 boxing/unboxing; CLR exceptions; specialized generics, interfaces and constrained
 calls; and `async Task` / `async Task<T>` with Debug and Release state machines.
 The minimal CoreLib includes basic Console, String.Concat, object/value equality,
-and Math operations. It is not a replacement for the full .NET BCL.
+Math operations, and DLL-backed primitive array initializers. It is not a
+replacement for the full .NET BCL.
 
 Async execution is single-threaded and deterministic: a FIFO continuation queue
 and virtual-time `Task.Delay` timers are pumped by awaiter `GetResult` / `Result`.

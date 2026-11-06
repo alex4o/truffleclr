@@ -28,7 +28,7 @@ class IlAppDomain : AutoCloseable {
     }
 
     private val references = mutableMapOf<String, IlType>()
-    internal var metadataChanged: (() -> Unit)? = null
+    internal var metadataChanged: ((List<IlType>, List<IlMethod>) -> Unit)? = null
     var assemblies: MutableList<IlAssembly> = mutableListOf()
     internal var materializeType: ((String) -> Unit)? = null
     internal var availableTypes: Set<String> = emptySet()
