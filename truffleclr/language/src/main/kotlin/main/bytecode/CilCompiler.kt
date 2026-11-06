@@ -26,6 +26,7 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
     private lateinit var b: CilRootNodeGen.Builder
     private lateinit var locals: List<BytecodeLocal>
     private lateinit var carry: List<BytecodeLocal>
+    // isBoolean proves a Boolean-local load; comparison instructions always push int32.
     private class Value(var emit: () -> Unit, val isBoolean: Boolean, var materialized: Boolean = false)
     private val stack = mutableListOf<Value>()
     private var pendingOperations = 0
@@ -159,7 +160,9 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
                         .filter { (from, to) -> children.values.none { to >= it.first && from <= it.last } }.map { it.second }.distinct()
                     for (destination in destinations.filter { it != first }) {
                         b.beginIfThen()
-                        b.beginCmp(CompareCondition.EQ); b.emitLoadLocal(scope.pc!!); b.emitLoadConstant(destination); b.endCmp()
+                        b.beginTruth()
+                        b.beginCmp(CompareCondition.EQ, false); b.emitLoadLocal(scope.pc!!); b.emitLoadConstant(destination); b.endCmp()
+                        b.endTruth()
                         b.emitBranch(scope.label(destination)); b.endIfThen()
                     }
                 }
@@ -191,7 +194,7 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
                                     "brtrue", "brfalse" -> pop()
                                     else -> {
                                         val right = pop(); val left = pop()
-                                        push(true) { b.beginCmp(condition(i.instruction)); load(left, right); b.endCmp() }
+                                        push { b.beginCmp(condition(i.instruction), "un" in i.instructionArgs); load(left, right); b.endCmp() }
                                         pop()
                                     }
                                 }
@@ -309,17 +312,17 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
                     "add" -> { b.beginAdd(); load(left, right); b.endAdd() }
                     "sub" -> { b.beginSub(); load(left, right); b.endSub() }
                     "mul" -> { b.beginMul(); load(left, right); b.endMul() }
-                    "div" -> { b.beginDiv(); load(left, right); b.endDiv() }
-                    "rem" -> { b.beginRem(); load(left, right); b.endRem() }
+                    "div" -> { b.beginDiv("un" in i.instructionArgs); load(left, right); b.endDiv() }
+                    "rem" -> { b.beginRem("un" in i.instructionArgs); load(left, right); b.endRem() }
                     "and" -> { b.beginAnd(); load(left, right); b.endAnd() }
                     "or" -> { b.beginOr(); load(left, right); b.endOr() }
                     "xor" -> { b.beginXor(); load(left, right); b.endXor() }
                     "shl" -> { b.beginShl(); load(left, right); b.endShl() }
-                    "shr" -> { b.beginShr(); load(left, right); b.endShr() }
+                    "shr" -> { b.beginShr("un" in i.instructionArgs); load(left, right); b.endShr() }
                 } }
             }
             "neg" -> { val v = pop(); push { b.beginNeg(); load(v); b.endNeg() } }
-            "ceq", "clt", "cgt" -> { val right = pop(); val left = pop(); push(true) { b.beginCmp(condition(i.instruction)); load(left, right); b.endCmp() } }
+            "ceq", "clt", "cgt" -> { val right = pop(); val left = pop(); push { b.beginCmp(condition(i.instruction), "un" in i.instructionArgs); load(left, right); b.endCmp() } }
             "conv", "castclass", "unbox" -> Unit // Preserve the existing pass-through semantics.
             "isinst" -> { materialize(); pop(); push { b.emitLoadConstant(false) } }
             "ldind" -> { materialize(); pop(); push { b.emitLoadConstant(0) } }

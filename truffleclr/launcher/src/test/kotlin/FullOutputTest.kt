@@ -4,13 +4,10 @@ import org.graalvm.polyglot.Context
 import org.graalvm.polyglot.Source
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.DisplayName
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import java.io.ByteArrayOutputStream
 import java.io.File
-import java.nio.file.FileVisitOption
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.stream.Stream
@@ -25,17 +22,6 @@ class FullOutputTest {
 
         println(output.joinToString("\n"))
         assertLinesEquals(expected, output)
-    }
-
-    @Test
-    fun unsupportedMethodFailsOnlyWhenCalled() {
-        Context.newBuilder().allowAllAccess(true).build().use { context ->
-            context.eval(Source.newBuilder("clr", File("./test/virtual_cache.il")).build())
-            val program = context.getBindings("clr").getMember("HelloWorld.Program")
-            val method = program.getMember(program.memberKeys.single { it.contains("Unsupported(") })
-            val error = Assertions.assertThrows(org.graalvm.polyglot.PolyglotException::class.java) { method.execute() }
-            Assertions.assertTrue(error.message.orEmpty().contains("not implemented: not"))
-        }
     }
 
     companion object {

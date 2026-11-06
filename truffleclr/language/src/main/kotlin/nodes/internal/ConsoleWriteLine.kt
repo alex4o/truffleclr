@@ -10,14 +10,17 @@ import java.io.PrintStream
 import java.text.DecimalFormat
 
 @NodeInfo(description = "WriteLine")
-class ConsoleWriteLine() :
+class ConsoleWriteLine(private val booleanArgument: Boolean = false) :
     ExpressionNode() {
 
     val stream: PrintStream
         get() = Clr.contextReference.get(this).output
 
     override fun execute(env: VirtualFrame): Any? {
-        writeLine(env.arguments[0])
+        val value = env.arguments[0]
+        // The CIL evaluation stack represents comparison results as int32, including
+        // values passed to the Boolean overload. Formatting follows the signature.
+        writeLine(if (booleanArgument && value is Int) value != 0 else value)
         return CTSNull
     }
 

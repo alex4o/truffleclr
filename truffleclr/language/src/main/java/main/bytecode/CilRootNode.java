@@ -54,21 +54,21 @@ public abstract class CilRootNode extends RootNode implements BytecodeRootNode {
         @Specialization static float dofloat( float left, float right) { return left * right; }
         @Specialization static double dodouble( double left, double right) { return left * right; }
     }
-    @Operation public static final class Div {
-        @Specialization static int dobyte( byte left, byte right) { return left / right; }
-        @Specialization static int doshort( short left, short right) { return left / right; }
-        @Specialization static int doint( int left, int right) { return left / right; }
-        @Specialization static long dolong( long left, long right) { return left / right; }
-        @Specialization static float dofloat( float left, float right) { return left / right; }
-        @Specialization static double dodouble( double left, double right) { return left / right; }
+    @Operation @ConstantOperand(type = boolean.class, name = "unsigned") public static final class Div {
+        @Specialization static int dobyte(boolean unsigned, byte left, byte right) { return unsigned ? Integer.divideUnsigned(left, right) : left / right; }
+        @Specialization static int doshort(boolean unsigned, short left, short right) { return unsigned ? Integer.divideUnsigned(left, right) : left / right; }
+        @Specialization static int doint(boolean unsigned, int left, int right) { return unsigned ? Integer.divideUnsigned(left, right) : left / right; }
+        @Specialization static long dolong(boolean unsigned, long left, long right) { return unsigned ? Long.divideUnsigned(left, right) : left / right; }
+        @Specialization(guards = "!unsigned") static float dofloat(boolean unsigned, float left, float right) { return left / right; }
+        @Specialization(guards = "!unsigned") static double dodouble(boolean unsigned, double left, double right) { return left / right; }
     }
-    @Operation public static final class Rem {
-        @Specialization static int dobyte( byte left, byte right) { return left % right; }
-        @Specialization static int doshort( short left, short right) { return left % right; }
-        @Specialization static int doint( int left, int right) { return left % right; }
-        @Specialization static long dolong( long left, long right) { return left % right; }
-        @Specialization static float dofloat( float left, float right) { return left % right; }
-        @Specialization static double dodouble( double left, double right) { return left % right; }
+    @Operation @ConstantOperand(type = boolean.class, name = "unsigned") public static final class Rem {
+        @Specialization static int dobyte(boolean unsigned, byte left, byte right) { return unsigned ? Integer.remainderUnsigned(left, right) : left % right; }
+        @Specialization static int doshort(boolean unsigned, short left, short right) { return unsigned ? Integer.remainderUnsigned(left, right) : left % right; }
+        @Specialization static int doint(boolean unsigned, int left, int right) { return unsigned ? Integer.remainderUnsigned(left, right) : left % right; }
+        @Specialization static long dolong(boolean unsigned, long left, long right) { return unsigned ? Long.remainderUnsigned(left, right) : left % right; }
+        @Specialization(guards = "!unsigned") static float dofloat(boolean unsigned, float left, float right) { return left % right; }
+        @Specialization(guards = "!unsigned") static double dodouble(boolean unsigned, double left, double right) { return left % right; }
     }
     @Operation public static final class And {
         @Specialization static int doint( int left, int right) { return left & right; }
@@ -87,10 +87,10 @@ public abstract class CilRootNode extends RootNode implements BytecodeRootNode {
         @Specialization static long dolong( long left, long right) { return left << right; }
         @Specialization static long doLongInt(long left, int right) { return left << right; }
     }
-    @Operation public static final class Shr {
-        @Specialization static int doint( int left, int right) { return left >> right; }
-        @Specialization static long dolong( long left, long right) { return left >> right; }
-        @Specialization static long doLongInt(long left, int right) { return left >> right; }
+    @Operation @ConstantOperand(type = boolean.class, name = "unsigned") public static final class Shr {
+        @Specialization static int doint(boolean unsigned, int left, int right) { return unsigned ? left >>> right : left >> right; }
+        @Specialization static long dolong(boolean unsigned, long left, long right) { return unsigned ? left >>> right : left >> right; }
+        @Specialization static long doLongInt(boolean unsigned, long left, int right) { return unsigned ? left >>> right : left >> right; }
     }
     @Operation public static final class Neg {
         @Specialization static char dochar(char value) { return (char) -value; }
@@ -131,27 +131,71 @@ public abstract class CilRootNode extends RootNode implements BytecodeRootNode {
         @Specialization static void dobyte(byte[] array, int index, byte value) { array[index] = value; }
         @Specialization static void dochar(char[] array, int index, char value) { array[index] = value; }
     }
+    /** ECMA-335 III.3.21-26: comparison results are int32, never host booleans. */
     @Operation @ConstantOperand(type = CompareCondition.class)
+    @ConstantOperand(type = boolean.class, name = "unsigned")
     public static final class Cmp {
-        static boolean test(CompareCondition condition, int comparison) {
-            return switch (condition) {
+        static int test(CompareCondition condition, int comparison) {
+            boolean result = switch (condition) {
                 case EQ -> comparison == 0; case NE -> comparison != 0;
                 case LT -> comparison < 0; case GT -> comparison > 0;
                 case LE -> comparison <= 0; case GE -> comparison >= 0;
             };
+            return result ? 1 : 0;
         }
-        @Specialization static boolean doint(CompareCondition c, int left, int right) { return test(c, Integer.compare(left, right)); }
-        @Specialization static boolean dolong(CompareCondition c, long left, long right) { return test(c, Long.compare(left, right)); }
-        @Specialization static boolean dofloat(CompareCondition c, float left, float right) { return test(c, Float.compare(left, right)); }
-        @Specialization static boolean dodouble(CompareCondition c, double left, double right) { return test(c, Double.compare(left, right)); }
-        @Specialization static boolean doboolean(CompareCondition c, boolean left, boolean right) { return test(c, Boolean.compare(left, right)); }
-        @Specialization static boolean doBoolInt(CompareCondition c, boolean left, int right) { return test(c, Boolean.compare(left, right != 0)); }
-        @Specialization static boolean doIntBool(CompareCondition c, int left, boolean right) { return test(c, Boolean.compare(right, left != 0)); }
-        @Fallback static boolean doObject(CompareCondition c, Object left, Object right) { return c == CompareCondition.EQ ? java.util.Objects.equals(left, right) : !java.util.Objects.equals(left, right); }
+        static int floating(CompareCondition condition, boolean unordered, double left, double right) {
+            if (Double.isNaN(left) || Double.isNaN(right)) return unordered ? 1 : 0;
+            // Direct relations preserve CIL equality of positive and negative zero.
+            boolean result = switch (condition) {
+                case EQ -> left == right; case NE -> left != right;
+                case LT -> left < right; case GT -> left > right;
+                case LE -> left <= right; case GE -> left >= right;
+            };
+            return result ? 1 : 0;
+        }
+        @Specialization static int doint(CompareCondition c, boolean unsigned, int left, int right) {
+            return test(c, unsigned ? Integer.compareUnsigned(left, right) : Integer.compare(left, right));
+        }
+        @Specialization static int dolong(CompareCondition c, boolean unsigned, long left, long right) {
+            return test(c, unsigned ? Long.compareUnsigned(left, right) : Long.compare(left, right));
+        }
+        @Specialization static int dofloat(CompareCondition c, boolean unsigned, float left, float right) {
+            return floating(c, unsigned, left, right);
+        }
+        @Specialization static int dodouble(CompareCondition c, boolean unsigned, double left, double right) {
+            return floating(c, unsigned, left, right);
+        }
+        @Specialization static int doFloatDouble(CompareCondition c, boolean unsigned, float left, double right) {
+            return floating(c, unsigned, left, right);
+        }
+        @Specialization static int doDoubleFloat(CompareCondition c, boolean unsigned, double left, float right) {
+            return floating(c, unsigned, left, right);
+        }
+        @Specialization static int doboolean(CompareCondition c, boolean unsigned, boolean left, boolean right) {
+            return doint(c, unsigned, left ? 1 : 0, right ? 1 : 0);
+        }
+        @Specialization static int doBoolInt(CompareCondition c, boolean unsigned, boolean left, int right) {
+            return doint(c, unsigned, left ? 1 : 0, right);
+        }
+        @Specialization static int doIntBool(CompareCondition c, boolean unsigned, int left, boolean right) {
+            return doint(c, unsigned, left, right ? 1 : 0);
+        }
+        @Fallback static int doObject(CompareCondition c, boolean unsigned, Object left, Object right) {
+            // Both representations are used by ldnull and zero-initialized reference arrays.
+            if (left == types.CTSNull.INSTANCE) left = null;
+            if (right == types.CTSNull.INSTANCE) right = null;
+            boolean equal = java.util.Objects.equals(left, right);
+            return (c == CompareCondition.EQ ? equal : !equal) ? 1 : 0;
+        }
     }
     @Operation public static final class Truth {
+        @Specialization static boolean execute(byte value) { return value != 0; }
+        @Specialization static boolean execute(short value) { return value != 0; }
+        @Specialization static boolean execute(char value) { return value != 0; }
         @Specialization static boolean execute(int value) { return value != 0; }
+        @Specialization static boolean execute(long value) { return value != 0; }
         @Specialization static boolean execute(boolean value) { return value; }
+        @Fallback static boolean reference(Object value) { return value != null && value != types.CTSNull.INSTANCE; }
     }
     @Operation @ConstantOperand(type = CorElementType.class)
     public static final class ArrayNew {
