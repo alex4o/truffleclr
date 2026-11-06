@@ -35,5 +35,5 @@ data class InstructionType(override var instruction: String, var type: String) :
 data class InstructionString(override var instruction: String, var content: String) : Instruction()
 data class InstructionSig(override var instruction: String) : Instruction()
 data class InstructionTok(override var instruction: String) : Instruction()
-data class InstructionSwitch(override var instruction: String) : Instruction()
+data class InstructionSwitch(override var instruction: String, val targets: List<String>) : Instruction()
 

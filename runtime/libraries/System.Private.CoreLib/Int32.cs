@@ -45,8 +45,7 @@ namespace System
                 return 0;
             }
 
-            return 0;
-            // throw new ArgumentException(SR.Arg_MustBeInt32);
+            throw new ArgumentException("Object must be of type Int32.");
         }
 
         public int CompareTo(int value)

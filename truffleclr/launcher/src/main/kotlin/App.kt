@@ -47,7 +47,8 @@ class App : CliktCommand() {
         val bindings = context.getBindings("clr")
         val programClass = bindings.getMember(`class`)
 
-        val mainMethod = programClass.memberKeys.find { it.contains("Main(") }
+        val mainMethod = programClass.memberKeys.find { it.contains("<Main>(") }
+            ?: programClass.memberKeys.find { it.contains("Main(") }
         val world = programClass.getMember(mainMethod)
         val me = arrayOf<String>()
 

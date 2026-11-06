@@ -1,77 +1,34 @@
 package nodes.internal
 
-import com.oracle.truffle.api.CompilerDirectives
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary
 import com.oracle.truffle.api.frame.VirtualFrame
-import com.oracle.truffle.api.nodes.NodeInfo
 import main.Clr
+import main.bytecode.ManagedReference
 import nodes.ExpressionNode
+import runtime.ClrObject
+import runtime.CorElementType
 import types.CTSNull
-import java.io.PrintStream
 import java.text.DecimalFormat
 
-@NodeInfo(description = "Write")
-class ConsoleWrite(private val characterArgument: Boolean = false) :
-    ExpressionNode() {
-
-    val stream: PrintStream
-        get() = Clr.contextReference.get(this).output
-
-    @CompilerDirectives.CompilationFinal
-    var type: Class<*>? = null
-
-    override fun execute(env: VirtualFrame): Any? {
-        if (characterArgument) {
-            val value = env.arguments[0]
-            write(if (value is Number) value.toInt().toChar() else value)
-            return CTSNull
+class ConsoleWrite(private val argumentType: CorElementType = CorElementType.OBJECT,
+                   private val newline: Boolean = false) : ExpressionNode() {
+    override fun execute(env: VirtualFrame): Any = write(env.arguments[0])
+    @TruffleBoundary
+    private fun write(value: Any?): Any {
+        val formatted = when {
+            value == null || value === CTSNull -> ""
+            argumentType == CorElementType.BOOLEAN -> if (value == true || value is Int && value != 0) "True" else "False"
+            argumentType == CorElementType.CHAR -> if (value is Number) value.toInt().toChar().toString() else value.toString()
+            argumentType == CorElementType.U4 -> Integer.toUnsignedString((value as Number).toInt())
+            argumentType == CorElementType.U8 -> java.lang.Long.toUnsignedString((value as Number).toLong())
+            value is ClrObject -> value.type.virtualTable.first { it.metadata.name == "ToString" }.callTarget.call(value).let { if (it == null || it === CTSNull) "" else it.toString() }
+            value is ManagedReference.Box -> value.toString()
+            value is Boolean -> if (value) "True" else "False"
+            value is Double || value is Float -> DecimalFormat.getInstance().apply { maximumFractionDigits = 15 }.format(value)
+            else -> value.toString()
         }
-
-        when (type) {
-            Double::class.java -> {
-                write(env.arguments[0] as Double)
-            }
-            Float::class.java -> {
-                write(env.arguments[0] as Float)
-            }
-            Boolean::class.java -> {
-                write(env.arguments[0] as Boolean)
-            }
-            Any::class.java -> {
-                write(env.arguments[0])
-
-            }
-            null -> {
-                type = env.arguments[0].javaClass
-                this.execute(env)
-            }
-            else -> {
-                write(env.arguments[0])
-            }
-        }
-
-
+        val stream = Clr.contextReference.get(this).output
+        if (newline) stream.println(formatted) else stream.print(formatted)
         return CTSNull
     }
-
-    val formater = DecimalFormat.getInstance()
-    init {
-        formater.maximumFractionDigits = 15
-    }
-
-    @CompilerDirectives.TruffleBoundary
-    fun write(any: Any?) {
-        stream.print(any)
-    }
-
-    @CompilerDirectives.TruffleBoundary
-    fun write(any: Double) {
-        stream.println(formater.format(any))
-    }
-
-    @CompilerDirectives.TruffleBoundary
-    fun write(any: Float) {
-        stream.println(formater.format(any))
-    }
-
-
 }

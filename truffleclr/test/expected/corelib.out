@@ -1,0 +1,73 @@
+3
+4
+True
+True
+True
+False
+True
+False
+False
+True
+False
+True
+True
+System.Object
+HelloWorld.Program
+True
+True
+False
+False
+True
+True
+HelloWorld.Pair
+False
+abc
+ab
+abc
+abcd
+named12
+named13
+null concat
+1
+1
+0
+1
+int wrong type
+byte wrong type
+0
+65535
+char low
+char high
+-1234567890123|True|1.5|4294967295|18446744073709551615|named
+-1234567890123
+Z
+False
+1.5
+4294967295
+18446744073709551615
+named
+
+5
+1234567890123
+2
+abs int overflow
+abs long overflow
+2
+7
+-8
+7
+2
+7
+2
+3
+2
+4
+32
+9
+0
+1
+0
+0
+0
+1
+0

@@ -6,6 +6,7 @@ import org.antlr.v4.runtime.tree.ParseTree
 import metadata.IlAppDomain
 import metadata.IlMethod
 import metadata.IlType
+import metadata.genericDefinitionName
 import java.util.*
 
 fun <T : ParseTree> ParserRuleContext.case(any: T?): Boolean {
@@ -168,7 +169,7 @@ fun MethodVisitor.extractFromMethodRefTest(methodRef: MethodRefContext): IlMetho
 
     val className: String = methodRef.typeSpec().toClassName()
 
-    val ownerDefinition = appDomain.getType(className.substringBefore('<'))
+    val ownerDefinition = appDomain.getType(className.genericDefinitionName())
     val signature = methodRef.type().text + methodRef.sigArgs0().text
     val namedParameters = Regex("!!([A-Za-z_][A-Za-z_0-9]*)").findAll(signature).map { it.groupValues[1] }.toSet()
     val methodParameters = if (namedParameters.isEmpty()) emptyList() else {
