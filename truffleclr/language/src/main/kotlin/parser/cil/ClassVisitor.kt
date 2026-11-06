@@ -7,7 +7,6 @@ import metadata.IlAppDomain
 import metadata.IlField
 import metadata.IlMethod
 import metadata.IlType
-import org.omg.CORBA.CTX_RESTRICT_SCOPE
 import types.CTSNull
 import java.util.*
 

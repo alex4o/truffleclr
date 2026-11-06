@@ -13,13 +13,8 @@ import java.text.DecimalFormat
 class ConsoleWrite() :
     ExpressionNode() {
 
-    val context by lazy {
-        lookupContextReference(Clr::class.java).get()
-    }
-
-    val stream by lazy {
-        PrintStream(context.env.out())
-    }
+    val stream: PrintStream
+        get() = Clr.contextReference.get(this).output
 
     @CompilerDirectives.CompilationFinal
     var type: Class<*>? = null

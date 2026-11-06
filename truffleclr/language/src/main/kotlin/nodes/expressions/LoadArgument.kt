@@ -4,7 +4,6 @@ import com.oracle.truffle.api.CompilerDirectives
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal
 import com.oracle.truffle.api.dsl.NodeField
 import com.oracle.truffle.api.dsl.Specialization
-import com.oracle.truffle.api.frame.FrameSlot
 import com.oracle.truffle.api.frame.FrameSlotKind
 import com.oracle.truffle.api.frame.VirtualFrame
 import com.oracle.truffle.api.nodes.NodeInfo
@@ -12,10 +11,10 @@ import nodes.ExpressionNode
 
 //TODO: Spliting the arguments and locals is a bad design decsion
 @NodeInfo(shortName = "ldarg")
-class LoadArgument(@CompilationFinal val index: Int, @CompilationFinal val slot: FrameSlot?) : ExpressionNode() {
+class LoadArgument(@CompilationFinal val index: Int, @CompilationFinal val slot: Int, val kind: FrameSlotKind) : ExpressionNode() {
 
     @CompilerDirectives.CompilationFinal
-    val get = when (slot?.kind) {
+    val get = when (kind) {
         FrameSlotKind.Int -> {
             this::executeInt
         }

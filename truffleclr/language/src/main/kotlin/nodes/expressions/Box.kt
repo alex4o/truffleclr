@@ -1,8 +1,6 @@
 package nodes.expressions
 
 import com.oracle.truffle.api.dsl.*
-import com.oracle.truffle.api.frame.FrameSlot
-import com.oracle.truffle.api.frame.FrameSlotKind
 import com.oracle.truffle.api.frame.VirtualFrame
 import com.oracle.truffle.api.nodes.NodeInfo
 import nodes.ExpressionNode

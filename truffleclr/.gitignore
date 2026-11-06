@@ -4,4 +4,3 @@
 build
 .gradle
 graal_dumps
-gradle

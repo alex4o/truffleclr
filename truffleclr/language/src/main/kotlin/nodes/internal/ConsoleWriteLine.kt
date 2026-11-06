@@ -13,13 +13,8 @@ import java.text.DecimalFormat
 class ConsoleWriteLine() :
     ExpressionNode() {
 
-    val context by lazy {
-        lookupContextReference(Clr::class.java).get()
-    }
-
-    val stream by lazy {
-        PrintStream(context.env.out())
-    }
+    val stream: PrintStream
+        get() = Clr.contextReference.get(this).output
 
     override fun execute(env: VirtualFrame): Any? {
         writeLine(env.arguments[0])
@@ -53,13 +48,8 @@ class ConsoleWriteLine() :
 @NodeInfo(shortName = "WriteLine")
 class ConsoleWriteLine0() :
     ExpressionNode() {
-    val context by lazy {
-        lookupContextReference(Clr::class.java).get()
-    }
-
-    val stream by lazy {
-        PrintStream(context.env.out())
-    }
+    val stream: PrintStream
+        get() = Clr.contextReference.get(this).output
 
     override fun execute(env: VirtualFrame): Any? {
         writeLine()

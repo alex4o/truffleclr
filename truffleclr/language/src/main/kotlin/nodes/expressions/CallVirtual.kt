@@ -1,6 +1,5 @@
 package nodes.expressions
 
-import com.oracle.truffle.`object`.DynamicObjectImpl
 import com.oracle.truffle.api.*
 import com.oracle.truffle.api.`object`.DynamicObject
 import com.oracle.truffle.api.`object`.Shape
@@ -42,10 +41,10 @@ class CallVirtual(
         }else if(callNode != null && cachedShape != shape) {
             CompilerDirectives.transferToInterpreterAndInvalidate()
             val newNode = replace(CallVirtualSlow(methodIndex, args))
-            return newNode.execute(env)
+            return newNode.executeArguments(arguments)
         }else{
             CompilerDirectives.transferToInterpreterAndInvalidate()
-            val method = (shape.objectType as ClrObject).virtualTable[methodIndex]
+            val method = (shape.dynamicType as ClrObject).virtualTable[methodIndex]
             callNode = method.callNode!!
             cachedShape = shape
             callNode!!.call(*arguments)
@@ -64,8 +63,12 @@ class CallVirtual(
                 arguments[i] = args[i].execute(env)
             }
 
+            return executeArguments(arguments)
+        }
+
+        fun executeArguments(arguments: Array<Any?>): Any? {
             val shape = (arguments[0] as DynamicObject).shape
-            val method = (shape.objectType as ClrObject).virtualTable[methodIndex]
+            val method = (shape.dynamicType as ClrObject).virtualTable[methodIndex]
             return indirectCallNode.call(method.callNode!!.callTarget, *arguments)
         }
 

@@ -9,8 +9,6 @@ import java.io.File
 import java.io.FileWriter
 import java.time.Duration
 import java.time.LocalTime
-import java.time.temporal.Temporal
-import java.util.*
 import kotlin.system.measureTimeMillis
 
 fun String.runCommand() {

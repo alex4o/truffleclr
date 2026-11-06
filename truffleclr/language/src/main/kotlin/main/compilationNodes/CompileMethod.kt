@@ -2,7 +2,6 @@ package main.compilationNodes
 
 import com.oracle.truffle.api.*
 import com.oracle.truffle.api.frame.FrameDescriptor
-import com.oracle.truffle.api.frame.FrameSlot
 import com.oracle.truffle.api.frame.FrameSlotKind
 import com.oracle.truffle.api.frame.VirtualFrame
 import com.oracle.truffle.api.nodes.DirectCallNode
@@ -27,7 +26,15 @@ class CompileMethod(
     val type: Type
 ) :
     StatementNode() {
-    val frameDescriptor = FrameDescriptor();
+    val frameDescriptor = FrameDescriptor.newBuilder()
+    val slotKinds = mutableListOf<FrameSlotKind>()
+    val slotNames = mutableListOf<String>()
+
+    private fun addSlot(name: String, kind: FrameSlotKind): Int {
+        slotKinds.add(kind)
+        slotNames.add(name)
+        return frameDescriptor.addSlot(kind, name, null)
+    }
 
     var compiled = sortedMapOf<Int, Block>()
 
@@ -51,16 +58,16 @@ class CompileMethod(
 //                CorElementType.VALUETYPE -> TODO()
                 else -> error("Unknown local type encountered: ${local.type}")
             }
-            frameDescriptor.addFrameSlot("local$index", kind)
+            addSlot("local$index", kind)
         } else {
-            frameDescriptor.addFrameSlot("local$index", FrameSlotKind.Object)
+            addSlot("local$index", FrameSlotKind.Object)
         }
     }
 
 
     val argumentSlotMap: Map<String, Int>
         get() {
-            return argumentsSlots.mapIndexed { index, it -> Pair(it.identifier.toString(), index) }.toMap()
+            return argumentsSlots.mapIndexed { index, it -> Pair(slotNames[it], index) }.toMap()
         }
 
     /**
@@ -88,26 +95,25 @@ class CompileMethod(
 //                CorElementType.VALUETYPE -> TODO()
                 else -> error("Unknown local type encountered: ${local.type}")
             }
-            frameDescriptor.addFrameSlot(name, kind)
+            addSlot(name, kind)
         } else {
-            frameDescriptor.addFrameSlot(name, FrameSlotKind.Object)
+            addSlot(name, FrameSlotKind.Object)
         }
-    }.filter { it.kind != FrameSlotKind.Illegal }
+    }.filter { slotKinds[it] != FrameSlotKind.Illegal }
 
     /**
      * Duplicate instructions also use the virtual frame.
      */
     var dupCount = 0
-    fun genDupSlot(kind: FrameSlotKind): FrameSlot {
-//        return frameDescriptor.findOrAddFrameSlot("dup$dupCount", FrameSlotKind.Object)
-        return frameDescriptor.findOrAddFrameSlot("dup${dupCount++}", kind)
+    fun genDupSlot(kind: FrameSlotKind): Int {
+        return addSlot("dup${dupCount++}", kind)
     }
 
     /**
      * Create the MethodBody that will be the RootNode of this method.
      */
     private fun body(dispatchNode: DispatchNode): MethodBody {
-        return MethodBody(method.name, dispatchNode, argumentsSlots.toTypedArray(), frameDescriptor, language)
+        return MethodBody(method.name, dispatchNode, argumentsSlots.toTypedArray(), frameDescriptor.build(), language)
     }
 
     val runtime = Truffle.getRuntime()
@@ -117,10 +123,10 @@ class CompileMethod(
      */
     fun compileInternal() {
         try {
-            val methodBody = InternalMethod(initialize.internalMethods[method.toString()]!!, frameDescriptor, language)
+            val methodBody = InternalMethod(initialize.internalMethods[method.toString()]!!, frameDescriptor.build(), language)
             val member = type.members.getValue(method.toString())
             if (member is Method) {
-                member.callNode = DirectCallNode.create(runtime.createCallTarget(methodBody))
+                member.callNode = DirectCallNode.create(methodBody.callTarget)
             } else {
                 CompilerDirectives.transferToInterpreter()
                 error("Trying to compile a non method as a method")
@@ -170,7 +176,7 @@ class CompileMethod(
         val methodBody = body(dispatchNode)
         val member = type.members.getValue(method.toString())
         if (member is Method) {
-            member.callNode = DirectCallNode.create(runtime.createCallTarget(methodBody))
+            member.callNode = DirectCallNode.create(methodBody.callTarget)
         } else {
             error("Trying to compile a non method as a method")
         }

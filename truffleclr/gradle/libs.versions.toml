@@ -1,0 +1,24 @@
+[versions]
+kotlin = "2.4.21"
+graalvm = "25.5.5.0.3"
+antlr = "4.13.2"
+clikt = "5.1.0"
+graphviz = "0.18.1"
+junit = "6.1.3"
+
+[libraries]
+truffle-api = { module = "org.graalvm.truffle:truffle-api", version.ref = "graalvm" }
+truffle-dsl-processor = { module = "org.graalvm.truffle:truffle-dsl-processor", version.ref = "graalvm" }
+truffle-runtime = { module = "org.graalvm.truffle:truffle-runtime", version.ref = "graalvm" }
+polyglot = { module = "org.graalvm.polyglot:polyglot", version.ref = "graalvm" }
+antlr-tool = { module = "org.antlr:antlr4", version.ref = "antlr" }
+antlr-runtime = { module = "org.antlr:antlr4-runtime", version.ref = "antlr" }
+clikt = { module = "com.github.ajalt.clikt:clikt", version.ref = "clikt" }
+graphviz = { module = "guru.nidi:graphviz-java", version.ref = "graphviz" }
+junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
