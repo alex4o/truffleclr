@@ -34,7 +34,7 @@ namespace System.Runtime.CompilerServices
         private Task<T> task;
         internal TaskAwaiter(Task<T> value) { task = value; }
         public bool IsCompleted { get { return task.IsCompleted; } }
-        public T GetResult() { return task.Result; }
+        public T GetResult() { return task.GetAwaitedResult(); }
         void IStateMachineAwaiter.Schedule(IAsyncStateMachine machine) { task.Register(machine); }
         public void OnCompleted(Action continuation) { throw new NotSupportedException("Delegate continuations are not supported."); }
         public void UnsafeOnCompleted(Action continuation) { OnCompleted(continuation); }

@@ -26,6 +26,26 @@ class IlAppDomain {
         }
     }
 
+    fun genericTypeName(definition: String, arguments: List<String>): String {
+        val name = arguments.joinToString(",", "$definition<", ">")
+        getType(name).genericInstance = GenericTypeName(definition, arguments)
+        return name
+    }
+
+    fun mapTypeName(name: String, transform: (String) -> String): String {
+        if (name.endsWith("&")) return mapTypeName(name.dropLast(1), transform) + "&"
+        if (name.endsWith("[]")) return mapTypeName(name.dropLast(2), transform) + "[]"
+        val instance = getType(name).genericInstance ?: return transform(name)
+        return genericTypeName(instance.definition, instance.arguments.map { mapTypeName(it, transform) })
+    }
+
+    fun displayTypeName(name: String): String {
+        if (name.endsWith("&")) return displayTypeName(name.dropLast(1)) + "&"
+        if (name.endsWith("[]")) return displayTypeName(name.dropLast(2)) + "[]"
+        val instance = getType(name).genericInstance ?: return name.replace('/', '+')
+        return instance.arguments.joinToString(",", instance.definition.replace('/', '+') + "[", "]") { displayTypeName(it) }
+    }
+
     fun getMethod(id: String): IlMethod? {
         val typeName = id.split("::")[0]
         val methodName = id.split("::")[1]

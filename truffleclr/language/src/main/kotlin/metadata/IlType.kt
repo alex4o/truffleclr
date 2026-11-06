@@ -5,6 +5,7 @@ import runtime.CoreTypeInfo
 
 class IlType(var name: String, val type: CorElementType) {
     var genericParameters: List<String> = emptyList()
+    var genericInstance: GenericTypeName? = null
     var interfaces: List<IlType> = emptyList()
 
     var methods: MutableMap<String, IlMethod> = mutableMapOf()

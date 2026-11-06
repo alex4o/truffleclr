@@ -53,9 +53,18 @@ namespace System.Threading.Tasks
             else lastWaiting.Next = item;
             lastWaiting = item;
         }
-        internal void GetResult()
+        private void WaitForCompletion()
         {
             while (!completed) Scheduler.Step();
+        }
+        public void Wait()
+        {
+            WaitForCompletion();
+            if (failure != null) throw new AggregateException(failure);
+        }
+        internal void GetResult()
+        {
+            WaitForCompletion();
             if (failure != null) throw failure;
         }
     }
@@ -63,7 +72,8 @@ namespace System.Threading.Tasks
     public class Task<T> : Task
     {
         private T result;
-        public T Result { get { GetResult(); return result; } }
+        public T Result { get { Wait(); return result; } }
+        internal T GetAwaitedResult() { GetResult(); return result; }
         public new TaskAwaiter<T> GetAwaiter() { return new TaskAwaiter<T>(this); }
         internal void SetResult(T value) { result = value; Finish(null); }
     }

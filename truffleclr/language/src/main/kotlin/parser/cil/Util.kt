@@ -6,7 +6,6 @@ import org.antlr.v4.runtime.tree.ParseTree
 import metadata.IlAppDomain
 import metadata.IlMethod
 import metadata.IlType
-import metadata.genericDefinitionName
 import java.util.*
 
 fun <T : ParseTree> ParserRuleContext.case(any: T?): Boolean {
@@ -66,10 +65,10 @@ fun test(methodRef: MethodRefContext) {
  */
 fun SlashedNameContext.canonicalName(): String = dottedName().joinToString("/") { it.text.trim('\'') }
 
-fun TypeSpecContext.toClassName(): String {
+fun TypeSpecContext.toClassName(appDomain: IlAppDomain): String {
     return match(this) {
         case(type()) {
-            toParsedType()
+            toClassName(appDomain)
         }
         case(className()) {
             slashedName().canonicalName()
@@ -84,7 +83,7 @@ fun TypeSpecContext.toClassName(): String {
  * Get the metadata of a already parsed class from a TypeContext.
  */
 fun TypeContext.getType(appDomain: IlAppDomain, typeParameters: List<String> = emptyList(), methodParameters: List<String> = emptyList()): IlType =
-    appDomain.getType(toClassName().normalizeParameters(typeParameters, methodParameters))
+    appDomain.getType(toClassName(appDomain).normalizeParameters(appDomain, typeParameters, methodParameters))
 
 fun TyparsClauseContext.parameterNames(): List<String> =
     generateSequence(typars()) { it.typarsRest()?.typars() }.map { parameter ->
@@ -99,23 +98,26 @@ fun TyparsClauseContext.parameterNames(): List<String> =
         parameter.dottedName().text.trim('\'')
     }.toList()
 
-fun String.normalizeParameters(typeParameters: List<String>, methodParameters: List<String> = emptyList()): String =
-    Regex("(!!?)([A-Za-z_][A-Za-z_0-9]*)").replace(this) { match ->
-        val parameters = if (match.groupValues[1] == "!!") methodParameters else typeParameters
-        val index = parameters.indexOf(match.groupValues[2])
-        require(index >= 0) { "Unknown generic parameter "+match.value }
-        match.groupValues[1] + index
+fun String.normalizeParameters(appDomain: IlAppDomain, typeParameters: List<String>, methodParameters: List<String> = emptyList()): String =
+    appDomain.mapTypeName(this) { text ->
+        Regex("(!!?)([A-Za-z_][A-Za-z_0-9]*)").replace(text) { match ->
+            val parameters = if (match.groupValues[1] == "!!") methodParameters else typeParameters
+            val index = parameters.indexOf(match.groupValues[2])
+            require(index >= 0) { "Unknown generic parameter "+match.value }
+            match.groupValues[1] + index
+        }
     }
 
 /**
  * Parse the class name from a TypeContext
  */
-fun TypeContext.toClassName(): String {
+fun TypeContext.toClassName(appDomain: IlAppDomain): String {
     return when (this) {
-        is TypeGenericContext -> type().toClassName() + tyArgs1().tyArgs2().type().joinToString(",", "<", ">") { it.toClassName() }
+        is TypeGenericContext -> appDomain.genericTypeName(type().toClassName(appDomain),
+            tyArgs1().tyArgs2().type().map { it.toClassName(appDomain) })
         is TypeU1Context, is TypeU2Context, is TypeU3Context, is TypeU4Context -> text
-        is TypeManageRefContext -> type().toClassName() + "&"
-        is TypeArrayContext -> type().toClassName() + "[]"
+        is TypeManageRefContext -> type().toClassName(appDomain) + "&"
+        is TypeArrayContext -> type().toClassName(appDomain) + "[]"
         is TypeNativeContext -> "System.IntPtr"
         is TypeClassContext -> {
             className()?.slashedName()?.canonicalName() ?: "System.Object"
@@ -167,9 +169,10 @@ fun MethodVisitor.extractFromMethodRefTest(methodRef: MethodRefContext): IlMetho
     }, "$1")
 
 
-    val className: String = methodRef.typeSpec().toClassName()
+    val className: String = methodRef.typeSpec().toClassName(appDomain)
 
-    val ownerDefinition = appDomain.getType(className.genericDefinitionName())
+    val owner = appDomain.getType(className)
+    val ownerDefinition = owner.genericInstance?.let { appDomain.getType(it.definition) } ?: owner
     val signature = methodRef.type().text + methodRef.sigArgs0().text
     val namedParameters = Regex("!!([A-Za-z_][A-Za-z_0-9]*)").findAll(signature).map { it.groupValues[1] }.toSet()
     val methodParameters = if (namedParameters.isEmpty()) emptyList() else {
@@ -197,11 +200,11 @@ fun MethodVisitor.extractFromMethodRefTest(methodRef: MethodRefContext): IlMetho
     }
 
     val method = IlMethod(methodName, arguments)
-    method.memberOf = appDomain.getType(className.normalizeParameters(this.method.memberOf!!.genericParameters, this.method.genericParameters))
+    method.memberOf = appDomain.getType(className.normalizeParameters(appDomain, this.method.memberOf!!.genericParameters, this.method.genericParameters))
     method.returnType = methodRef.type().getType(appDomain, ownerDefinition.genericParameters, methodParameters)
     method.static = methodRef.callConv().K_INSTANCE().isEmpty()
     method.genericArguments = methodRef.tyArgs0()?.tyArgs1()?.tyArgs2()?.type()?.map {
-        appDomain.getType(it.toClassName().normalizeParameters(this.method.memberOf!!.genericParameters, this.method.genericParameters))
+        appDomain.getType(it.toClassName(appDomain).normalizeParameters(appDomain, this.method.memberOf!!.genericParameters, this.method.genericParameters))
     } ?: emptyList()
     return method
 }
@@ -214,4 +217,4 @@ class ParsedType() {
  * Transforms cil types to be CTS type names.
  * I don't understand why the need for 3 different type systems in the CLI.
  */
-fun TypeContext.toParsedType(): String = toClassName()
+fun TypeContext.toParsedType(appDomain: IlAppDomain): String = toClassName(appDomain)

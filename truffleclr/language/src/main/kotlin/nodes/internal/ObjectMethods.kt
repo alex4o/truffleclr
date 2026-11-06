@@ -3,6 +3,7 @@ package nodes.internal
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary
 import com.oracle.truffle.api.frame.VirtualFrame
 import main.bytecode.ManagedReference
+import main.Clr
 import nodes.ExpressionNode
 import runtime.ClrObject
 import types.CTSNull
@@ -11,11 +12,30 @@ class ObjectTypeName : ExpressionNode() {
     override fun execute(env: VirtualFrame): Any = typeName(env.arguments[0])
     @TruffleBoundary
     private fun typeName(value: Any): String = when (value) {
-        is ManagedReference.Box -> value.type.name.replace('/', '+')
-        is ClrObject -> value.type.name.replace('/', '+')
+        is ManagedReference.Box -> value.type.displayName
+        is ClrObject -> value.type.displayName
         is String -> "System.String"
-        else -> "System.Array"
+        else -> checkNotNull(arrayTypeName(value)) { "Unknown CLR object type: " + value.javaClass.name }
     }
+}
+
+@TruffleBoundary
+internal fun arrayTypeName(value: Any): String? {
+    Clr.contextReference.get(null).arrayTypeNames[value]?.let { return it }
+    val element = when (value) {
+        is ManagedReference.ObjectArray -> value.type.displayName
+        is BooleanArray -> "System.Boolean"
+        is ByteArray -> "System.Byte"
+        is ShortArray -> "System.Int16"
+        is CharArray -> "System.Char"
+        is IntArray -> "System.Int32"
+        is LongArray -> "System.Int64"
+        is FloatArray -> "System.Single"
+        is DoubleArray -> "System.Double"
+        is Array<*> -> if (value.javaClass.componentType == String::class.java) "System.String" else "System.Object"
+        else -> return null
+    }
+    return "$element[]"
 }
 
 class IdentityHashCode : ExpressionNode() {

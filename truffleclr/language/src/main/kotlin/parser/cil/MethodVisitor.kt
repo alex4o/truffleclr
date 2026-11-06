@@ -4,7 +4,6 @@ import Cil.CilParser
 import metadata.CodeBoundary
 import metadata.IlAppDomain
 import metadata.IlMethod
-import metadata.genericDefinitionName
 import metadata.instruction.*
 
 /**
@@ -83,7 +82,7 @@ class MethodVisitor(var appDomain: IlAppDomain, var method: IlMethod) : Cil.CilB
                 else -> "fault"
             }
             method.exceptionClauses.add(metadata.ExceptionClause(start, end, handlerStart, handlerEnd,
-                kind, clause.catchClause()?.typeSpec()?.toClassName(), filterStart))
+                kind, clause.catchClause()?.typeSpec()?.toClassName(appDomain), filterStart))
             clauses = clauses.sehClauses()
         }
         return method
@@ -100,9 +99,10 @@ class MethodVisitor(var appDomain: IlAppDomain, var method: IlMethod) : Cil.CilB
     }
 
     override fun visitMethod_override(ctx: CilParser.Method_overrideContext): Any {
-        val owner = ctx.typeSpec().toClassName()
+        val owner = ctx.typeSpec().toClassName(appDomain)
         val name = ctx.methodName().text.trim('\'')
-        val ownerDefinition = appDomain.getType(owner.genericDefinitionName())
+        val ownerType = appDomain.getType(owner)
+        val ownerDefinition = ownerType.genericInstance?.let { appDomain.getType(it.definition) } ?: ownerType
         val signature = (ctx.type()?.text ?: "") + (ctx.sigArgs0()?.text ?: "")
         val namedParameters = Regex("!!([A-Za-z_][A-Za-z_0-9]*)").findAll(signature).map { it.groupValues[1] }.toSet()
         val methodParameters = if (namedParameters.isEmpty()) emptyList() else {
@@ -120,7 +120,7 @@ class MethodVisitor(var appDomain: IlAppDomain, var method: IlMethod) : Cil.CilB
         } ?: method.arguments
         val reference = IlMethod(name, arguments)
         reference.genericParameters = methodParameters
-        reference.memberOf = appDomain.getType(owner.normalizeParameters(method.memberOf!!.genericParameters, method.genericParameters))
+        reference.memberOf = appDomain.getType(owner.normalizeParameters(appDomain, method.memberOf!!.genericParameters, method.genericParameters))
         reference.returnType = ctx.type()?.getType(appDomain, ownerDefinition.genericParameters, methodParameters) ?: method.returnType
         method.overrideReferences.add(reference)
         return method
@@ -209,10 +209,10 @@ class MethodVisitor(var appDomain: IlAppDomain, var method: IlMethod) : Cil.CilB
                     InstructionString(INSTR_STRING().toString(), compQstring().text.replace("\\t", "\t"))
                 }
                 is CilParser.Instr_typeContext -> {
-                    InstructionType(INSTR_TYPE().text, typeSpec().toClassName().normalizeParameters(method.memberOf!!.genericParameters, method.genericParameters))
+                    InstructionType(INSTR_TYPE().text, typeSpec().toClassName(appDomain).normalizeParameters(appDomain, method.memberOf!!.genericParameters, method.genericParameters))
                 }
                 is CilParser.Instr_fieldContext -> {
-                    InstructionField(INSTR_FIELD().text, type().toClassName(), typeSpec().toClassName().normalizeParameters(method.memberOf!!.genericParameters, method.genericParameters), dottedName().text.trim('\''))
+                    InstructionField(INSTR_FIELD().text, type().toClassName(appDomain), typeSpec().toClassName(appDomain).normalizeParameters(appDomain, method.memberOf!!.genericParameters, method.genericParameters), dottedName().text.trim('\''))
                 }
                 is CilParser.Instr_varContext -> {
                     if (id() != null) {

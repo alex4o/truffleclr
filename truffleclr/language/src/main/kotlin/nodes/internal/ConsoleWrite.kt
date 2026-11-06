@@ -25,7 +25,7 @@ class ConsoleWrite(private val argumentType: CorElementType = CorElementType.OBJ
             value is ManagedReference.Box -> value.toString()
             value is Boolean -> if (value) "True" else "False"
             value is Double || value is Float -> DecimalFormat.getInstance().apply { maximumFractionDigits = 15 }.format(value)
-            else -> value.toString()
+            else -> arrayTypeName(value) ?: value.toString()
         }
         val stream = Clr.contextReference.get(this).output
         if (newline) stream.println(formatted) else stream.print(formatted)

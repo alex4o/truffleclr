@@ -20,7 +20,11 @@ class MathFunction(private val operation: String) : ExpressionNode() {
             "Sqrt" -> Math.sqrt(a)
             "Min" -> Math.min(a, (env.arguments[1] as Number).toDouble())
             "Max" -> Math.max(a, (env.arguments[1] as Number).toDouble())
-            "Pow" -> Math.pow(a, (env.arguments[1] as Number).toDouble())
+            "Pow" -> {
+                val exponent = (env.arguments[1] as Number).toDouble()
+                // .NET follows C pow: these identities also hold for NaN/infinite exponents.
+                if (a == 1.0 || a == -1.0 && exponent.isInfinite()) 1.0 else Math.pow(a, exponent)
+            }
             "Atan2" -> Math.atan2(a, (env.arguments[1] as Number).toDouble())
             else -> error(operation)
         }

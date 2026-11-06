@@ -11,7 +11,7 @@ import runtime.util.Keys
 import types.CTSNull
 
 @ExportLibrary(InteropLibrary::class)
-class Type(val name: String, val baseType: Type?): TruffleObject {
+class Type(val name: String, val baseType: Type?, val displayName: String = name): TruffleObject {
     // TODO: a single field will be a single type you wont be able to have two fields with the same names and different types
     @JvmField
     val members: MutableMap<String, TruffleObject> = mutableMapOf()

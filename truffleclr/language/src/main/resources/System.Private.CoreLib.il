@@ -18,10 +18,10 @@
                                                                                       65 2E 43 6F 72 65 4C 69 62 00 00 )                // e.CoreLib..
   .custom instance void System.Reflection.AssemblyConfigurationAttribute::.ctor(string) = ( 01 00 05 44 65 62 75 67 00 00 )                   // ...Debug..
   .custom instance void System.Reflection.AssemblyFileVersionAttribute::.ctor(string) = ( 01 00 07 31 2E 30 2E 30 2E 30 00 00 )             // ...1.0.0.0..
-  .custom instance void System.Reflection.AssemblyInformationalVersionAttribute::.ctor(string) = ( 01 00 2E 31 2E 30 2E 30 2B 63 35 38 65 63 38 33   // ...1.0.0+c58ec83
-                                                                                                   31 34 64 34 37 64 37 32 34 31 65 64 31 61 35 36   // 14d47d7241ed1a56
-                                                                                                   30 32 36 38 63 35 66 30 37 63 61 63 65 61 35 33   // 0268c5f07cacea53
-                                                                                                   32 00 00 )                                        // 2..
+  .custom instance void System.Reflection.AssemblyInformationalVersionAttribute::.ctor(string) = ( 01 00 2E 31 2E 30 2E 30 2B 63 33 36 34 65 64 36   // ...1.0.0+c364ed6
+                                                                                                   39 36 64 62 33 31 36 66 33 33 38 35 65 38 64 33   // 96db316f3385e8d3
+                                                                                                   65 63 62 32 34 64 37 66 63 66 37 31 30 64 63 33   // ecb24d7fcf710dc3
+                                                                                                   61 00 00 )                                        // a..
   .custom instance void System.Reflection.AssemblyProductAttribute::.ctor(string) = ( 01 00 16 53 79 73 74 65 6D 2E 50 72 69 76 61 74   // ...System.Privat
                                                                                       65 2E 43 6F 72 65 4C 69 62 00 00 )                // e.CoreLib..
   .custom instance void System.Reflection.AssemblyTitleAttribute::.ctor(string) = ( 01 00 16 53 79 73 74 65 6D 2E 50 72 69 76 61 74   // ...System.Privat
@@ -30,14 +30,14 @@
   .ver 1:0:0:0
 }
 .module System.Private.CoreLib.dll
-// MVID: {0e1cf937-f4ad-4544-80b3-6d07c5d833c4}
+// MVID: {60ecfed5-b83a-4e68-aba8-d71306a3ae42}
 .custom instance void System.Runtime.CompilerServices.RefSafetyRulesAttribute::.ctor(int32) = ( 01 00 0B 00 00 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x0x102e7c000
+// Image base: 0x0x104cf8000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -166,6 +166,288 @@
   } // end of method RefSafetyRulesAttribute::.ctor
 
 } // end of class System.Runtime.CompilerServices.RefSafetyRulesAttribute
+
+.class public auto ansi beforefieldinit System.AggregateException
+       extends System.Exception
+{
+  .field private initonly class System.Collections.ObjectModel.ReadOnlyCollection`1<class System.Exception> innerExceptions
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor() cil managed
+  {
+    // Code size       14 (0xe)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldstr      "One or more errors occurred."
+    IL_0006:  call       instance void System.AggregateException::.ctor(string)
+    IL_000b:  nop
+    IL_000c:  nop
+    IL_000d:  ret
+  } // end of method AggregateException::.ctor
+
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor(string message) cil managed
+  {
+    // Code size       27 (0x1b)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.1
+    IL_0002:  call       instance void System.Exception::.ctor(string)
+    IL_0007:  nop
+    IL_0008:  nop
+    IL_0009:  ldarg.0
+    IL_000a:  ldc.i4.0
+    IL_000b:  newarr     System.Exception
+    IL_0010:  newobj     instance void class System.Collections.ObjectModel.ReadOnlyCollection`1<class System.Exception>::.ctor(!0[])
+    IL_0015:  stfld      class System.Collections.ObjectModel.ReadOnlyCollection`1<class System.Exception> System.AggregateException::innerExceptions
+    IL_001a:  ret
+  } // end of method AggregateException::.ctor
+
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor(class System.Exception innerException) cil managed
+  {
+    // Code size       15 (0xf)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldstr      "One or more errors occurred."
+    IL_0006:  ldarg.1
+    IL_0007:  call       instance void System.AggregateException::.ctor(string,
+                                                                        class System.Exception)
+    IL_000c:  nop
+    IL_000d:  nop
+    IL_000e:  ret
+  } // end of method AggregateException::.ctor
+
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor(string message,
+                               class System.Exception innerException) cil managed
+  {
+    // Code size       46 (0x2e)
+    .maxstack  5
+    .locals init (bool V_0)
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.1
+    IL_0002:  ldarg.2
+    IL_0003:  call       instance void System.Exception::.ctor(string,
+                                                               class System.Exception)
+    IL_0008:  nop
+    IL_0009:  nop
+    IL_000a:  ldarg.2
+    IL_000b:  ldnull
+    IL_000c:  ceq
+    IL_000e:  stloc.0
+    IL_000f:  ldloc.0
+    IL_0010:  brfalse.s  IL_0018
+
+    IL_0012:  newobj     instance void System.ArgumentNullException::.ctor()
+    IL_0017:  throw
+
+    IL_0018:  ldarg.0
+    IL_0019:  ldc.i4.1
+    IL_001a:  newarr     System.Exception
+    IL_001f:  dup
+    IL_0020:  ldc.i4.0
+    IL_0021:  ldarg.2
+    IL_0022:  stelem.ref
+    IL_0023:  newobj     instance void class System.Collections.ObjectModel.ReadOnlyCollection`1<class System.Exception>::.ctor(!0[])
+    IL_0028:  stfld      class System.Collections.ObjectModel.ReadOnlyCollection`1<class System.Exception> System.AggregateException::innerExceptions
+    IL_002d:  ret
+  } // end of method AggregateException::.ctor
+
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor(class System.Exception[] exceptions) cil managed
+  {
+    // Code size       15 (0xf)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldstr      "One or more errors occurred."
+    IL_0006:  ldarg.1
+    IL_0007:  call       instance void System.AggregateException::.ctor(string,
+                                                                        class System.Exception[])
+    IL_000c:  nop
+    IL_000d:  nop
+    IL_000e:  ret
+  } // end of method AggregateException::.ctor
+
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor(string message,
+                               class System.Exception[] exceptions) cil managed
+  {
+    // Code size       84 (0x54)
+    .maxstack  4
+    .locals init (class System.Exception[] V_0,
+             int32 V_1,
+             bool V_2,
+             bool V_3)
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.1
+    IL_0002:  ldarg.2
+    IL_0003:  call       class System.Exception System.AggregateException::First(class System.Exception[])
+    IL_0008:  call       instance void System.Exception::.ctor(string,
+                                                               class System.Exception)
+    IL_000d:  nop
+    IL_000e:  nop
+    IL_000f:  ldarg.2
+    IL_0010:  ldlen
+    IL_0011:  conv.i4
+    IL_0012:  newarr     System.Exception
+    IL_0017:  stloc.0
+    IL_0018:  ldc.i4.0
+    IL_0019:  stloc.1
+    IL_001a:  br.s       IL_003d
+
+    IL_001c:  nop
+    IL_001d:  ldarg.2
+    IL_001e:  ldloc.1
+    IL_001f:  ldelem.ref
+    IL_0020:  ldnull
+    IL_0021:  ceq
+    IL_0023:  stloc.2
+    IL_0024:  ldloc.2
+    IL_0025:  brfalse.s  IL_0032
+
+    IL_0027:  ldstr      "An element of innerExceptions was null."
+    IL_002c:  newobj     instance void System.ArgumentException::.ctor(string)
+    IL_0031:  throw
+
+    IL_0032:  ldloc.0
+    IL_0033:  ldloc.1
+    IL_0034:  ldarg.2
+    IL_0035:  ldloc.1
+    IL_0036:  ldelem.ref
+    IL_0037:  stelem.ref
+    IL_0038:  nop
+    IL_0039:  ldloc.1
+    IL_003a:  ldc.i4.1
+    IL_003b:  add
+    IL_003c:  stloc.1
+    IL_003d:  ldloc.1
+    IL_003e:  ldarg.2
+    IL_003f:  ldlen
+    IL_0040:  conv.i4
+    IL_0041:  clt
+    IL_0043:  stloc.3
+    IL_0044:  ldloc.3
+    IL_0045:  brtrue.s   IL_001c
+
+    IL_0047:  ldarg.0
+    IL_0048:  ldloc.0
+    IL_0049:  newobj     instance void class System.Collections.ObjectModel.ReadOnlyCollection`1<class System.Exception>::.ctor(!0[])
+    IL_004e:  stfld      class System.Collections.ObjectModel.ReadOnlyCollection`1<class System.Exception> System.AggregateException::innerExceptions
+    IL_0053:  ret
+  } // end of method AggregateException::.ctor
+
+  .method private hidebysig static class System.Exception 
+          First(class System.Exception[] exceptions) cil managed
+  {
+    // Code size       30 (0x1e)
+    .maxstack  2
+    .locals init (bool V_0,
+             class System.Exception V_1)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  ldnull
+    IL_0003:  ceq
+    IL_0005:  stloc.0
+    IL_0006:  ldloc.0
+    IL_0007:  brfalse.s  IL_000f
+
+    IL_0009:  newobj     instance void System.ArgumentNullException::.ctor()
+    IL_000e:  throw
+
+    IL_000f:  ldarg.0
+    IL_0010:  ldlen
+    IL_0011:  brfalse.s  IL_0018
+
+    IL_0013:  ldarg.0
+    IL_0014:  ldc.i4.0
+    IL_0015:  ldelem.ref
+    IL_0016:  br.s       IL_0019
+
+    IL_0018:  ldnull
+    IL_0019:  stloc.1
+    IL_001a:  br.s       IL_001c
+
+    IL_001c:  ldloc.1
+    IL_001d:  ret
+  } // end of method AggregateException::First
+
+  .method public hidebysig specialname instance class System.Collections.ObjectModel.ReadOnlyCollection`1<class System.Exception> 
+          get_InnerExceptions() cil managed
+  {
+    // Code size       12 (0xc)
+    .maxstack  1
+    .locals init (class System.Collections.ObjectModel.ReadOnlyCollection`1<class System.Exception> V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  ldfld      class System.Collections.ObjectModel.ReadOnlyCollection`1<class System.Exception> System.AggregateException::innerExceptions
+    IL_0007:  stloc.0
+    IL_0008:  br.s       IL_000a
+
+    IL_000a:  ldloc.0
+    IL_000b:  ret
+  } // end of method AggregateException::get_InnerExceptions
+
+  .method public hidebysig specialname virtual 
+          instance string  get_Message() cil managed
+  {
+    // Code size       74 (0x4a)
+    .maxstack  4
+    .locals init (string V_0,
+             int32 V_1,
+             bool V_2,
+             string V_3)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  call       instance string System.Exception::get_Message()
+    IL_0007:  stloc.0
+    IL_0008:  ldc.i4.0
+    IL_0009:  stloc.1
+    IL_000a:  br.s       IL_0032
+
+    IL_000c:  ldloc.0
+    IL_000d:  ldstr      " ("
+    IL_0012:  ldarg.0
+    IL_0013:  ldfld      class System.Collections.ObjectModel.ReadOnlyCollection`1<class System.Exception> System.AggregateException::innerExceptions
+    IL_0018:  ldloc.1
+    IL_0019:  callvirt   instance !0 class System.Collections.ObjectModel.ReadOnlyCollection`1<class System.Exception>::get_Item(int32)
+    IL_001e:  callvirt   instance string System.Exception::get_Message()
+    IL_0023:  ldstr      ")"
+    IL_0028:  call       string System.String::Concat(string,
+                                                      string,
+                                                      string,
+                                                      string)
+    IL_002d:  stloc.0
+    IL_002e:  ldloc.1
+    IL_002f:  ldc.i4.1
+    IL_0030:  add
+    IL_0031:  stloc.1
+    IL_0032:  ldloc.1
+    IL_0033:  ldarg.0
+    IL_0034:  ldfld      class System.Collections.ObjectModel.ReadOnlyCollection`1<class System.Exception> System.AggregateException::innerExceptions
+    IL_0039:  callvirt   instance int32 class System.Collections.ObjectModel.ReadOnlyCollection`1<class System.Exception>::get_Count()
+    IL_003e:  clt
+    IL_0040:  stloc.2
+    IL_0041:  ldloc.2
+    IL_0042:  brtrue.s   IL_000c
+
+    IL_0044:  ldloc.0
+    IL_0045:  stloc.3
+    IL_0046:  br.s       IL_0048
+
+    IL_0048:  ldloc.3
+    IL_0049:  ret
+  } // end of method AggregateException::get_Message
+
+  .property instance callconv(8) class System.Collections.ObjectModel.ReadOnlyCollection`1<class System.Exception>
+          InnerExceptions()
+  {
+    .get instance class System.Collections.ObjectModel.ReadOnlyCollection`1<class System.Exception> System.AggregateException::get_InnerExceptions()
+  } // end of property AggregateException::InnerExceptions
+  .property instance callconv(8) string Message()
+  {
+    .get instance string System.AggregateException::get_Message()
+  } // end of property AggregateException::Message
+} // end of class System.AggregateException
 
 .class public abstract auto ansi beforefieldinit System.Array
        extends System.Object
@@ -2229,6 +2511,13 @@
   .size 1
 } // end of class System.UInt64
 
+.class public sequential ansi sealed beforefieldinit System.UIntPtr
+       extends System.ValueType
+{
+  .pack 0
+  .size 1
+} // end of class System.UIntPtr
+
 .class public sequential ansi sealed beforefieldinit System.Single
        extends System.ValueType
 {
@@ -3137,13 +3426,12 @@
     IL_0045:  ret
   } // end of method Task::Register
 
-  .method assembly hidebysig instance void 
-          GetResult() cil managed
+  .method private hidebysig instance void 
+          WaitForCompletion() cil managed
   {
-    // Code size       43 (0x2b)
+    // Code size       23 (0x17)
     .maxstack  2
-    .locals init (bool V_0,
-             bool V_1)
+    .locals init (bool V_0)
     IL_0000:  nop
     IL_0001:  br.s       IL_0009
 
@@ -3157,19 +3445,58 @@
     IL_0013:  ldloc.0
     IL_0014:  brtrue.s   IL_0003
 
-    IL_0016:  ldarg.0
-    IL_0017:  ldfld      class System.Exception System.Threading.Tasks.Task::failure
-    IL_001c:  ldnull
-    IL_001d:  cgt.un
-    IL_001f:  stloc.1
-    IL_0020:  ldloc.1
-    IL_0021:  brfalse.s  IL_002a
+    IL_0016:  ret
+  } // end of method Task::WaitForCompletion
 
-    IL_0023:  ldarg.0
-    IL_0024:  ldfld      class System.Exception System.Threading.Tasks.Task::failure
-    IL_0029:  throw
+  .method public hidebysig instance void 
+          Wait() cil managed
+  {
+    // Code size       34 (0x22)
+    .maxstack  2
+    .locals init (bool V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  call       instance void System.Threading.Tasks.Task::WaitForCompletion()
+    IL_0007:  nop
+    IL_0008:  ldarg.0
+    IL_0009:  ldfld      class System.Exception System.Threading.Tasks.Task::failure
+    IL_000e:  ldnull
+    IL_000f:  cgt.un
+    IL_0011:  stloc.0
+    IL_0012:  ldloc.0
+    IL_0013:  brfalse.s  IL_0021
 
-    IL_002a:  ret
+    IL_0015:  ldarg.0
+    IL_0016:  ldfld      class System.Exception System.Threading.Tasks.Task::failure
+    IL_001b:  newobj     instance void System.AggregateException::.ctor(class System.Exception)
+    IL_0020:  throw
+
+    IL_0021:  ret
+  } // end of method Task::Wait
+
+  .method assembly hidebysig instance void 
+          GetResult() cil managed
+  {
+    // Code size       29 (0x1d)
+    .maxstack  2
+    .locals init (bool V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  call       instance void System.Threading.Tasks.Task::WaitForCompletion()
+    IL_0007:  nop
+    IL_0008:  ldarg.0
+    IL_0009:  ldfld      class System.Exception System.Threading.Tasks.Task::failure
+    IL_000e:  ldnull
+    IL_000f:  cgt.un
+    IL_0011:  stloc.0
+    IL_0012:  ldloc.0
+    IL_0013:  brfalse.s  IL_001c
+
+    IL_0015:  ldarg.0
+    IL_0016:  ldfld      class System.Exception System.Threading.Tasks.Task::failure
+    IL_001b:  throw
+
+    IL_001c:  ret
   } // end of method Task::GetResult
 
   .method public hidebysig specialname rtspecialname 
@@ -3220,7 +3547,7 @@
     .locals init (!T V_0)
     IL_0000:  nop
     IL_0001:  ldarg.0
-    IL_0002:  call       instance void System.Threading.Tasks.Task::GetResult()
+    IL_0002:  call       instance void System.Threading.Tasks.Task::Wait()
     IL_0007:  nop
     IL_0008:  ldarg.0
     IL_0009:  ldfld      !0 class System.Threading.Tasks.Task`1<!T>::result
@@ -3230,6 +3557,25 @@
     IL_0011:  ldloc.0
     IL_0012:  ret
   } // end of method Task`1::get_Result
+
+  .method assembly hidebysig instance !T 
+          GetAwaitedResult() cil managed
+  {
+    // Code size       19 (0x13)
+    .maxstack  1
+    .locals init (!T V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  call       instance void System.Threading.Tasks.Task::GetResult()
+    IL_0007:  nop
+    IL_0008:  ldarg.0
+    IL_0009:  ldfld      !0 class System.Threading.Tasks.Task`1<!T>::result
+    IL_000e:  stloc.0
+    IL_000f:  br.s       IL_0011
+
+    IL_0011:  ldloc.0
+    IL_0012:  ret
+  } // end of method Task`1::GetAwaitedResult
 
   .method public hidebysig instance valuetype System.Runtime.CompilerServices.TaskAwaiter`1<!T> 
           GetAwaiter() cil managed
@@ -3801,7 +4147,7 @@
     IL_0000:  nop
     IL_0001:  ldarg.0
     IL_0002:  ldfld      class System.Threading.Tasks.Task`1<!0> valuetype System.Runtime.CompilerServices.TaskAwaiter`1<!T>::task
-    IL_0007:  callvirt   instance !0 class System.Threading.Tasks.Task`1<!T>::get_Result()
+    IL_0007:  callvirt   instance !0 class System.Threading.Tasks.Task`1<!T>::GetAwaitedResult()
     IL_000c:  stloc.0
     IL_000d:  br.s       IL_000f
 
@@ -5315,6 +5661,95 @@
   } // end of method File::.ctor
 
 } // end of class System.IO.File
+
+.class public auto ansi beforefieldinit System.Collections.ObjectModel.ReadOnlyCollection`1<T>
+       extends System.Object
+{
+  .custom instance void System.Reflection.DefaultMemberAttribute::.ctor(string) = ( 01 00 04 49 74 65 6D 00 00 )                      // ...Item..
+  .field private initonly !T[] items
+  .method assembly hidebysig specialname rtspecialname 
+          instance void  .ctor(!T[] values) cil managed
+  {
+    // Code size       16 (0x10)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  call       instance void System.Object::.ctor()
+    IL_0006:  nop
+    IL_0007:  nop
+    IL_0008:  ldarg.0
+    IL_0009:  ldarg.1
+    IL_000a:  stfld      !0[] class System.Collections.ObjectModel.ReadOnlyCollection`1<!T>::items
+    IL_000f:  ret
+  } // end of method ReadOnlyCollection`1::.ctor
+
+  .method public hidebysig specialname instance int32 
+          get_Count() cil managed
+  {
+    // Code size       14 (0xe)
+    .maxstack  1
+    .locals init (int32 V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  ldfld      !0[] class System.Collections.ObjectModel.ReadOnlyCollection`1<!T>::items
+    IL_0007:  ldlen
+    IL_0008:  conv.i4
+    IL_0009:  stloc.0
+    IL_000a:  br.s       IL_000c
+
+    IL_000c:  ldloc.0
+    IL_000d:  ret
+  } // end of method ReadOnlyCollection`1::get_Count
+
+  .method public hidebysig specialname instance !T 
+          get_Item(int32 index) cil managed
+  {
+    // Code size       49 (0x31)
+    .maxstack  2
+    .locals init (bool V_0,
+             !T V_1)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  ldc.i4.0
+    IL_0003:  blt.s      IL_0015
+
+    IL_0005:  ldarg.1
+    IL_0006:  ldarg.0
+    IL_0007:  ldfld      !0[] class System.Collections.ObjectModel.ReadOnlyCollection`1<!T>::items
+    IL_000c:  ldlen
+    IL_000d:  conv.i4
+    IL_000e:  clt
+    IL_0010:  ldc.i4.0
+    IL_0011:  ceq
+    IL_0013:  br.s       IL_0016
+
+    IL_0015:  ldc.i4.1
+    IL_0016:  stloc.0
+    IL_0017:  ldloc.0
+    IL_0018:  brfalse.s  IL_0020
+
+    IL_001a:  newobj     instance void System.ArgumentOutOfRangeException::.ctor()
+    IL_001f:  throw
+
+    IL_0020:  ldarg.0
+    IL_0021:  ldfld      !0[] class System.Collections.ObjectModel.ReadOnlyCollection`1<!T>::items
+    IL_0026:  ldarg.1
+    IL_0027:  ldelem     !T
+    IL_002c:  stloc.1
+    IL_002d:  br.s       IL_002f
+
+    IL_002f:  ldloc.1
+    IL_0030:  ret
+  } // end of method ReadOnlyCollection`1::get_Item
+
+  .property instance callconv(8) int32 Count()
+  {
+    .get instance int32 System.Collections.ObjectModel.ReadOnlyCollection`1::get_Count()
+  } // end of property ReadOnlyCollection`1::Count
+  .property instance callconv(8) !T Item(int32)
+  {
+    .get instance !T System.Collections.ObjectModel.ReadOnlyCollection`1::get_Item(int32)
+  } // end of property ReadOnlyCollection`1::Item
+} // end of class System.Collections.ObjectModel.ReadOnlyCollection`1
 
 
 // =============================================================
