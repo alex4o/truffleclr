@@ -227,6 +227,14 @@ public abstract class CilRootNode extends RootNode implements BytecodeRootNode {
     public static final class Invoke4 {
         @Specialization static Object invoke(Method method, Object v0, Object v1, Object v2, Object v3, @Cached("create(method.getCallTarget())") DirectCallNode call) { return call.call(v0, v1, v2, v3); }
     }
+    @Operation @ConstantOperand(type = Method.class)
+    public static final class InvokeNonVirtual {
+        @Specialization static Object execute(Method method, @Variadic Object[] args,
+                @Cached("create(method.getCallTarget())") DirectCallNode call) {
+            if (args[0] == null || args[0] == types.CTSNull.INSTANCE) throw new NullPointerException("callvirt receiver");
+            return call.call(args);
+        }
+    }
     @Operation @ConstantOperand(type = int.class)
     public static final class InvokeVirtual {
         static Type type(Object[] args) { return ((ClrObject) args[0]).getType(); }

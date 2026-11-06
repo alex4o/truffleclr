@@ -60,7 +60,10 @@ class ClassVisitor(var appDomain: IlAppDomain, var type: IlType) : Cil.CilBaseVi
             arguments
         )
 
-        method.static = ctx.methodHead().methAttr().map { it.text }.toSet().contains("static")
+        val attributes = ctx.methodHead().methAttr().map { it.text }.toSet()
+        method.static = "static" in attributes
+        method.virtual = "virtual" in attributes
+        method.newSlot = "newslot" in attributes
         method.abstract = ctx.methodHead().methAttr().map { it.text }.toSet().contains("abstract")
         method.internal = ctx.methodHead().implAttr().map { it.text }.toSet().contains("internalcall")
         method.memberOf = type

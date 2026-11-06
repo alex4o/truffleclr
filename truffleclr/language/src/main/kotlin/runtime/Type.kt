@@ -35,12 +35,11 @@ class Type(val name: String, val baseType: Type?): TruffleObject {
     private var initializing = false
     private var initializationFailure: Throwable? = null
 
-    fun resolveField(name: String, static: Boolean): Field =
-        (if (static) staticFields[name] else instanceFields[name])
-            ?: baseType?.resolveField(name, static) ?: error("No field $name in "+this.name)
+    fun resolveField(name: String): Field =
+        members[name] as? Field ?: baseType?.resolveField(name) ?: error("No field $name in "+this.name)
 
-    /** Initialize on first field access, newobj or method entry (except .cctor).
-     * This also eagerly initializes beforefieldinit types on their first method call.
+    /** Triggered by static field access, static methods and instance constructors.
+     * beforefieldinit types may also initialize on their first instance method call.
      * Reentrant accesses see the zeroed storage; a failed initializer is never rerun.
      */
     fun ensureInitialized() {

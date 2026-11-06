@@ -32,8 +32,12 @@ class Initialize(appDomain: IlAppDomain, val context: ClrContext, val language: 
             type.members[method.toString()] = member
             compileChildren.add(CompileMethod(method, this, language, type))
             if (method.name == ".cctor") type.initializer = member
-            val index = virtualTable.indexOfFirst { it.metadata.toString(false) == method.toString(false) }
-            if (index < 0) virtualTable.add(member) else virtualTable[index] = member
+            if (method.virtual) {
+                val inherited = if (method.newSlot) -1 else
+                    virtualTable.indexOfLast { it.metadata.toString(false) == method.toString(false) }
+                member.virtualSlot = if (inherited < 0) virtualTable.size else inherited
+                if (inherited < 0) virtualTable.add(member) else virtualTable[inherited] = member
+            }
         }
         type.virtualTable = virtualTable.toTypedArray()
         base?.let { type.instanceFields.putAll(it.instanceFields) }

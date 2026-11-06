@@ -128,7 +128,10 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
             b = builder
             b.beginRoot()
             val owner = context.types.getValue(method.memberOf!!.fullName)
-            if (method.name != ".cctor" && owner.initializer != null) b.emitInitializeType(owner)
+            if (method.name != ".cctor" && owner.initializer != null &&
+                (method.static || method.name == ".ctor" || "beforefieldinit" in method.memberOf!!.attribtes)) {
+                b.emitInitializeType(owner)
+            }
             locals = method.locals.map { b.createLocal() }
             carry = List(maxStack) { b.createLocal() }
             locals.forEachIndexed { index, local -> store(local) { b.emitLoadConstant(defaultValue(method.locals[index])) } }
@@ -272,7 +275,7 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
     }
     private fun defaultValue(type: IlType): Any = if (!type.isPrimiteive) CTSNull else when (type.type) {
         CorElementType.BOOLEAN -> false
-        CorElementType.I1, CorElementType.U1 -> 0.toByte()
+        CorElementType.I1, CorElementType.U1, CorElementType.I2, CorElementType.U2,
         CorElementType.CHAR, CorElementType.I4, CorElementType.U4 -> 0
         CorElementType.I8, CorElementType.U8 -> 0L
         CorElementType.R4 -> 0.0f
@@ -344,7 +347,19 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
             }
             "ldfld", "stfld" -> {
                 i as InstructionField
-                val field = context.types.getValue(i.member).resolveField(i.name, false)
+                val field = context.types.getValue(i.member).resolveField(i.name)
+                if (field.metadata.static) {
+                    // Materialize both operands in order: the ignored receiver may have effects.
+                    materialize()
+                    if (i.instruction == "ldfld") {
+                        pop()
+                        push { b.emitStaticLoad(field) }
+                    } else {
+                        val value = pop(); pop()
+                        b.beginStaticStore(field); load(value); b.endStaticStore()
+                    }
+                    return
+                }
                 if (i.instruction == "ldfld") { val receiver = pop(); push {
                     when (field.storageType) {
                         Int::class.javaPrimitiveType -> { b.beginFieldLoadInt(field); load(receiver); b.endFieldLoadInt() }
@@ -356,7 +371,8 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
             }
             "ldsfld", "stsfld" -> {
                 i as InstructionField
-                val field = context.types.getValue(i.member).resolveField(i.name, true)
+                val field = context.types.getValue(i.member).resolveField(i.name)
+                require(field.metadata.static) { "Not a static field: $i" }
                 if (i.instruction == "ldsfld") push { b.emitStaticLoad(field) }
                 else { val value = pop(); materialize(); b.beginStaticStore(field); load(value); b.endStaticStore() }
             }
@@ -369,9 +385,12 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
                     when (i.instruction) {
                         "callvirt" -> {
                             require(!callee.static)
-                            val index = type.virtualTable.indexOfFirst { it.metadata.toString(false) == callee.toString(false) }
-                            require(index >= 0) { "No virtual method $callee" }
-                            b.beginInvokeVirtual(index); args.forEach { load(it) }; b.endInvokeVirtual()
+                            val target = type.members.getValue(callee.toString()) as Method
+                            if (target.virtualSlot >= 0) {
+                                b.beginInvokeVirtual(target.virtualSlot); args.forEach { load(it) }; b.endInvokeVirtual()
+                            } else {
+                                b.beginInvokeNonVirtual(target); args.forEach { load(it) }; b.endInvokeNonVirtual()
+                            }
                         }
                         "newobj" -> { b.beginObjectNew(type, type.members.getValue(callee.toString()) as Method, args.size); args.forEach { load(it) }; b.endObjectNew() }
                         else -> { val target = type.members.getValue(callee.toString()) as Method
