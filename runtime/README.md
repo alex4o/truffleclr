@@ -1,14 +1,15 @@
 # Minimal CoreLib
 
-Rebuild on macOS with .NET 10 and the matching native ildasm (the checked-in
-disassembler is Linux-only):
+Rebuild with the .NET 10 SDK; no disassembler is required:
 
 ```sh
 export DOTNET_ROOT=/tmp/dotnet
-make -C runtime DOTNET=/tmp/dotnet/dotnet ILDASM=/Users/alex4o/.cache/truffleclr-tools/ildasm
+make -C runtime DOTNET=/tmp/dotnet/dotnet
 ```
 
-Use stdout redirection, not ildasm’s `-out` option: stdout avoids a UTF-8 BOM.
-The ildasm 10 `-utf8` output parses without the old `-lin -cav` flags.
-The generated resource is checked in. After rebuilding, run
-`./gradlew :launcher:test` from `truffleclr/`.
+The build copies the compiled assembly to
+`truffleclr/language/src/main/resources/System.Private.CoreLib.dll`. This binary
+resource is loaded directly; there is no IL-disassembly step. Rust and Cargo are
+required to build the native assembly loader used by TruffleCLR.
+
+After rebuilding, run `./gradlew :launcher:test` from `truffleclr/`.

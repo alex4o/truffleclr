@@ -1,8 +1,32 @@
 package metadata
 
-class IlAppDomain {
+class IlAppDomain : AutoCloseable {
+    private val resources = mutableListOf<AutoCloseable>()
+    private var closed = false
+
+    fun own(resource: AutoCloseable) {
+        check(!closed) { "Assembly domain is closed" }
+        resources.add(resource)
+    }
+
+    override fun close() {
+        if (closed) return
+        closed = true
+        metadataChanged = null
+        var failure: Throwable? = null
+        for (resource in resources.asReversed()) {
+            try {
+                resource.close()
+            } catch (error: Throwable) {
+                if (failure == null) failure = error else failure.addSuppressed(error)
+            }
+        }
+        resources.clear()
+        failure?.let { throw it }
+    }
 
     private val references = mutableMapOf<String, IlType>()
+    internal var metadataChanged: (() -> Unit)? = null
     var assemblies: MutableList<IlAssembly> = mutableListOf()
     lateinit var entryPoint: IlMethod
     lateinit var entryAssembly: IlAssembly

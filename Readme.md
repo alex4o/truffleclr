@@ -1,7 +1,7 @@
 TruffleCLR
 ==========
 
-The main goal of this project is to implement the Common Language Infrastructure (CLI) using Truffle [GraalVM]. The project requires the the use of a disassembled file in the `.il` format. To obtain that file the `ildasm` program should be used. The main component of this project resides inside of the `truffleclr` folder. 
+The main goal of this project is to implement the Common Language Infrastructure (CLI) using Truffle [GraalVM]. Programs can be loaded directly from compiled .NET `.dll` assemblies or from disassembled `.il` files. The main component of this project resides inside the `truffleclr` folder.
 
 ## What runs
 
@@ -25,7 +25,7 @@ Generate output fixtures against .NET with
 
 ## Requirements
 
-JDK 25; use GraalVM CE 25 for JIT compilation (on a stock JDK Truffle falls back to the interpreter). The Gradle wrapper downloads everything else. Versions are pinned in `truffleclr/gradle/libs.versions.toml`.
+JDK 25; use GraalVM CE 25 for JIT compilation (on a stock JDK Truffle falls back to the interpreter). Install Rust with Cargo for the native assembly loader, and a .NET SDK to compile C# fixtures or rebuild CoreLib. The Gradle wrapper downloads Gradle and JVM dependencies. Versions are pinned in `truffleclr/gradle/libs.versions.toml`.
 
 ## Building
 
@@ -33,18 +33,35 @@ Inside the `truffleclr` folder: `./gradlew :launcher:installDist`. The ANTLR par
 
 ## Running
 
-`launcher/build/install/launcher/bin/launcher --class HelloWorld.Program test/loop.il`. Help: `launcher/build/install/launcher/bin/launcher --help`.
+From `truffleclr/`, run a binary assembly:
+
+```sh
+launcher/build/install/launcher/bin/launcher --class HelloWorld.Program test/dll/loop.dll
+```
+
+The same command accepts `test/loop.il` for the text format. DLL input uses the
+`clr` language with MIME type `application/x-dotnet-assembly`.
+Help: `launcher/build/install/launcher/bin/launcher --help`.
 
 ## Testing
 
-`./gradlew :launcher:test` runs every `test/<name>.il` that has a `test/expected/<name>.out` and compares the output.
+`./gradlew :launcher:test` runs each available `test/dll/<name>.dll` and
+`test/<name>.il` with a matching `test/expected/<name>.out`. Both variants compare
+against the same expected output; test names identify the input path (including
+Debug/Release fixture suffixes).
 
-## Obtaining CIL (.il) files
-To execute a program an `.il` file is needed. The instructions below describe how such file can be obtained when using the 2 C# compilers on supporting linux.
+## Compiling programs and obtaining CIL (.il) files
+Compile a C# program with `dotnet build`; its assembly is under
+`bin/<configuration>/<target-framework>/`. Pass the program's `.dll` directly to
+the launcher; disassembly is optional. The loader uses the project's minimal
+CoreLib, not the full .NET BCL.
+
+For text fixtures, the instructions below describe how to obtain `.il` files.
 
 ### Mono
 After a C# program has been compiled an `.exe` file is produced. This file can then directly be given to `ildasm`.
 
 ### NetCore
-When using NetCore the resulting binary is a `.dll` file. It can be found using `./bin/*/*/*.dll`. This file can then be disassembled using `ildasm`.
+When using .NET the resulting binary is a `.dll` file under `bin/*/*/`.
+Run it directly with TruffleCLR, or disassemble it using `ildasm` for text input.
 

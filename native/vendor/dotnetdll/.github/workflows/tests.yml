@@ -1,0 +1,69 @@
+name: dotnetdll test suite
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  msrv:
+    name: Rust 1.85.1 checks
+    runs-on: ubuntu-latest
+    env:
+      RUSTUP_TOOLCHAIN: 1.85.1
+    steps:
+      - uses: actions/checkout@v4
+      - run: rustup toolchain install 1.85.1 --profile minimal
+      - run: cargo check --workspace --all-targets --all-features --locked
+      - name: Run self-contained parser regressions
+        run: cargo test --locked --test owned_heap_values --test deferred_method_bodies
+      - run: cargo doc --no-deps --all-features --locked
+
+  miri:
+    name: Miri Tree Borrows
+    runs-on: ubuntu-latest
+    env:
+      RUSTUP_TOOLCHAIN: nightly-2026-05-27
+      MIRIFLAGS: -Zmiri-tree-borrows -Zmiri-disable-isolation -Zmiri-ignore-leaks
+    steps:
+      - uses: actions/checkout@v4
+      - run: rustup toolchain install nightly-2026-05-27 --profile minimal --component miri --component rust-src
+      - run: cargo miri setup
+      - name: Check owned heaps on a small generated DLL
+        run: cargo miri test --locked --test owned_heap_values miri_owned_heap_smoke -- --exact --test-threads=1
+      - name: Check deferred body ranges and errors
+        run: cargo miri test --locked --test deferred_method_bodies -- --test-threads=1
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Detect which files were changed in this commit
+        uses: tj-actions/changed-files@v45
+        id: changed-files
+      - name: Authenticate with GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Get tags for image
+        id: metadata
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+      - uses: docker/setup-buildx-action@v3
+      - name: Build and publish Docker image (if the Dockerfile has changed)
+        uses: docker/build-push-action@v6
+        if: github.event_name == 'push' && contains(steps.changed-files.outputs.all_changed_files, 'Dockerfile')
+        with:
+          # Explicitly pass file so that the repo isn't used as build context
+          # Nothing in the repo is actually used during build
+          file: Dockerfile
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          push: true
+          tags: ${{ steps.metadata.outputs.tags }}
+          labels: ${{ steps.metadata.outputs.labels }}
+      - run: docker compose run tests /cargo/bin/cargo test --locked
+        env:
+          DOCKER_BUILDKIT: 1
+          COMPOSE_DOCKER_CLI_BUILD: 1

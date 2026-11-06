@@ -14,12 +14,23 @@ class Initialize(private val appDomain: IlAppDomain, val context: ClrContext, va
     private val compileChildren = mutableListOf<CompileMethod>()
     val internalMethods by lazy { InternalTable.staticMethods() }
     private val metadataByType = linkedMapOf<Type, IlType>()
+    private val prepared = mutableSetOf<Type>()
+    private var installed = false
 
     init {
+        refresh()
+        appDomain.metadataChanged = ::refresh
+    }
+
+    /** Body specialization may discover closed types or generic method instances.
+     * Never rebuild existing shapes or reset already initialized static storage.
+     */
+    private fun refresh() {
         for (assembly in appDomain.assemblies) {
             assembly.types.values.forEach { processType(it) }
         }
-        val mapped = mutableSetOf<Type>()
+        val newTypes = metadataByType.keys.filter { it !in prepared }
+        val mapped = prepared.toMutableSet()
         fun mapInterfaces(type: Type) {
             if (type in mapped) return
             val metadata = metadataByType.getValue(type)
@@ -65,12 +76,12 @@ class Initialize(private val appDomain: IlAppDomain, val context: ClrContext, va
         for (type in metadataByType.keys.toList()) mapInterfaces(type)
         // Field types can refer forward or back to their owner. Resolve only after
         // every shape exists; no recursive processType calls for field signatures.
-        for (type in context.types.values) {
+        for (type in newTypes) {
             for (field in type.members.values.filterIsInstance<Field>()) {
                 field.valueType = context.types[field.metadata.type.fullName]?.takeIf { it.isValueType }
             }
         }
-        for (type in context.types.values) type.prepareValueLayout()
+        for (type in newTypes) type.prepareValueLayout()
 
         // Reference/static cycles are legal, but recursively embedded structs are not.
         val visiting = mutableSetOf<Type>()
@@ -82,17 +93,26 @@ class Initialize(private val appDomain: IlAppDomain, val context: ClrContext, va
             visiting.remove(type)
             visited.add(type)
         }
-        for (type in context.types.values) validateLayout(type)
-        for (type in context.types.values) {
+        for (type in newTypes) validateLayout(type)
+        for (type in newTypes) {
             for (field in type.staticFields.values) {
                 field.valueType?.let { field.writeRaw(type.staticObject, it.newValue()) }
             }
         }
+        prepared.addAll(newTypes)
     }
 
     /** Prepare bases first, even when the assembly declares a derived class first. */
     private fun processType(metadata: IlType): Type {
-        context.types[metadata.fullName]?.let { return it }
+        context.types[metadata.fullName]?.let { type ->
+            for (method in metadata.methods.values) {
+                if (method.key() in type.members) continue
+                check(!method.virtual) { "Cannot add a virtual slot after type initialization: $method" }
+                type.members[method.key()] = Method(method)
+                addCompiler(method, type)
+            }
+            return type
+        }
         val base = metadata.extends?.let { processType(it) }
         val type = Type(metadata.fullName, base, appDomain.displayTypeName(metadata.fullName))
         context.types[metadata.fullName] = type
@@ -103,7 +123,7 @@ class Initialize(private val appDomain: IlAppDomain, val context: ClrContext, va
         for (method in metadata.methods.values) {
             val member = Method(method)
             type.members[method.key()] = member
-            compileChildren.add(CompileMethod(method, this, language, type))
+            addCompiler(method, type)
             if (method.name == ".cctor") type.initializer = member
             require(!method.virtual || method.genericParameters.isEmpty()) {
                 "Generic virtual methods are unsupported: $method"
@@ -156,6 +176,15 @@ class Initialize(private val appDomain: IlAppDomain, val context: ClrContext, va
         builder.endRoot()
     }.nodes.single().also { it.setMethodName("Initialize") }.callTarget
 
-    fun install() { compileChildren.forEach { it.install() } }
+    private fun addCompiler(method: metadata.IlMethod, type: Type) {
+        val compiler = CompileMethod(method, this, language, type)
+        compileChildren.add(compiler)
+        if (installed) compiler.install()
+    }
+
+    fun install() {
+        compileChildren.forEach { it.install() }
+        installed = true
+    }
     override fun toString() = "Initialize"
 }

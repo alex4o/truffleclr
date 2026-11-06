@@ -11,6 +11,19 @@ class Specialize(private val domain: IlAppDomain) {
     private val origins = mutableMapOf<IlType, Pair<IlType, List<IlType>>>()
     private val pending = ArrayDeque<() -> Unit>()
     private val methods = mutableMapOf<Triple<IlMethod, IlType, List<IlType>>, IlMethod>()
+    private var publishedTypes = 0
+    private var publishedMethods = 0
+    private val assemblyOwners = domain.assemblies.associateWith { it.types.values.toSet() }
+
+    /** Signatures and MethodImpl declarations never require decoding IL bodies. */
+    private fun publish() {
+        while (pending.isNotEmpty()) pending.removeFirst().invoke()
+        for ((assembly, owned) in assemblyOwners) {
+            assembly.types = types.filterValues { origins.getValue(it).first in owned }.toMutableMap()
+        }
+        publishedTypes = types.size
+        publishedMethods = methods.size
+    }
 
     private fun substitute(name: String, typeArgs: List<IlType>, methodArgs: List<IlType>): String =
         domain.mapTypeName(name) { text ->
@@ -83,17 +96,22 @@ class Specialize(private val domain: IlAppDomain) {
         methods[key] = closed
         check(owner.methods.put(closed.key(), closed) == null) { "Ambiguous specialized method: $closed" }
         pending.add {
-            closed.locals = definition.locals.map { type(it.name, typeArgs, args) }
-            closed.maxstack = definition.maxstack
-            closed.labels.putAll(definition.labels)
-            closed.instructionOffsets.putAll(definition.instructionOffsets)
-            closed.jumpLabels.addAll(definition.jumpLabels)
-            closed.exceptionClauses.addAll(definition.exceptionClauses.map { it.copy(catchType = it.catchType?.let { name -> type(name, typeArgs, args).name }) })
             val explicit = definition.overrideReferences.map { resolve(it, typeArgs, args) }
             closed.overrides.addAll(explicit.map { it.key() })
             if (definition.virtual && !definition.newSlot && explicit.none { !it.memberOf!!.isInterface }) {
                 inheritedDeclaration(definition, owner)?.let { closed.overrides.add(it.key()) }
             }
+        }
+        closed.deferBody {
+            definition.ensureBody()
+            closed.locals = definition.locals.map { type(it.name, typeArgs, args) }
+            closed.maxstack = definition.maxstack
+            closed.initLocals = definition.initLocals
+            closed.pinnedLocals = definition.pinnedLocals
+            closed.labels.putAll(definition.labels)
+            closed.instructionOffsets.putAll(definition.instructionOffsets)
+            closed.jumpLabels.addAll(definition.jumpLabels)
+            closed.exceptionClauses.addAll(definition.exceptionClauses.map { it.copy(catchType = it.catchType?.let { name -> type(name, typeArgs, args).name }) })
             closed.instructions = definition.instructions.map { instruction ->
                 val result = when (instruction) {
                     is InstructionType -> InstructionType(instruction.instruction, type(instruction.type, typeArgs, args).name)
@@ -105,7 +123,16 @@ class Specialize(private val domain: IlAppDomain) {
                 if (result !== instruction) result.instructionArgs.addAll(instruction.instructionArgs)
                 result
             }.toMutableList()
+            if (types.size != publishedTypes || methods.size != publishedMethods) {
+                publish()
+                // Newly discovered closed owners/methods must have runtime shapes and
+                // lazy targets before CilCompiler resolves its bytecode constants.
+                domain.metadataChanged?.invoke()
+            }
         }
+        // Text IL was already decoded by ANTLR; retain its declaration-time
+        // validation. Native definitions have no instructions until first compile.
+        if (definition.instructions.isNotEmpty()) pending.add { closed.ensureBody() }
         return closed
     }
 
@@ -168,11 +195,6 @@ class Specialize(private val domain: IlAppDomain) {
 
     fun run() {
         for (definition in definitions.values) if (definition.genericParameters.isEmpty()) type(definition.name)
-        while (pending.isNotEmpty()) pending.removeFirst().invoke()
-        // Preserve assembly ownership for exports; closed instantiations belong to their definition's assembly.
-        for (assembly in domain.assemblies) {
-            val owned = assembly.types.values.toSet()
-            assembly.types = types.filterValues { origins.getValue(it).first in owned }.toMutableMap()
-        }
+        publish()
     }
 }

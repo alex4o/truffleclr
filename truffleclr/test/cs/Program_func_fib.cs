@@ -7,7 +7,7 @@ namespace HelloWorld
     {
         static void Main(string[] args)
         {
-            for (int i = 0; i < 1100; i++)
+            for (int i = 0; i < 30; i++)
             {
                 Console.Write(i);
                 Console.Write(" ");

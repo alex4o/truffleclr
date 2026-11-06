@@ -7,6 +7,7 @@ import com.github.ajalt.clikt.parameters.types.*
 import com.oracle.truffle.api.frame.FrameSlotTypeException
 import org.graalvm.polyglot.Context
 import org.graalvm.polyglot.Source
+import org.graalvm.polyglot.io.ByteSequence
 import java.io.ByteArrayOutputStream
 import java.io.File
 import kotlin.system.measureTimeMillis
@@ -29,7 +30,7 @@ fun String.runCommand() {
 class App : CliktCommand() {
     override val printHelpOnEmptyArgs = true
 
-    private val file: File by argument(help="The file to run").file(mustExist = true)
+    private val file: File by argument(help="The .dll assembly or .il file to run").file(mustExist = true)
     private val `class`: String by option(help="The class containing the Main method").prompt("Class with Main method")
 
     override fun run() {
@@ -37,12 +38,7 @@ class App : CliktCommand() {
 
         val context = Context.newBuilder().allowAllAccess(true).out(out).build()
 
-        context.eval(
-            Source.newBuilder(
-                "clr",
-                file
-            ).build()
-        )
+        context.eval(programSource(file))
 
         val bindings = context.getBindings("clr")
         val programClass = bindings.getMember(`class`)
@@ -68,6 +64,15 @@ class App : CliktCommand() {
         }
     }
 }
+
+fun programSource(file: File): Source =
+    if (file.extension.equals("dll", ignoreCase = true)) {
+        Source.newBuilder("clr", ByteSequence.create(file.readBytes()), file.name)
+            .mimeType("application/x-dotnet-assembly")
+            .build()
+    } else {
+        Source.newBuilder("clr", file).build()
+    }
 
 fun main(args: Array<String>) {
     App().main(args)

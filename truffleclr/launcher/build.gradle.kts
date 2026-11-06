@@ -30,6 +30,6 @@ tasks.test {
     useJUnitPlatform()
     workingDir = rootDir
     // The parameterized suite discovers these fixtures at runtime.
-    inputs.files(fileTree(rootDir.resolve("test")) { include("*.il", "expected/*.out") })
+    inputs.files(fileTree(rootDir.resolve("test")) { include("*.il", "dll/*.dll", "expected/*.out", "rejected/*.il", "rejected/*.dll", "rejected/*.error") })
     jvmArgs(truffleJvmArgs)
 }

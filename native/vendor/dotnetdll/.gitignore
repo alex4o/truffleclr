@@ -1,0 +1,10 @@
+/target
+*.dll
+*.runtimeconfig.json
+
+.idea
+
+# AI guidelines
+.junie
+TESTING.md
+.refactor-orchestrator/

@@ -21,7 +21,7 @@ import types.CTSNull
  * parallel stack transfers without keeping an operand stack in the interpreter.
  */
 class CilCompiler(private val method: IlMethod, private val language: Clr, private val context: ClrContext) {
-    private val code = method.instructions
+    private val code = method.also { it.ensureBody() }.instructions
     private data class Block(val start: Int, val end: Int, val successors: List<Int>)
     private lateinit var b: CilRootNodeGen.Builder
     private lateinit var locals: List<BytecodeLocal>

@@ -7,7 +7,7 @@ namespace HelloWorld
     {
         static void Main(string[] args)
         {
-            for (int i = 0; i < 1100; i++)
+            for (int i = 0; i < 13; i++)
             {
                 Console.Write(i);
                 Console.Write(" ");
@@ -17,7 +17,7 @@ namespace HelloWorld
 
         static int fac(int n)
         {
-            if (n == 1)
+            if (n == 0)
             {
                 return 1;
             }

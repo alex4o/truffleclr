@@ -1,6 +1,6 @@
 ﻿/* The Great Computer Language Shootout
    http://shootout.alioth.debian.org/
- 
+
    contributed by Jarkko Miettinen
 */
 
@@ -81,19 +81,13 @@ namespace HelloWorld
         }
 
         public static void Main(String[] args)
-        {                    using (System.IO.StreamWriter file = new System.IO.StreamWriter("./fannkuchen_cs.csv")) {
-                                                   for(int c = 0; c <= 100; c++) {
-                                                       Stopwatch stopwatch = Stopwatch.StartNew();
+        {
             int n = 10;
             // if (args.length > 0) n = Integer.parseInt(args[0]);
             Console.Write("Pfannkuchen(");
             Console.Write(n);
             Console.Write(") = ");
             Console.WriteLine(fannkuch(n));
-                      stopwatch.Stop();
-                                                                    file.WriteLine($"fannkuchen,{c},{stopwatch.Elapsed.TotalMilliseconds}");
-                                                                    }
-                                                                    }
         }
     }
 }
