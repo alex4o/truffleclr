@@ -37,14 +37,18 @@ class Initialize(appDomain: IlAppDomain, val context: ClrContext, val language: 
             for (iface in declared.flatMap { listOf(it) + it.interfaces }.distinct()) {
                 for (declaration in iface.members.values.filterIsInstance<Method>()) {
                     if (declaration.metadata.static) continue
-                    val implementations = generateSequence(type) { it.baseType }
-                        .flatMap { it.members.values.filterIsInstance<Method>().asSequence() }
-                        .filter { !it.metadata.static && it.metadata.virtual &&
-                            it.metadata.toString(false) == declaration.metadata.toString(false) }.toList()
-                    val implementation = implementations.firstOrNull {
-                        it.metadata.definitionSignature == declaration.metadata.definitionSignature
-                    } ?: implementations.firstOrNull()
-                    if (implementation != null) type.interfaceMethods[declaration.metadata.key()] = implementation
+                    // Inheritance depth wins before signature preference. A base
+                    // definition must never displace a derived closed override.
+                    val implementation = generateSequence(type) { it.baseType }.mapNotNull { owner ->
+                        val candidates = owner.members.values.filterIsInstance<Method>().filter {
+                            !it.metadata.static && it.metadata.isPublic &&
+                                it.metadata.toString(false) == declaration.metadata.toString(false)
+                        }
+                        candidates.firstOrNull { it.metadata.definitionSignature == declaration.metadata.definitionSignature }
+                            ?: candidates.firstOrNull()
+                    }.firstOrNull()
+                    if (implementation != null) type.interfaceMethods[declaration.metadata.key()] =
+                        if (implementation.virtualSlot >= 0) type.virtualTable[implementation.virtualSlot] else implementation
                 }
             }
             for (implementation in type.members.values.filterIsInstance<Method>()) {
@@ -104,23 +108,17 @@ class Initialize(appDomain: IlAppDomain, val context: ClrContext, val language: 
             require(!method.virtual || method.genericParameters.isEmpty()) {
                 "Generic virtual methods are unsupported: $method"
             }
+            val overridden = method.overrides.mapNotNull { signature ->
+                generateSequence(base) { it.baseType }.mapNotNull { it.members[signature] as? Method }.firstOrNull()
+            }
+            for (declaration in overridden) {
+                check(!method.static && declaration.virtualSlot >= 0) { "Invalid virtual override: $method -> $declaration" }
+            }
             if (method.virtual) {
-                val inherited = if (method.newSlot) -1 else {
-                    val candidates = virtualTable.withIndex().filter { it.value.metadata.toString(false) == method.toString(false) }
-                    val exact = candidates.filter { it.value.metadata.definitionSignature == method.definitionSignature }
-                    val matches = exact.ifEmpty { candidates }
-                    require(exact.isNotEmpty() || matches.size <= 1) { "Ambiguous virtual override $method; use an explicit .override" }
-                    matches.lastOrNull()?.index ?: -1
-                }
-                member.virtualSlot = if (inherited < 0) virtualTable.size else inherited
-                if (inherited < 0) virtualTable.add(member) else virtualTable[inherited] = member
+                member.virtualSlot = overridden.firstOrNull()?.virtualSlot ?: virtualTable.size
+                if (member.virtualSlot == virtualTable.size) virtualTable.add(member)
             }
-            for (signature in method.overrides) {
-                val declaration = generateSequence(base) { it.baseType }
-                    .mapNotNull { it.members[signature] as? Method }.firstOrNull() ?: continue
-                check(!method.static && declaration.virtualSlot >= 0) { "Invalid virtual override: $method -> $signature" }
-                virtualTable[declaration.virtualSlot] = member
-            }
+            for (declaration in overridden) virtualTable[declaration.virtualSlot] = member
         }
         type.virtualTable = virtualTable.toTypedArray()
         base?.let { type.instanceFields.putAll(it.instanceFields) }

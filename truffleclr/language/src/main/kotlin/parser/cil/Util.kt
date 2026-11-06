@@ -86,7 +86,17 @@ fun TypeContext.getType(appDomain: IlAppDomain, typeParameters: List<String> = e
     appDomain.getType(toClassName().normalizeParameters(typeParameters, methodParameters))
 
 fun TyparsClauseContext.parameterNames(): List<String> =
-    generateSequence(typars()) { it.typarsRest()?.typars() }.map { it.dottedName().text.trim('\'') }.toList()
+    generateSequence(typars()) { it.typarsRest()?.typars() }.map { parameter ->
+        var attributes: TyparAttribsContext? = parameter.typarAttribs()
+        while (attributes != null) {
+            val variance = attributes.typarAttrib()?.text
+            if (variance == "+" || variance == "-") {
+                throw UnsupportedOperationException("Generic parameter variance '$variance' is not supported: ${parameter.dottedName().text}")
+            }
+            attributes = attributes.typarAttribs()
+        }
+        parameter.dottedName().text.trim('\'')
+    }.toList()
 
 fun String.normalizeParameters(typeParameters: List<String>, methodParameters: List<String> = emptyList()): String =
     Regex("(!!?)([A-Za-z_][A-Za-z_0-9]*)").replace(this) { match ->

@@ -36,9 +36,12 @@ class Type(val name: String, val baseType: Type?): TruffleObject {
 
     fun resolveDispatch(declaration: Method): Method =
         if (declaration.metadata.memberOf!!.isInterface)
-            interfaceMethods[declaration.metadata.key()]
-                ?: error("No interface implementation for ${declaration.metadata} on $name")
+            resolveInterface(declaration.dispatchKey)
         else if (declaration.virtualSlot >= 0) virtualTable[declaration.virtualSlot] else declaration
+
+    @CompilerDirectives.TruffleBoundary
+    fun resolveInterface(key: String): Method =
+        interfaceMethods[key] ?: error("No interface implementation for $key on $name")
 
     /** Only user structs use owned ClrObject storage; primitives and enums do not. */
     val isValueType: Boolean = baseType?.name == "System.ValueType" &&

@@ -74,6 +74,7 @@ class Specialize(private val domain: IlAppDomain) {
         closed.memberOf = owner
         closed.returnType = type(definition.returnType.name, typeArgs, args)
         closed.genericArguments = args
+        closed.isPublic = definition.isPublic
         closed.static = definition.static
         closed.virtual = definition.virtual
         closed.newSlot = definition.newSlot
@@ -88,7 +89,11 @@ class Specialize(private val domain: IlAppDomain) {
             closed.instructionOffsets.putAll(definition.instructionOffsets)
             closed.jumpLabels.addAll(definition.jumpLabels)
             closed.exceptionClauses.addAll(definition.exceptionClauses.map { it.copy(catchType = it.catchType?.let { name -> type(name, typeArgs, args).name }) })
-            closed.overrides.addAll(definition.overrideReferences.map { resolve(it, typeArgs, args).key() })
+            val explicit = definition.overrideReferences.map { resolve(it, typeArgs, args) }
+            closed.overrides.addAll(explicit.map { it.key() })
+            if (definition.virtual && !definition.newSlot && explicit.none { !it.memberOf!!.isInterface }) {
+                inheritedDeclaration(definition, owner)?.let { closed.overrides.add(it.key()) }
+            }
             closed.instructions = definition.instructions.map { instruction ->
                 val result = when (instruction) {
                     is InstructionType -> InstructionType(instruction.instruction, type(instruction.type, typeArgs, args).name)
@@ -102,6 +107,30 @@ class Specialize(private val domain: IlAppDomain) {
             }.toMutableList()
         }
         return closed
+    }
+
+    /** Match in the derived definition's open context, not after closing X and Y
+     * to the same type. Each base edge composes its parameter substitution.
+     */
+    private fun inheritedDeclaration(implementation: IlMethod, owner: IlType): IlMethod? {
+        var current = implementation.memberOf!!
+        var parameters = current.genericParameters.indices.map { domain.getType("!$it") }
+        var closedBase = owner.extends
+        while (closedBase != null) {
+            val baseName = substitute(current.extends!!.name, parameters, emptyList())
+            val bracket = baseName.indexOf('<')
+            current = definitions.getValue(baseName.substringBefore('<'))
+            parameters = if (bracket < 0) emptyList() else
+                arguments(baseName.substring(bracket + 1, baseName.lastIndex)).map { domain.getType(it) }
+            val matches = current.methods.values.filter {
+                it.virtual && !it.static && it.genericParameters.isEmpty() &&
+                    substitute(it.toString(false), parameters, emptyList()) == implementation.toString(false)
+            }
+            require(matches.size <= 1) { "Ambiguous virtual override $implementation; use an explicit .override" }
+            if (matches.isNotEmpty()) return method(matches.single(), closedBase, emptyList())
+            closedBase = closedBase.extends
+        }
+        return null
     }
 
     private fun resolve(reference: IlMethod, typeArgs: List<IlType>, methodArgs: List<IlType>): IlMethod {

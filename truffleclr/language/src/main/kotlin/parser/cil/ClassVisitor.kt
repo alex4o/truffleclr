@@ -65,6 +65,7 @@ class ClassVisitor(var appDomain: IlAppDomain, var type: IlType) : Cil.CilBaseVi
 
         method.genericParameters = parameters
         val attributes = ctx.methodHead().methAttr().map { it.text }.toSet()
+        method.isPublic = "public" in attributes
         method.static = "static" in attributes
         method.virtual = "virtual" in attributes
         method.newSlot = "newslot" in attributes

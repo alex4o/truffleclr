@@ -24,6 +24,7 @@ class IlMethod(var name: String, var arguments: List<Pair<String, IlType>>) {
 
     var memberOf: IlType? = null
 
+    var isPublic = false
     var virtual = false
     var newSlot = false
     var static = false

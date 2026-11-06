@@ -100,11 +100,26 @@ class MethodVisitor(var appDomain: IlAppDomain, var method: IlMethod) : Cil.CilB
     override fun visitMethod_override(ctx: CilParser.Method_overrideContext): Any {
         val owner = ctx.typeSpec().toClassName()
         val name = ctx.methodName().text.trim('\'')
-        val arguments = ctx.sigArgs0()?.sigArgs1()?.sigArg()?.map { "" to it.type().getType(appDomain) }
-            ?: method.arguments
+        val ownerDefinition = appDomain.getType(owner.substringBefore('<'))
+        val signature = (ctx.type()?.text ?: "") + (ctx.sigArgs0()?.text ?: "")
+        val namedParameters = Regex("!!([A-Za-z_][A-Za-z_0-9]*)").findAll(signature).map { it.groupValues[1] }.toSet()
+        val methodParameters = if (namedParameters.isEmpty()) emptyList() else {
+            val count = ctx.sigArgs0()?.sigArgs1()?.sigArg()?.size ?: 0
+            val candidates = ownerDefinition.methods.values.filter {
+                it.name == name && it.arguments.size == count && it.genericParameters.containsAll(namedParameters)
+            }.map { it.genericParameters }.distinct()
+            require(candidates.size == 1) { "Cannot resolve named generic parameters in " + ctx.text }
+            candidates.single()
+        }
+        // Signature names belong to the referenced declaration; owner arguments
+        // belong to the implementing method's context.
+        val arguments = ctx.sigArgs0()?.sigArgs1()?.sigArg()?.map {
+            "" to it.type().getType(appDomain, ownerDefinition.genericParameters, methodParameters)
+        } ?: method.arguments
         val reference = IlMethod(name, arguments)
+        reference.genericParameters = methodParameters
         reference.memberOf = appDomain.getType(owner.normalizeParameters(method.memberOf!!.genericParameters, method.genericParameters))
-        reference.returnType = ctx.type()?.getType(appDomain) ?: method.returnType
+        reference.returnType = ctx.type()?.getType(appDomain, ownerDefinition.genericParameters, methodParameters) ?: method.returnType
         method.overrideReferences.add(reference)
         return method
     }
