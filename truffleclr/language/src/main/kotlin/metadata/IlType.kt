@@ -4,6 +4,8 @@ import runtime.CorElementType
 import runtime.CoreTypeInfo
 
 class IlType(var name: String, val type: CorElementType) {
+    var genericParameters: List<String> = emptyList()
+    var interfaces: List<IlType> = emptyList()
 
     var methods: MutableMap<String, IlMethod> = mutableMapOf()
     var fields: MutableMap<String, IlField> = mutableMapOf()
@@ -42,6 +44,8 @@ class IlType(var name: String, val type: CorElementType) {
 
         val array = IlType("$name[]", CorElementType.ARRAY)
         array.elementClass = this
+        array.rank = rank
+        arrayCache[rank] = array
         return array
     }
 

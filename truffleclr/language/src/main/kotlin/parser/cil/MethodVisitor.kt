@@ -97,8 +97,20 @@ class MethodVisitor(var appDomain: IlAppDomain, var method: IlMethod) : Cil.CilB
         return method
     }
 
+    override fun visitMethod_override(ctx: CilParser.Method_overrideContext): Any {
+        val owner = ctx.typeSpec().toClassName()
+        val name = ctx.methodName().text.trim('\'')
+        val arguments = ctx.sigArgs0()?.sigArgs1()?.sigArg()?.map { "" to it.type().getType(appDomain) }
+            ?: method.arguments
+        val reference = IlMethod(name, arguments)
+        reference.memberOf = appDomain.getType(owner.normalizeParameters(method.memberOf!!.genericParameters, method.genericParameters))
+        reference.returnType = ctx.type()?.getType(appDomain) ?: method.returnType
+        method.overrideReferences.add(reference)
+        return method
+    }
+
     override fun visitMethod_locals(ctx: CilParser.Method_localsContext): Any {
-        method.locals = ctx.sigArgs0().sigArgs1().sigArg().map { it.type().getType(appDomain) }
+        method.locals = ctx.sigArgs0().sigArgs1().sigArg().map { it.type().getType(appDomain, method.memberOf!!.genericParameters, method.genericParameters) }
         return method.locals
     }
 
@@ -173,10 +185,10 @@ class MethodVisitor(var appDomain: IlAppDomain, var method: IlMethod) : Cil.CilB
                     InstructionString(INSTR_STRING().toString(), compQstring().text.replace("\\t", "\t"))
                 }
                 is CilParser.Instr_typeContext -> {
-                    InstructionType(INSTR_TYPE().text, typeSpec().toClassName())
+                    InstructionType(INSTR_TYPE().text, typeSpec().toClassName().normalizeParameters(method.memberOf!!.genericParameters, method.genericParameters))
                 }
                 is CilParser.Instr_fieldContext -> {
-                    InstructionField(INSTR_FIELD().text, type().text, typeSpec().text, dottedName().text)
+                    InstructionField(INSTR_FIELD().text, type().toClassName(), typeSpec().toClassName().normalizeParameters(method.memberOf!!.genericParameters, method.genericParameters), dottedName().text.trim('\''))
                 }
                 is CilParser.Instr_varContext -> {
                     if (id() != null) {

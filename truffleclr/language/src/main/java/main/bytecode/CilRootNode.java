@@ -311,7 +311,13 @@ public abstract class CilRootNode extends RootNode implements BytecodeRootNode {
         static boolean isNull(Object[] args) { return args[0] == null || args[0] == types.CTSNull.INSTANCE; }
         @Specialization(guards = "isNull(args)")
         static Object nullReceiver(int index, @Variadic Object[] args) { throw ClrException.invalidReference(args[0]); }
-        static Type type(Object[] args) { return args[0] instanceof ManagedReference.Box box ? box.type : ManagedReference.receiver(args[0]).getType(); }
+        static Type type(Object[] args) {
+            Object receiver = args[0];
+            if (receiver instanceof String) return Clr.contextReference.get(null).getTypes().get("System.String");
+            if (receiver instanceof ManagedReference.ObjectArray || receiver.getClass().isArray())
+                return Clr.contextReference.get(null).getTypes().get("System.Array");
+            return receiver instanceof ManagedReference.Box box ? box.type : ManagedReference.receiver(receiver).getType();
+        }
         static com.oracle.truffle.api.CallTarget target(Type type, int index) {
             return type.getVirtualTable()[index].getCallTarget();
         }
@@ -322,6 +328,33 @@ public abstract class CilRootNode extends RootNode implements BytecodeRootNode {
         @Specialization(replaces = "cached", guards = "!isNull(args)")
         static Object generic(int index, @Variadic Object[] args,
                 @Cached IndirectCallNode call) { return call.call(target(type(args), index), args); }
+    }
+    @Operation @ConstantOperand(type = Method.class)
+    public static final class InvokeInterface {
+        static boolean isNull(Object[] args) { return InvokeVirtual.isNull(args); }
+        static Type type(Object[] args) { return InvokeVirtual.type(args); }
+        static com.oracle.truffle.api.CallTarget target(Type type, Method declaration) {
+            return type.resolveDispatch(declaration).getCallTarget();
+        }
+        @Specialization(guards = "isNull(args)")
+        static Object nullReceiver(Method declaration, @Variadic Object[] args) { throw ClrException.invalidReference(args[0]); }
+        @Specialization(guards = {"!isNull(args)", "type(args) == cachedType"}, limit = "5")
+        static Object cached(Method declaration, @Variadic Object[] args,
+                @Cached("type(args)") Type cachedType,
+                @Cached("create(target(cachedType, declaration))") DirectCallNode call) { return call.call(args); }
+        @Specialization(replaces = "cached", guards = "!isNull(args)")
+        static Object generic(Method declaration, @Variadic Object[] args,
+                @Cached IndirectCallNode call) { return call.call(target(type(args), declaration), args); }
+    }
+    /** constrained. dereferences reference receivers, but boxes a copy only for
+     * value types whose implementation is inherited from Object/ValueType. */
+    @Operation @ConstantOperand(type = Type.class)
+    public static final class ConstrainedReceiver {
+        @Specialization static Object execute(Type type, Object reference) {
+            Object value = reference instanceof ManagedReference location ? location.get() : reference;
+            return type.isValueType() || type.isEnum() || type.getInfo().isPrimitive()
+                ? new ManagedReference.Box(type, value) : value;
+        }
     }
     @Operation @ConstantOperand(type = Type.class) @ConstantOperand(type = Method.class)
     @ConstantOperand(type = int.class, name = "argumentCount")

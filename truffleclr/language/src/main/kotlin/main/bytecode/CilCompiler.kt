@@ -75,7 +75,7 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
     }
 
     private fun effect(i: Instruction): Pair<Int, Int> = when (i.instruction) {
-        "nop", "break", "br", "readonly", "leave", "rethrow", "endfinally", "endfault" -> 0 to 0
+        "nop", "break", "br", "readonly", "constrained", "leave", "rethrow", "endfinally", "endfault" -> 0 to 0
         "throw", "endfilter" -> 1 to 0
         "dup" -> 1 to 2
         "pop", "stloc", "starg", "stsfld", "initobj", "brtrue", "brfalse" -> 1 to 0
@@ -98,6 +98,11 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
     @CompilerDirectives.TruffleBoundary
     fun compile(): CilRootNode {
         require(code.isNotEmpty()) { "No body for $method" }
+        code.forEachIndexed { index, instruction ->
+            if (instruction.instruction == "constrained") require(
+                instruction is InstructionType && code.getOrNull(index + 1)?.instruction == "callvirt"
+            ) { "constrained. must immediately precede callvirt in $method at $index" }
+        }
         val blocks = blocks()
         val byStart = blocks.associateBy { it.start }
         val heights = mutableMapOf(0 to 0)
@@ -490,7 +495,7 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
 
     private fun emit(i: Instruction, instructionIndex: Int) {
         when (i.instruction) {
-            "nop", "break", "readonly" -> Unit
+            "nop", "break", "readonly", "constrained" -> Unit
             "dup" -> { materialize(); stack.add(stack.last()) }
             "pop" -> { materialize(); pop() }
             "ldarga" -> push { b.emitLoadLocal(arguments[number(i, true)]!!) }
@@ -586,7 +591,8 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
             }
             "initobj" -> {
                 val reference = pop(); materialize()
-                val type = context.types.getValue((i as InstructionType).type)
+                val name = (i as InstructionType).type
+                val type = context.types.getValue(if (name.endsWith("[]")) "System.Array" else name)
                 b.beginReferenceStore(); load(reference)
                 if (type.isValueType) b.emitDefaultValue(type) else b.emitLoadConstant(when (type.info.type) {
                     CorElementType.I8, CorElementType.U8 -> 0L
@@ -696,15 +702,40 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
                     when (i.instruction) {
                         "callvirt" -> {
                             require(!callee.static)
-                            val target = type.members.getValue(callee.toString()) as Method
-                            if (target.virtualSlot >= 0) {
-                                b.beginInvokeVirtual(target.virtualSlot); args.forEach { load(it) }; b.endInvokeVirtual()
-                            } else {
-                                b.beginInvokeNonVirtual(target); args.forEach { load(it) }; b.endInvokeNonVirtual()
+                            val target = type.members.getValue(callee.key()) as Method
+                            val prefix = code.getOrNull(instructionIndex - 1)
+                                ?.takeIf { it.instruction == "constrained" } as? InstructionType
+                            val constraint = prefix?.let { context.types.getValue(if (it.type.endsWith("[]")) "System.Array" else it.type) }
+                            val valueReceiver = constraint != null &&
+                                (constraint.isValueType || constraint.isEnum || constraint.info.isPrimitive)
+                            val implementation = if (valueReceiver) constraint!!.resolveDispatch(target) else null
+                            val unboxed = implementation?.metadata?.memberOf?.fullName == constraint?.name && valueReceiver
+                            fun emitArguments() {
+                                args.forEachIndexed { index, value ->
+                                    if (index == 0 && constraint != null && !unboxed) {
+                                        b.beginConstrainedReceiver(constraint)
+                                        load(value)
+                                        b.endConstrainedReceiver()
+                                    } else load(value)
+                                }
+                            }
+                            when {
+                                unboxed -> {
+                                    b.beginInvokeNonVirtual(implementation!!); emitArguments(); b.endInvokeNonVirtual()
+                                }
+                                type.isInterface -> {
+                                    b.beginInvokeInterface(target); emitArguments(); b.endInvokeInterface()
+                                }
+                                target.virtualSlot >= 0 -> {
+                                    b.beginInvokeVirtual(target.virtualSlot); emitArguments(); b.endInvokeVirtual()
+                                }
+                                else -> {
+                                    b.beginInvokeNonVirtual(target); emitArguments(); b.endInvokeNonVirtual()
+                                }
                             }
                         }
-                        "newobj" -> { b.beginObjectNew(type, type.members.getValue(callee.toString()) as Method, args.size); args.forEach { load(it) }; b.endObjectNew() }
-                        else -> { val target = type.members.getValue(callee.toString()) as Method
+                        "newobj" -> { b.beginObjectNew(type, type.members.getValue(callee.key()) as Method, args.size); args.forEach { load(it) }; b.endObjectNew() }
+                        else -> { val target = type.members.getValue(callee.key()) as Method
                             when (args.size) {
                             0 -> { b.emitInvoke0(target) }
                             1 -> { b.beginInvoke1(target); args.forEach { load(it) }; b.endInvoke1() }

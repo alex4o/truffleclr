@@ -29,6 +29,17 @@ class Type(val name: String, val baseType: Type?): TruffleObject {
     @CompilerDirectives.CompilationFinal lateinit var shape: StaticShape<ClrObjectFactory>
     @CompilerDirectives.CompilationFinal lateinit var staticObject: ClrObject
     @CompilerDirectives.CompilationFinal(dimensions = 1) lateinit var virtualTable: Array<Method>
+    @CompilerDirectives.CompilationFinal(dimensions = 1)
+    var interfaces: Array<Type> = emptyArray()
+    var isInterface: Boolean = false
+    val interfaceMethods: MutableMap<String, Method> = linkedMapOf()
+
+    fun resolveDispatch(declaration: Method): Method =
+        if (declaration.metadata.memberOf!!.isInterface)
+            interfaceMethods[declaration.metadata.key()]
+                ?: error("No interface implementation for ${declaration.metadata} on $name")
+        else if (declaration.virtualSlot >= 0) virtualTable[declaration.virtualSlot] else declaration
+
     /** Only user structs use owned ClrObject storage; primitives and enums do not. */
     val isValueType: Boolean = baseType?.name == "System.ValueType" &&
         name != "System.Enum" && CoreTypeInfo.typeByName[name]?.isPrimitive != true
@@ -144,6 +155,7 @@ class Type(val name: String, val baseType: Type?): TruffleObject {
     }
 
     fun isAssignableFrom(type: Type): Boolean {
+        if (isInterface && type.interfaces.any { it === this }) return true
         var current: Type? = type
         while (current != null) {
             if (this === current) return true
