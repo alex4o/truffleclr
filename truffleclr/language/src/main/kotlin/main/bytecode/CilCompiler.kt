@@ -5,6 +5,7 @@ import com.oracle.truffle.api.bytecode.BytecodeConfig
 import com.oracle.truffle.api.bytecode.BytecodeLabel
 import com.oracle.truffle.api.bytecode.BytecodeLocal
 import main.Clr
+import metadata.CodeBoundary
 import metadata.IlMethod
 import metadata.IlType
 import metadata.instruction.*
@@ -41,21 +42,32 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
     private val stack = mutableListOf<Value>()
     private var pendingOperations = 0
 
+    private val terminals = setOf("ret", "throw", "rethrow", "endfinally", "endfault", "endfilter")
+    private fun position(boundary: CodeBoundary): Int = when (boundary) {
+        is CodeBoundary.Index -> boundary.instruction
+        is CodeBoundary.Label -> method.labels.getValue(boundary.name)
+        is CodeBoundary.Offset -> method.instructionOffsets[boundary.bytes]
+            ?: error("Exception offset "+boundary.bytes+" is not an instruction boundary in $method")
+    }
     private fun target(i: InstructionBrTarget) = method.labels.getValue(i.target)
     private fun blocks(): List<Block> {
         val starts = sortedSetOf(0)
+        for (clause in method.exceptionClauses) {
+            listOfNotNull(clause.tryStart, clause.tryEnd, clause.handlerStart, clause.handlerEnd, clause.filterStart)
+                .map(::position).filter { it < code.size }.forEach { starts.add(it) }
+        }
         code.forEachIndexed { index, i ->
             if (i is InstructionBrTarget) starts.add(target(i))
-            if ((i is InstructionBrTarget || i.instruction == "ret") && index + 1 < code.size) starts.add(index + 1)
+            if ((i is InstructionBrTarget || i.instruction in terminals) && index + 1 < code.size) starts.add(index + 1)
         }
         val orderedStarts = starts.toList()
         return orderedStarts.mapIndexed { n, start ->
             val end = orderedStarts.getOrNull(n + 1) ?: code.size
             val last = code[end - 1]
             val successors = when {
-                last is InstructionBrTarget && last.instruction == "br" -> listOf(target(last))
+                last is InstructionBrTarget && last.instruction in listOf("br", "leave") -> listOf(target(last))
                 last is InstructionBrTarget -> listOf(target(last), end)
-                last.instruction == "ret" -> emptyList()
+                last.instruction in terminals -> emptyList()
                 else -> listOf(end)
             }
             Block(start, end, successors.distinct())
@@ -63,7 +75,8 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
     }
 
     private fun effect(i: Instruction): Pair<Int, Int> = when (i.instruction) {
-        "nop", "break", "br", "readonly" -> 0 to 0
+        "nop", "break", "br", "readonly", "leave", "rethrow", "endfinally", "endfault" -> 0 to 0
+        "throw", "endfilter" -> 1 to 0
         "dup" -> 1 to 2
         "pop", "stloc", "starg", "stsfld", "initobj", "brtrue", "brfalse" -> 1 to 0
         "ret" -> (if (method.returnType.type == CorElementType.VOID) 0 else 1) to 0
@@ -88,15 +101,21 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
         val blocks = blocks()
         val byStart = blocks.associateBy { it.start }
         val heights = mutableMapOf(0 to 0)
-        val queue = ArrayDeque<Int>().apply { add(0) }
-        var maxStack = 0
+        // Validate and emit every EH body, including dormant protected ranges.
+        for (clause in method.exceptionClauses) {
+            heights[position(clause.tryStart)] = 0
+            heights[position(clause.handlerStart)] = if (clause.kind in listOf("catch", "filter")) 1 else 0
+            clause.filterStart?.let { heights[position(it)] = 1 }
+        }
+        val queue = ArrayDeque<Int>().apply { addAll(heights.keys) }
+        var maxStack = heights.values.max()
         while (queue.isNotEmpty()) {
             val block = byStart.getValue(queue.removeFirst())
             var height = heights.getValue(block.start)
             for (index in block.start until block.end) {
                 val (pop, push) = effect(code[index])
                 require(height >= pop) { "Stack underflow in $method at $index" }
-                height += push - pop
+                height = if (code[index].instruction == "leave") 0 else height + push - pop
                 maxStack = maxOf(maxStack, height)
             }
             if (code[block.end - 1].instruction == "ret") require(height == 0) { "Nonempty return stack in $method" }
@@ -107,18 +126,63 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
                 if (previous == null) queue.add(next)
             }
         }
-        val reachable = blocks.filter { it.start in heights }
+        val groups = method.exceptionClauses.groupBy { position(it.tryStart) to position(it.tryEnd) }.values.toList()
+        fun instructionRanges(clauses: List<metadata.ExceptionClause>): List<IntRange> =
+            listOf(position(clauses.first().tryStart) until position(clauses.first().tryEnd)) +
+                clauses.map { position(it.filterStart ?: it.handlerStart) until position(it.handlerEnd) }
+        val reachable = mutableListOf<Block>()
+        // Canonicalize physical EH layout only; successors retain their original targets.
+        // Raw tables may put handlers before their try or leave ordinary code between clauses.
+        fun layout(first: Int, end: Int, enclosing: Set<List<metadata.ExceptionClause>>) {
+            val candidates = groups.filter { it !in enclosing && instructionRanges(it).all { range -> range.first >= first && range.last < end } }
+            var index = first
+            while (index < end) {
+                val handler = candidates.flatMap { instructionRanges(it).drop(1) }.firstOrNull { index in it }
+                if (handler != null) { index = handler.last + 1; continue }
+                val group = candidates.filter { position(it.first().tryStart) == index }.maxByOrNull { position(it.first().tryEnd) }
+                if (group != null) {
+                    for (range in instructionRanges(group)) layout(range.first, range.last + 1, enclosing + listOf(group))
+                    index = position(group.first().tryEnd)
+                } else {
+                    val block = byStart.getValue(index)
+                    if (index in heights) reachable.add(block)
+                    index = block.end
+                }
+            }
+        }
+        layout(0, code.size, emptySet())
+        require(reachable.map { it.start }.toSet() == heights.keys) { "Overlapping exception regions in $method" }
+        fun blockRange(start: CodeBoundary, end: CodeBoundary): IntRange {
+            val members = reachable.indices.filter { reachable[it].start in position(start) until position(end) }
+            return members.min()..members.max()
+        }
         // Nest loop intervals, expanding side entries so every generated While is
         // single-entry. Crossing intervals are merged (irreducible flow fallback).
-        data class Region(var first: Int, var last: Int)
+        data class Region(var first: Int, var last: Int, val clauses: List<metadata.ExceptionClause> = emptyList())
         val indices = reachable.mapIndexed { index, block -> block.start to index }.toMap()
         val edges = reachable.flatMap { block -> block.successors.map { indices.getValue(block.start) to indices.getValue(it) } }
+        val exceptionRegions = groups.map { clauses ->
+            val first = blockRange(clauses.first().tryStart, clauses.first().tryEnd).first
+            val last = clauses.maxOf { blockRange(it.handlerStart, it.handlerEnd).last }
+            Region(first, last, clauses)
+        }
         val regions = edges.filter { (from, to) -> to <= from }.groupBy { it.second }
             .map { (to, incoming) -> Region(to, incoming.maxOf { it.first }) }.toMutableList()
         var changed: Boolean
         do {
             changed = false
             for (region in regions) {
+                for (exception in exceptionRegions) {
+                    val overlaps = region.first <= exception.last && exception.first <= region.last
+                    val contains = region.first <= exception.first && region.last >= exception.last
+                    val parts = listOf(blockRange(exception.clauses.first().tryStart, exception.clauses.first().tryEnd)) +
+                        exception.clauses.map { blockRange(it.filterStart ?: it.handlerStart, it.handlerEnd) }
+                    if (overlaps && !contains && parts.none { region.first >= it.first && region.last <= it.last }) {
+                        region.first = minOf(region.first, exception.first)
+                        region.last = maxOf(region.last, exception.last)
+                        changed = true
+                    }
+                }
                 val entry = edges.filter { (from, to) -> from < region.first && to > region.first && to <= region.last }
                     .minOfOrNull { it.first }
                 if (entry != null) { region.first = entry; changed = true }
@@ -136,6 +200,7 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
                 }
             }
         } while (changed)
+        regions.addAll(exceptionRegions)
         val roots = CilRootNodeGen.create(language, BytecodeConfig.DEFAULT) { builder ->
             b = builder
             b.beginRoot()
@@ -158,6 +223,9 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
             } } }
             class Scope(val region: Region?, val parent: Scope?) {
                 val labels = mutableMapOf<Int, BytecodeLabel>()
+                var exception: BytecodeLocal? = parent?.exception
+                var finish: BytecodeLabel? = parent?.finish
+                var filterResult: BytecodeLocal? = parent?.filterResult
                 var pc: BytecodeLocal? = null
                 var continueLabel: BytecodeLabel? = null
                 fun label(index: Int): BytecodeLabel = labels[index] ?: checkNotNull(parent).label(index)
@@ -165,21 +233,24 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
             fun edge(from: Int, next: Int, scope: Scope) {
                 if (next <= from) {
                     var loop = scope
-                    while (loop.region == null || next < loop.region!!.first || from > loop.region!!.last) loop = checkNotNull(loop.parent)
+                    while (loop.pc == null || next < loop.region!!.first || from > loop.region!!.last) loop = checkNotNull(loop.parent)
                     store(checkNotNull(loop.pc)) { b.emitLoadConstant(next) }
                     b.emitBranch(checkNotNull(loop.continueLabel))
                 } else b.emitBranch(scope.label(next))
             }
             fun emitRange(first: Int, last: Int, scope: Scope) {
-                val children = regions.filter { it !== scope.region && it.first >= first && it.last <= last }
-                    .filter { child -> regions.none { other -> other !== child && other !== scope.region && other.first >= first && other.last <= last && other.first <= child.first && other.last >= child.last } }
-                    .associateBy { it.first }
+                val ancestors = generateSequence(scope) { it.parent }.mapNotNull { it.region }.toSet()
+                val candidates = regions.filter { it !in ancestors && it.first >= first && it.last <= last }
+                val children = candidates.filter { child -> candidates.none { other ->
+                    other !== child && other.first <= child.first && other.last >= child.last &&
+                        (other.first < child.first || other.last > child.last || other.clauses.isEmpty())
+                } }.associateBy { it.first }
                 var index = first
                 while (index <= last) {
-                    scope.labels[index] = b.createLabel()
+                    scope.labels.getOrPut(index) { b.createLabel() }
                     index = children[index]?.let { it.last + 1 } ?: (index + 1)
                 }
-                if (scope.region != null) {
+                if (scope.pc != null) {
                     scope.continueLabel = b.createLabel()
                     val destinations = edges.filter { (from, to) -> to <= from && from in first..last && to in first..last }
                         .filter { (from, to) -> children.values.none { to >= it.first && from <= it.last } }.map { it.second }.distinct()
@@ -197,12 +268,85 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
                     val child = children[index]
                     if (child != null) {
                         val inner = Scope(child, scope)
-                        inner.pc = b.createLocal()
-                        store(inner.pc!!) { b.emitLoadConstant(child.first) }
-                        b.beginWhile(); b.emitLoadConstant(true); b.beginBlock()
-                        emitRange(child.first, child.last, inner)
-                        b.emitLabel(inner.continueLabel!!)
-                        b.endBlock(); b.endWhile()
+                        if (child.clauses.isEmpty()) {
+                            inner.pc = b.createLocal()
+                            store(inner.pc!!) { b.emitLoadConstant(child.first) }
+                            b.beginWhile(); b.emitLoadConstant(true); b.beginBlock()
+                            emitRange(child.first, child.last, inner)
+                            b.emitLabel(inner.continueLabel!!)
+                            b.endBlock(); b.endWhile()
+                        } else {
+                            val clauses = child.clauses
+                            val firstClause = clauses.first()
+                            fun part(start: CodeBoundary, end: CodeBoundary, partScope: Scope) {
+                                b.beginBlock()
+                                val range = blockRange(start, end)
+                                emitRange(range.first, range.last, partScope)
+                                b.endBlock()
+                            }
+                            if (firstClause.kind == "finally") {
+                                require(clauses.size == 1)
+                                b.beginTryFinally {
+                                    val saved = stack.toList()
+                                    val operations = pendingOperations
+                                    val handler = Scope(child, scope)
+                                    b.beginBlock()
+                                    handler.finish = b.createLabel()
+                                    part(firstClause.handlerStart, firstClause.handlerEnd, handler)
+                                    b.emitLabel(handler.finish!!)
+                                    b.endBlock()
+                                    stack.clear(); stack.addAll(saved); pendingOperations = operations
+                                }
+                                part(firstClause.tryStart, firstClause.tryEnd, Scope(child, inner))
+                                b.endTryFinally()
+                            } else {
+                                b.beginTryCatch()
+                                part(firstClause.tryStart, firstClause.tryEnd, Scope(child, inner))
+                                b.beginBlock()
+                                inner.exception = b.createLocal()
+                                store(inner.exception!!) { b.emitLoadException() }
+                                val done = b.createLabel()
+                                for (clause in clauses) {
+                                    val handler = Scope(child, inner)
+                                    if (clause.kind == "fault") {
+                                        handler.finish = b.createLabel()
+                                        part(clause.handlerStart, clause.handlerEnd, handler)
+                                        b.emitLabel(handler.finish!!)
+                                        continue
+                                    }
+                                    b.beginIfThen()
+                                    if (clause.kind == "filter") {
+                                        b.beginBlock()
+                                        val result = b.createLocal()
+                                        store(result) { b.emitLoadConstant(0) }
+                                        // Filters are evaluated after inner frames unwind (one-pass semantics).
+                                        b.beginTryCatch()
+                                        b.beginBlock()
+                                        val filter = Scope(child, inner)
+                                        filter.finish = b.createLabel(); filter.filterResult = result
+                                        store(carry[0]) { b.beginExceptionObject(); b.emitLoadLocal(inner.exception!!); b.endExceptionObject() }
+                                        part(clause.filterStart!!, clause.handlerStart, filter)
+                                        b.emitLabel(filter.finish!!)
+                                        b.endBlock()
+                                        b.beginBlock(); b.endBlock() // A throwing filter is false.
+                                        b.endTryCatch()
+                                        b.beginTruth(); b.emitLoadLocal(result); b.endTruth()
+                                        b.endBlock()
+                                    } else {
+                                        b.beginExceptionMatches(context.types.getValue(clause.catchType!!))
+                                        b.emitLoadLocal(inner.exception!!); b.endExceptionMatches()
+                                    }
+                                    b.beginBlock()
+                                    store(carry[0]) { b.beginExceptionObject(); b.emitLoadLocal(inner.exception!!); b.endExceptionObject() }
+                                    part(clause.handlerStart, clause.handlerEnd, handler)
+                                    b.emitBranch(done)
+                                    b.endBlock(); b.endIfThen()
+                                }
+                                b.beginRaise(); b.emitLoadLocal(inner.exception!!); b.endRaise()
+                                b.emitLabel(done)
+                                b.endBlock(); b.endTryCatch()
+                            }
+                        }
                         index = child.last + 1
                         continue
                     }
@@ -215,7 +359,7 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
                         when {
                             i is InstructionBrTarget -> {
                                 val condition = when (i.instruction) {
-                                    "br" -> null
+                                    "br", "leave" -> null
                                     "brtrue", "brfalse" -> pop()
                                     else -> {
                                         val right = pop(); val left = pop()
@@ -223,6 +367,7 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
                                         pop()
                                     }
                                 }
+                                if (i.instruction == "leave") { materialize(); stack.clear() }
                                 spill()
                                 if (condition == null) edge(index, indices.getValue(target(i)), scope) else {
                                     b.beginIfThenElse()
@@ -235,6 +380,17 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
                                     b.endIfThenElse()
                                 }
                             }
+                            i.instruction == "throw" -> {
+                                val value = pop(); materialize()
+                                b.beginRaise(); b.beginGuestException(); load(value); b.endGuestException(); b.endRaise()
+                            }
+                            i.instruction == "rethrow" -> {
+                                b.beginRaise(); b.emitLoadLocal(checkNotNull(scope.exception)); b.endRaise()
+                            }
+                            i.instruction in listOf("endfinally", "endfault", "endfilter") -> {
+                                if (i.instruction == "endfilter") store(checkNotNull(scope.filterResult)) { load(pop()) }
+                                b.emitBranch(checkNotNull(scope.finish))
+                            }
                             i.instruction == "ret" -> {
                                 b.beginReturn()
                                 if (method.returnType.type == CorElementType.VOID) b.emitLoadConstant(0) else load(pop())
@@ -244,8 +400,8 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
                         }
                     }
                     val tail = code[block.end - 1]
-                    if (tail !is InstructionBrTarget && tail.instruction != "ret") {
-                        spill(); edge(index, index + 1, scope)
+                    if (tail !is InstructionBrTarget && tail.instruction !in terminals) {
+                        spill(); edge(index, indices.getValue(block.successors.single()), scope)
                     }
                     index++
                 }

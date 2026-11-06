@@ -14,7 +14,9 @@ public abstract class ManagedReference implements TruffleObject {
     public abstract Type valueType();
 
     public static ClrObject receiver(Object value) {
-        return (ClrObject) (value instanceof ManagedReference reference ? reference.get() : value);
+        Object receiver = value instanceof ManagedReference reference ? reference.get() : value;
+        if (receiver == null || receiver == types.CTSNull.INSTANCE) throw ClrException.invalidReference(receiver);
+        return (ClrObject) receiver;
     }
     public static final class Cell extends ManagedReference {
         private Object value;
@@ -41,20 +43,21 @@ public abstract class ManagedReference implements TruffleObject {
             if (value == types.CTSNull.INSTANCE) value = null;
             Type actual = value instanceof Box box ? box.type : value instanceof ClrObject object ? object.getType() : null;
             if (value != null && (actual == null || !type.isAssignableFrom(actual)))
-                throw new ArrayStoreException("Invalid element for " + type.getName());
+                throw ClrException.create("ArrayTypeMismatchException", "Invalid element for " + type.getName());
             values[index] = value;
         }
         public ObjectArray(Type type, int size) {
             this.type = type;
+            if (size < 0) throw ClrException.create("OverflowException", "Array dimensions exceeded supported range.");
             values = new Object[size];
             if (type.isValueType()) for (int i = 0; i < size; i++) values[i] = type.newValue();
         }
     }
-    /** Kept distinct so guest exception handling can map this to System.ArrayTypeMismatchException. */
-    public static final class ArrayTypeMismatchException extends RuntimeException {
-        public ArrayTypeMismatchException(Type expected) {
-            super("ldelema: array element type is incompatible with " + expected.getName());
-        }
+    static void storeObject(Object[] array, int index, Object value) {
+        if (value == types.CTSNull.INSTANCE) value = null;
+        if (array instanceof String[] && value != null && !(value instanceof String))
+            throw ClrException.create("ArrayTypeMismatchException", "Invalid array element type.");
+        array[index] = value;
     }
     static boolean hasElementType(Type element, Object array) {
         if (array instanceof ObjectArray a) return a.type == element;
@@ -97,7 +100,7 @@ public abstract class ManagedReference implements TruffleObject {
         public void setRaw(Object value) {
             if (array instanceof ObjectArray a) a.store(index, value);
             else if (array instanceof Object[] a) {
-                a[index] = value == types.CTSNull.INSTANCE ? null : value;
+                storeObject(a, index, value);
             }
             else if (array instanceof int[] a) a[index] = ((Number) value).intValue();
             else if (array instanceof long[] a) a[index] = ((Number) value).longValue();

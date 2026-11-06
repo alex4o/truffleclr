@@ -1,6 +1,7 @@
 package parser.cil
 
 import Cil.CilParser
+import metadata.CodeBoundary
 import metadata.IlAppDomain
 import metadata.IlMethod
 import metadata.instruction.*
@@ -14,6 +15,82 @@ class MethodVisitor(var appDomain: IlAppDomain, var method: IlMethod) : Cil.CilB
     var instructions = mutableListOf<Pair<String, Instruction>>()
     var labels = mutableMapOf<String, Int>()
     var entryPoint: String? = null
+
+    private var byteOffset = 0
+    private fun mark() = CodeBoundary.Index(method.instructions.size)
+
+    private fun boundary(ctx: org.antlr.v4.runtime.tree.ParseTree): CodeBoundary =
+        if (ctx is CilParser.IdContext) CodeBoundary.Label(ctx.text)
+        else CodeBoundary.Offset(ctx.text.let { if (it.startsWith("0x")) it.drop(2).toInt(16) else it.toInt() })
+
+    private fun instructionSize(instruction: Instruction): Int {
+        val opcode = instruction.instruction
+        val opcodeBytes = if (opcode in twoByteOpcodes) 2 else 1
+        val operandBytes = when (instruction) {
+            is InstructionNone -> 0
+            is InstructionVar, is InstructionVarS -> if (opcode.endsWith(".s")) 1 else 2
+            is InstructionI -> if (opcode == "ldc.i4.s" || opcode == "unaligned.") 1 else 4
+            is InstructionI8, is InstructionR8 -> 8
+            is InstructionR -> 4
+            is InstructionBrTarget -> if (opcode.endsWith(".s")) 1 else 4
+            is InstructionMethod, is InstructionField, is InstructionType, is InstructionString -> 4
+            else -> error("Unknown instruction size: $opcode")
+        }
+        return opcodeBytes + operandBytes
+    }
+
+    companion object {
+        private val twoByteOpcodes = setOf(
+            "arglist", "ceq", "cgt", "cgt.un", "clt", "clt.un", "ldftn", "ldvirtftn",
+            "ldarg", "ldarga", "starg", "ldloc", "ldloca", "stloc", "localloc", "endfilter",
+            "unaligned.", "volatile.", "tail.", "initobj", "constrained.", "cpblk", "initblk",
+            "rethrow", "sizeof", "refanytype", "readonly."
+        )
+    }
+
+    override fun visitSehBlock(ctx: CilParser.SehBlockContext): Any {
+        val block = ctx.tryBlock()
+        val start: CodeBoundary
+        val end: CodeBoundary
+        if (block.scopeBlock() != null) {
+            start = mark(); visit(block.scopeBlock()); end = mark()
+        } else {
+            start = boundary(block.getChild(1))
+            end = boundary(block.getChild(3))
+        }
+        var clauses: CilParser.SehClausesContext? = ctx.sehClauses()
+        while (clauses != null) {
+            val clause = clauses.sehClause()
+            val filter = clause.filterClause()
+            val filterStart = if (filter == null) null else if (filter.scopeBlock() != null) {
+                mark().also { visit(filter.scopeBlock()) }
+            } else boundary(filter.getChild(1))
+            val handler = clause.handlerBlock()
+            val handlerStart: CodeBoundary
+            val handlerEnd: CodeBoundary
+            if (handler.scopeBlock() != null) {
+                handlerStart = mark(); visit(handler.scopeBlock()); handlerEnd = mark()
+            } else {
+                handlerStart = boundary(handler.getChild(1))
+                handlerEnd = boundary(handler.getChild(3))
+            }
+            val kind = when {
+                clause.catchClause() != null -> "catch"
+                filter != null -> "filter"
+                clause.finallyClause() != null -> "finally"
+                else -> "fault"
+            }
+            method.exceptionClauses.add(metadata.ExceptionClause(start, end, handlerStart, handlerEnd,
+                kind, clause.catchClause()?.typeSpec()?.toClassName(), filterStart))
+            clauses = clauses.sehClauses()
+        }
+        return method
+    }
+
+    override fun visitMethod_label(ctx: CilParser.Method_labelContext): Any {
+        method.labels[ctx.id().text] = method.instructions.size
+        return method
+    }
 
     override fun visitMethod_entrypoint(ctx: CilParser.Method_entrypointContext): Any {
         appDomain.entryPoint = method
@@ -44,7 +121,7 @@ class MethodVisitor(var appDomain: IlAppDomain, var method: IlMethod) : Cil.CilB
         val instr = ctx.instr().getChild(0);
 
         if (entryPoint == null) {
-            entryPoint = if (label.isEmpty) {
+            entryPoint = if (label == null || label.isEmpty) {
                 "ENTRY_POINT"
             } else {
                 labelText
@@ -130,6 +207,9 @@ class MethodVisitor(var appDomain: IlAppDomain, var method: IlMethod) : Cil.CilB
                 }
             }
         }
+
+        byteOffset += instructionSize(instruction)
+        method.instructionOffsets[byteOffset] = method.instructions.size + 1
 
         val split = instruction.instruction.split(".")
 

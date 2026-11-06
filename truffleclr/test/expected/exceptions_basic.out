@@ -1,0 +1,12 @@
+middle finally
+boom
+7
+inner finally
+boom
+return finally
+42
+loop finally
+1
+loop finally
+loop finally
+done
