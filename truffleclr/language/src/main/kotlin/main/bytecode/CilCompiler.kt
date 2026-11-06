@@ -5,6 +5,7 @@ import com.oracle.truffle.api.bytecode.BytecodeConfig
 import com.oracle.truffle.api.bytecode.BytecodeLabel
 import com.oracle.truffle.api.bytecode.BytecodeLocal
 import main.Clr
+import metadata.CodeBoundary
 import metadata.IlMethod
 import metadata.IlType
 import metadata.instruction.*
@@ -42,7 +43,12 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
     private var pendingOperations = 0
 
     private val terminals = setOf("ret", "throw", "rethrow", "endfinally", "endfault", "endfilter")
-    private fun position(label: String) = method.labels.getValue(label)
+    private fun position(boundary: CodeBoundary): Int = when (boundary) {
+        is CodeBoundary.Index -> boundary.instruction
+        is CodeBoundary.Label -> method.labels.getValue(boundary.name)
+        is CodeBoundary.Offset -> method.instructionOffsets[boundary.bytes]
+            ?: error("Exception offset "+boundary.bytes+" is not an instruction boundary in $method")
+    }
     private fun target(i: InstructionBrTarget) = method.labels.getValue(i.target)
     private fun blocks(): List<Block> {
         val starts = sortedSetOf(0)
@@ -146,7 +152,7 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
         }
         layout(0, code.size, emptySet())
         require(reachable.map { it.start }.toSet() == heights.keys) { "Overlapping exception regions in $method" }
-        fun blockRange(start: String, end: String): IntRange {
+        fun blockRange(start: CodeBoundary, end: CodeBoundary): IntRange {
             val members = reachable.indices.filter { reachable[it].start in position(start) until position(end) }
             return members.min()..members.max()
         }
@@ -272,7 +278,7 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
                         } else {
                             val clauses = child.clauses
                             val firstClause = clauses.first()
-                            fun part(start: String, end: String, partScope: Scope) {
+                            fun part(start: CodeBoundary, end: CodeBoundary, partScope: Scope) {
                                 b.beginBlock()
                                 val range = blockRange(start, end)
                                 emitRange(range.first, range.last, partScope)
