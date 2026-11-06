@@ -22,6 +22,16 @@ namespace System
         [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern void WriteLine(Int32 i);
         [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern void WriteLine(char value);
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern void WriteLine(uint value);
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern void WriteLine(long value);
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern void WriteLine(ulong value);
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern void WriteLine(float value);
+        [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern void WriteLine(String s);
 
         [MethodImpl(MethodImplOptions.InternalCall)]

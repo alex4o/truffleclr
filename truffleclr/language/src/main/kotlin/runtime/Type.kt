@@ -1,7 +1,7 @@
 package runtime
 
 import com.oracle.truffle.api.CompilerDirectives
-import com.oracle.truffle.api.`object`.Shape
+import com.oracle.truffle.api.staticobject.StaticShape
 import com.oracle.truffle.api.interop.InteropLibrary
 import com.oracle.truffle.api.interop.TruffleObject
 import com.oracle.truffle.api.library.ExportLibrary
@@ -25,7 +25,45 @@ class Type(val name: String, val baseType: Type?): TruffleObject {
         }
     }
 
-    lateinit var shape: Shape
+    @CompilerDirectives.CompilationFinal lateinit var shape: StaticShape<ClrObjectFactory>
+    @CompilerDirectives.CompilationFinal lateinit var staticObject: ClrObject
+    @CompilerDirectives.CompilationFinal(dimensions = 1) lateinit var virtualTable: Array<Method>
+    val instanceFields: MutableMap<String, Field> = linkedMapOf()
+    val staticFields: MutableMap<String, Field> = linkedMapOf()
+    var initializer: Method? = null
+    @CompilerDirectives.CompilationFinal private var initialized = false
+    private var initializing = false
+    private var initializationFailure: Throwable? = null
+
+    fun resolveField(name: String, static: Boolean): Field =
+        (if (static) staticFields[name] else instanceFields[name])
+            ?: baseType?.resolveField(name, static) ?: error("No field $name in "+this.name)
+
+    /** Initialize on first field access, newobj or method entry (except .cctor).
+     * This also eagerly initializes beforefieldinit types on their first method call.
+     * Reentrant accesses see the zeroed storage; a failed initializer is never rerun.
+     */
+    fun ensureInitialized() {
+        if (!initialized) initialize()
+    }
+
+    @Synchronized
+    @CompilerDirectives.TruffleBoundary
+    private fun initialize() {
+        if (initialized || initializing) return
+        initializationFailure?.let { throw it }
+        CompilerDirectives.transferToInterpreterAndInvalidate()
+        initializing = true
+        try {
+            initializer?.callTarget?.call()
+            initialized = true
+        } catch (failure: Throwable) {
+            initializationFailure = failure
+            throw failure
+        } finally {
+            initializing = false
+        }
+    }
 
     @ExportMessage
     fun hasMembers(): Boolean {
@@ -62,7 +100,9 @@ class Type(val name: String, val baseType: Type?): TruffleObject {
         return CTSNull
     }
 
+    fun isAssignableFrom(type: Type): Boolean = this === type || type.baseType?.let { isAssignableFrom(it) } == true
+
     fun isInstance(obj: TruffleObject?): Boolean {
-        return obj is Type
+        return obj is ClrObject && isAssignableFrom(obj.type)
     }
 }

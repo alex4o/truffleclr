@@ -99,11 +99,16 @@ fun TypeContext.toClassName(): String {
         is TypePrimitiveContext -> {
             when (text.trim()) {
                 "bool" -> "System.Boolean"
+                "int8" -> "System.SByte"
                 "uint8" -> "System.Byte"
+                "int16" -> "System.Int16"
+                "uint16" -> "System.UInt16"
+                "int64" -> "System.Int64"
+                "uint64" -> "System.UInt64"
                 "char" -> "System.Char"
                 "int32" -> "System.Int32"
                 "uint32" -> "System.UInt32"
-                "float32" -> "System.Float"
+                "float32" -> "System.Single"
                 "float64" -> "System.Double"
                 "string" -> "System.String"
                 else -> {

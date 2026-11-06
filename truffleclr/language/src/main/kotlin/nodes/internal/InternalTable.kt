@@ -1,5 +1,7 @@
 package nodes.internal
 
+import runtime.CorElementType
+
 /**
  * All the internal methods are implemented as nodes, this allows them to also use specializations.
  */
@@ -10,9 +12,14 @@ object InternalTable {
         "System.Void System.Console::Write(System.Object)" to ConsoleWrite(),
         "System.Void System.Console::Write(System.String)" to ConsoleWrite(),
         "System.Void System.Console::Write(System.Double)" to ConsoleWrite(),
-        "System.Void System.Console::Write(System.Char)" to ConsoleWrite(),
+        "System.Void System.Console::Write(System.Char)" to ConsoleWrite(true),
         "System.Void System.Console::WriteLine(System.Int32)" to ConsoleWriteLine(),
-        "System.Void System.Console::WriteLine(System.Boolean)" to ConsoleWriteLine(true),
+        "System.Void System.Console::WriteLine(System.Boolean)" to ConsoleWriteLine(CorElementType.BOOLEAN),
+        "System.Void System.Console::WriteLine(System.Char)" to ConsoleWriteLine(CorElementType.CHAR),
+        "System.Void System.Console::WriteLine(System.UInt32)" to ConsoleWriteLine(CorElementType.U4),
+        "System.Void System.Console::WriteLine(System.Int64)" to ConsoleWriteLine(),
+        "System.Void System.Console::WriteLine(System.UInt64)" to ConsoleWriteLine(CorElementType.U8),
+        "System.Void System.Console::WriteLine(System.Single)" to ConsoleWriteLine(),
         "System.Void System.Console::WriteLine(System.String)" to ConsoleWriteLine(),
         "System.Void System.Console::WriteLine(System.Double)" to ConsoleWriteLine(),
         "System.Void System.Console::WriteLine(System.Object)" to ConsoleWriteLine(),

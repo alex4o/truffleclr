@@ -142,7 +142,8 @@ class ClassVisitor(var appDomain: IlAppDomain, var type: IlType) : Cil.CilBaseVi
             CTSNull
         }
 
-        type.fields[name] = IlField(name, ctx.fieldDecl().type().getType(appDomain), value)
+        type.fields[name] = IlField(name, ctx.fieldDecl().type().getType(appDomain), value,
+            ctx.fieldDecl().fieldAttr().any { it.text == "static" })
 
         return type
     }

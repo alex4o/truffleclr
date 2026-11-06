@@ -983,6 +983,26 @@
   {
   } // end of method Console::WriteLine
 
+  .method public hidebysig static void WriteLine(char v) cil managed internalcall
+  {
+  }
+
+  .method public hidebysig static void WriteLine(uint32 v) cil managed internalcall
+  {
+  }
+
+  .method public hidebysig static void WriteLine(int64 v) cil managed internalcall
+  {
+  }
+
+  .method public hidebysig static void WriteLine(uint64 v) cil managed internalcall
+  {
+  }
+
+  .method public hidebysig static void WriteLine(float32 v) cil managed internalcall
+  {
+  }
+
   .method public hidebysig static void  WriteLine(string s) cil managed internalcall
   {
   } // end of method Console::WriteLine
@@ -1438,6 +1458,36 @@
   } // end of method ValueType::.ctor
 
 } // end of class System.ValueType
+
+.class public sequential ansi sealed beforefieldinit System.SByte
+       extends System.ValueType
+{
+}
+
+.class public sequential ansi sealed beforefieldinit System.Int16
+       extends System.ValueType
+{
+}
+
+.class public sequential ansi sealed beforefieldinit System.UInt16
+       extends System.ValueType
+{
+}
+
+.class public sequential ansi sealed beforefieldinit System.Int64
+       extends System.ValueType
+{
+}
+
+.class public sequential ansi sealed beforefieldinit System.UInt64
+       extends System.ValueType
+{
+}
+
+.class public sequential ansi sealed beforefieldinit System.Single
+       extends System.ValueType
+{
+}
 
 .class public sequential ansi sealed beforefieldinit System.Void
        extends System.ValueType

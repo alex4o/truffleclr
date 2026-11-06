@@ -5,12 +5,13 @@ import com.oracle.truffle.api.frame.VirtualFrame
 import com.oracle.truffle.api.nodes.NodeInfo
 import main.Clr
 import nodes.ExpressionNode
+import runtime.CorElementType
 import types.CTSNull
 import java.io.PrintStream
 import java.text.DecimalFormat
 
 @NodeInfo(description = "WriteLine")
-class ConsoleWriteLine(private val booleanArgument: Boolean = false) :
+class ConsoleWriteLine(private val argumentType: CorElementType = CorElementType.OBJECT) :
     ExpressionNode() {
 
     val stream: PrintStream
@@ -20,7 +21,13 @@ class ConsoleWriteLine(private val booleanArgument: Boolean = false) :
         val value = env.arguments[0]
         // The CIL evaluation stack represents comparison results as int32, including
         // values passed to the Boolean overload. Formatting follows the signature.
-        writeLine(if (booleanArgument && value is Int) value != 0 else value)
+        writeLine(when (argumentType) {
+            CorElementType.BOOLEAN -> if (value is Int) value != 0 else value
+            CorElementType.CHAR -> if (value is Number) value.toInt().toChar() else value
+            CorElementType.U4 -> Integer.toUnsignedString((value as Number).toInt())
+            CorElementType.U8 -> java.lang.Long.toUnsignedString((value as Number).toLong())
+            else -> value
+        })
         return CTSNull
     }
 

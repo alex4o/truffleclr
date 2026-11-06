@@ -10,7 +10,6 @@ import metadata.IlType
 import metadata.instruction.*
 import nodes.expressions.CompareCondition
 import runtime.ClrContext
-import runtime.ClrObject
 import runtime.CorElementType
 import runtime.Method
 import types.CTSNull
@@ -57,7 +56,7 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
         "dup" -> 1 to 2
         "pop", "stloc", "stsfld", "brtrue", "brfalse" -> 1 to 0
         "ret" -> (if (method.returnType.type == CorElementType.VOID) 0 else 1) to 0
-        "ldarg", "ldloc", "ldnull", "ldc", "ldstr" -> 0 to 1
+        "ldarg", "ldloc", "ldnull", "ldc", "ldstr", "ldsfld" -> 0 to 1
         "add", "sub", "mul", "div", "rem", "and", "or", "xor", "shl", "shr", "ceq", "clt", "cgt", "ldelem", "ldelema" -> 2 to 1
         "neg", "newarr", "isinst", "unbox", "ldind", "ldfld", "ldlen", "box", "conv", "castclass" -> 1 to 1
         "stfld", "beq", "bne", "bge", "bgt", "ble", "blt" -> 2 to 0
@@ -128,6 +127,8 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
         val roots = CilRootNodeGen.create(language, BytecodeConfig.DEFAULT) { builder ->
             b = builder
             b.beginRoot()
+            val owner = context.types.getValue(method.memberOf!!.fullName)
+            if (method.name != ".cctor" && owner.initializer != null) b.emitInitializeType(owner)
             locals = method.locals.map { b.createLocal() }
             carry = List(maxStack) { b.createLocal() }
             locals.forEachIndexed { index, local -> store(local) { b.emitLoadConstant(defaultValue(method.locals[index])) } }
@@ -343,17 +344,22 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
             }
             "ldfld", "stfld" -> {
                 i as InstructionField
-                require(context.types.getValue(i.member).shape.getProperty(i.name) != null) { "Not a field: $i" }
+                val field = context.types.getValue(i.member).resolveField(i.name, false)
                 if (i.instruction == "ldfld") { val receiver = pop(); push {
-                    when (i.type) {
-                        "int32", "uint32" -> { b.beginFieldLoadInt(i.name); load(receiver); b.endFieldLoadInt() }
-                        "float64" -> { b.beginFieldLoadDouble(i.name); load(receiver); b.endFieldLoadDouble() }
-                        else -> { b.beginFieldLoad(i.name); load(receiver); b.endFieldLoad() }
+                    when (field.storageType) {
+                        Int::class.javaPrimitiveType -> { b.beginFieldLoadInt(field); load(receiver); b.endFieldLoadInt() }
+                        Double::class.javaPrimitiveType -> { b.beginFieldLoadDouble(field); load(receiver); b.endFieldLoadDouble() }
+                        else -> { b.beginFieldLoad(field); load(receiver); b.endFieldLoad() }
                     }
                 } }
-                else { val value = pop(); val receiver = pop(); materialize(); b.beginFieldStore(i.name); load(receiver, value); b.endFieldStore() }
+                else { val value = pop(); val receiver = pop(); materialize(); b.beginFieldStore(field); load(receiver, value); b.endFieldStore() }
             }
-            "stsfld" -> { val value = pop(); materialize(); b.beginStaticStore(); load(value); b.endStaticStore() }
+            "ldsfld", "stsfld" -> {
+                i as InstructionField
+                val field = context.types.getValue(i.member).resolveField(i.name, true)
+                if (i.instruction == "ldsfld") push { b.emitStaticLoad(field) }
+                else { val value = pop(); materialize(); b.beginStaticStore(field); load(value); b.endStaticStore() }
+            }
             "call", "callvirt", "newobj" -> {
                 val callee = (i as InstructionMethod).method
                 val constructor = i.instruction == "newobj"
@@ -363,11 +369,11 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
                     when (i.instruction) {
                         "callvirt" -> {
                             require(!callee.static)
-                            val index = (type.shape.dynamicType as ClrObject).virtualTable.indexOfFirst { it.metadata.toString(false) == callee.toString(false) }
+                            val index = type.virtualTable.indexOfFirst { it.metadata.toString(false) == callee.toString(false) }
                             require(index >= 0) { "No virtual method $callee" }
                             b.beginInvokeVirtual(index); args.forEach { load(it) }; b.endInvokeVirtual()
                         }
-                        "newobj" -> { b.beginObjectNew(type.shape, type.members.getValue(callee.toString()) as Method, args.size); args.forEach { load(it) }; b.endObjectNew() }
+                        "newobj" -> { b.beginObjectNew(type, type.members.getValue(callee.toString()) as Method, args.size); args.forEach { load(it) }; b.endObjectNew() }
                         else -> { val target = type.members.getValue(callee.toString()) as Method
                             when (args.size) {
                             0 -> { b.emitInvoke0(target) }

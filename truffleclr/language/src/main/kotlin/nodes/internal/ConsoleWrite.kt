@@ -10,7 +10,7 @@ import java.io.PrintStream
 import java.text.DecimalFormat
 
 @NodeInfo(description = "Write")
-class ConsoleWrite() :
+class ConsoleWrite(private val characterArgument: Boolean = false) :
     ExpressionNode() {
 
     val stream: PrintStream
@@ -20,6 +20,11 @@ class ConsoleWrite() :
     var type: Class<*>? = null
 
     override fun execute(env: VirtualFrame): Any? {
+        if (characterArgument) {
+            val value = env.arguments[0]
+            write(if (value is Number) value.toInt().toChar() else value)
+            return CTSNull
+        }
 
         when (type) {
             Double::class.java -> {
