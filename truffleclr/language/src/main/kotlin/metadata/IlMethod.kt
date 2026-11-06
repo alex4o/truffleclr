@@ -6,6 +6,7 @@ import metadata.instruction.Instruction
 
 // TODO: Split into two distinct method types the Runtime one and the parsing one.
 class IlMethod(var name: String, var arguments: List<Pair<String, IlType>>) {
+    val exceptionClauses = mutableListOf<ExceptionClause>()
     var maxstack: Int = 0
     var locals: List<IlType> = mutableListOf()
     var instructions = mutableListOf<Instruction>()

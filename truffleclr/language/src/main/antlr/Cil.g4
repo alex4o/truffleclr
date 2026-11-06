@@ -845,6 +845,7 @@ methodDecl              : D_EMITBYTE int32                      #method_emitbyte
                         | D_ZEROINIT                            #method_zeroinit
                         | dataDecl                              #method_datadecl
                         | (id ':')? instr                       #method_instruction
+                        | id ':'                                #method_label
                         | secDecl                               #method_security
                         | extSourceSpec                         #method_externalSource
                         | languageDecl                          #method_language

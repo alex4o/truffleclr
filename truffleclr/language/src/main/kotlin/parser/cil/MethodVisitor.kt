@@ -15,6 +15,61 @@ class MethodVisitor(var appDomain: IlAppDomain, var method: IlMethod) : Cil.CilB
     var labels = mutableMapOf<String, Int>()
     var entryPoint: String? = null
 
+    private fun mark(): String = ("@eh" + method.labels.size).also {
+        method.labels[it] = method.instructions.size
+    }
+
+    override fun visitSehBlock(ctx: CilParser.SehBlockContext): Any {
+        val block = ctx.tryBlock()
+        fun offset(text: String): String = "IL_" + text.removePrefix("0x").let {
+            (if (text.startsWith("0x")) it.toInt(16) else it.toInt()).toString(16).padStart(4, '0')
+        }
+        val start: String
+        val end: String
+        if (block.scopeBlock() != null) {
+            start = mark(); visit(block.scopeBlock()); end = mark()
+        } else {
+            start = block.id().getOrNull(0)?.text ?: offset(block.int32(0).text)
+            end = block.id().getOrNull(1)?.text ?: offset(block.int32(1).text)
+        }
+        var clauses: CilParser.SehClausesContext? = ctx.sehClauses()
+        while (clauses != null) {
+            val clause = clauses.sehClause()
+            val filter = clause.filterClause()
+            val filterStart = if (filter == null) null else if (filter.scopeBlock() != null) {
+                mark().also { visit(filter.scopeBlock()) }
+            } else filter.id()?.text ?: offset(filter.int32().text)
+            val handler = clause.handlerBlock()
+            val handlerStart: String
+            val handlerEnd: String
+            if (handler.scopeBlock() != null) {
+                handlerStart = mark(); visit(handler.scopeBlock()); handlerEnd = mark()
+            } else {
+                fun endpoint(index: Int): String {
+                    val bound = handler.getChild(index)
+                    return if (bound is CilParser.IdContext) bound.text else offset(bound.text)
+                }
+                handlerStart = endpoint(1)
+                handlerEnd = endpoint(3)
+            }
+            val kind = when {
+                clause.catchClause() != null -> "catch"
+                filter != null -> "filter"
+                clause.finallyClause() != null -> "finally"
+                else -> "fault"
+            }
+            method.exceptionClauses.add(metadata.ExceptionClause(start, end, handlerStart, handlerEnd,
+                kind, clause.catchClause()?.typeSpec()?.toClassName(), filterStart))
+            clauses = clauses.sehClauses()
+        }
+        return method
+    }
+
+    override fun visitMethod_label(ctx: CilParser.Method_labelContext): Any {
+        method.labels[ctx.id().text] = method.instructions.size
+        return method
+    }
+
     override fun visitMethod_entrypoint(ctx: CilParser.Method_entrypointContext): Any {
         appDomain.entryPoint = method
         return method
