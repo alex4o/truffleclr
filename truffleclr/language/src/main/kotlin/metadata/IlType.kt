@@ -11,6 +11,12 @@ class IlType(var name: String, val type: CorElementType) {
     var extends: IlType? = null
     var polyglot: Boolean = false
 
+    var isByRef = false
+    fun makeByRef(): IlType = IlType("$name&", CorElementType.BYREF).also {
+        it.isByRef = true
+        it.elementClass = this
+    }
+
     var rank: Int = 0
     lateinit var elementClass: IlType
 

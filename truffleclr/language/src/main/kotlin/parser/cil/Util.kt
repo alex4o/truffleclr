@@ -81,8 +81,10 @@ fun TypeSpecContext.toClassName(): String {
  * Get the metadata of a already parsed class from a TypeContext.
  */
 fun TypeContext.getType(appDomain: IlAppDomain): IlType {
-    return if (this is TypeArrayContext) {
-        appDomain.getType(this.type().toClassName()).makeArray(1)
+    return if (this is TypeManageRefContext) {
+        this.type().getType(appDomain).makeByRef()
+    } else if (this is TypeArrayContext) {
+        this.type().getType(appDomain).makeArray(1)
     } else {
         appDomain.getType(this.toClassName())
     }
@@ -93,8 +95,11 @@ fun TypeContext.getType(appDomain: IlAppDomain): IlType {
  */
 fun TypeContext.toClassName(): String {
     return when (this) {
+        is TypeManageRefContext -> type().toClassName() + "&"
+        is TypeArrayContext -> type().toClassName() + "[]"
+        is TypeNativeContext -> "System.IntPtr"
         is TypeClassContext -> {
-            className()?.text ?: "System.Object"
+            className()?.slashedName()?.text ?: "System.Object"
         }
         is TypePrimitiveContext -> {
             when (text.trim()) {
@@ -117,7 +122,7 @@ fun TypeContext.toClassName(): String {
             }
         }
         is TypeValueTypeContext -> {
-            this.className().text
+            this.className().slashedName().text
         }
         is TypeVoidContext -> {
             "System.Void"
@@ -176,28 +181,4 @@ class ParsedType() {
  * Transforms cil types to be CTS type names.
  * I don't understand why the need for 3 different type systems in the CLI.
  */
-fun TypeContext.toParsedType(): String {
-    return when (this) {
-        is TypeClassContext -> {
-            className()?.slashedName()?.text ?: "System.Object"
-        }
-        is TypePrimitiveContext -> {
-            when (text) {
-                "int32" -> "System.Int32"
-                "uint32" -> "System.UInt32"
-                "int8" -> "System.UInt8"
-                "uint8" -> "System.UInt8"
-                "string" -> "System.String"
-                "bool" -> "System.Boolean"
-                else -> error("Unsupported primitive: ${this.start.line}")
-            }
-        }
-        is TypeValueTypeContext -> {
-            className().text
-        }
-        is TypeArrayContext -> {
-            this.type().toParsedType() + "[]"
-        }
-        else -> error("Bad TypeContext: ${this.start.line}")
-    }
-}
+fun TypeContext.toParsedType(): String = toClassName()

@@ -25,6 +25,11 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
     private lateinit var b: CilRootNodeGen.Builder
     private lateinit var locals: List<BytecodeLocal>
     private lateinit var carry: List<BytecodeLocal>
+    private lateinit var arguments: List<BytecodeLocal?>
+    private val mutableArguments by lazy { addressedArguments + code.filter { it.instruction == "starg" }.map { number(it, true) } }
+    private val addressedLocals by lazy { code.filter { it.instruction == "ldloca" }.map { number(it) }.toSet() }
+    private val addressedArguments by lazy { code.filter { it.instruction == "ldarga" }.map { number(it, true) }.toSet() }
+    private val argumentTypes get() = (if (method.static) emptyList() else listOf(method.memberOf!!)) + method.arguments.map { it.second }
     // isBoolean proves a Boolean-local load; comparison instructions always push int32.
     private class Value(var emit: () -> Unit, val isBoolean: Boolean, var materialized: Boolean = false)
     private val stack = mutableListOf<Value>()
@@ -52,15 +57,16 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
     }
 
     private fun effect(i: Instruction): Pair<Int, Int> = when (i.instruction) {
-        "nop", "break", "br" -> 0 to 0
+        "nop", "break", "br", "readonly" -> 0 to 0
         "dup" -> 1 to 2
-        "pop", "stloc", "stsfld", "brtrue", "brfalse" -> 1 to 0
+        "pop", "stloc", "starg", "stsfld", "initobj", "brtrue", "brfalse" -> 1 to 0
         "ret" -> (if (method.returnType.type == CorElementType.VOID) 0 else 1) to 0
-        "ldarg", "ldloc", "ldnull", "ldc", "ldstr", "ldsfld" -> 0 to 1
+        "ldarg", "ldarga", "ldloc", "ldloca", "ldnull", "ldc", "ldstr", "ldsfld", "ldsflda" -> 0 to 1
         "add", "sub", "mul", "div", "rem", "and", "or", "xor", "shl", "shr", "ceq", "clt", "cgt", "ldelem", "ldelema" -> 2 to 1
-        "neg", "newarr", "isinst", "unbox", "ldind", "ldfld", "ldlen", "box", "conv", "castclass" -> 1 to 1
-        "stfld", "beq", "bne", "bge", "bgt", "ble", "blt" -> 2 to 0
+        "neg", "newarr", "isinst", "unbox", "ldind", "ldobj", "ldfld", "ldflda", "ldlen", "box", "conv", "castclass" -> 1 to 1
+        "stfld", "stind", "stobj", "cpobj", "beq", "bne", "bge", "bgt", "ble", "blt" -> 2 to 0
         "stelem" -> 3 to 0
+        "localloc" -> throw UnsupportedOperationException("localloc: unmanaged stack allocation is unsupported")
         "call", "callvirt", "newobj" -> {
             val callee = (i as InstructionMethod).method
             val constructor = i.instruction == "newobj"
@@ -134,7 +140,16 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
             }
             locals = method.locals.map { b.createLocal() }
             carry = List(maxStack) { b.createLocal() }
-            locals.forEachIndexed { index, local -> store(local) { b.emitLoadConstant(defaultValue(method.locals[index])) } }
+            locals.forEachIndexed { index, local -> store(local) {
+                if (index in addressedLocals) b.beginCellNew(context.types[method.locals[index].fullName] ?: context.types.getValue("System.Object"))
+                emitDefault(method.locals[index])
+                if (index in addressedLocals) b.endCellNew()
+            } }
+            arguments = argumentTypes.mapIndexed { index, type -> if (index !in mutableArguments) null else b.createLocal().also { local -> store(local) {
+                if (index in addressedArguments) b.beginCellNew(context.types[type.fullName] ?: context.types.getValue("System.Object"))
+                if (index != 0 || method.static) copy(type) { b.emitLoadArgument(index) } else b.emitLoadArgument(index)
+                if (index in addressedArguments) b.endCellNew()
+            } } }
             class Scope(val region: Region?, val parent: Scope?) {
                 val labels = mutableMapOf<Int, BytecodeLabel>()
                 var pc: BytecodeLocal? = null
@@ -273,6 +288,15 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
         } else i.id.removePrefix("V_").toInt()
         else -> error("Wrong variable instruction $i")
     }
+    private fun copy(type: IlType, emit: () -> Unit) {
+        if (type.isByRef || context.types[type.fullName]?.isValueType != true) emit()
+        else { b.beginCopyValue(context.types.getValue(type.fullName)); emit(); b.endCopyValue() }
+    }
+    private fun emitDefault(type: IlType) {
+        val runtimeType = context.types[type.fullName]
+        if (!type.isByRef && runtimeType?.isValueType == true) b.emitDefaultValue(runtimeType)
+        else b.emitLoadConstant(defaultValue(type))
+    }
     private fun defaultValue(type: IlType): Any = if (!type.isPrimiteive) CTSNull else when (type.type) {
         CorElementType.BOOLEAN -> false
         CorElementType.I1, CorElementType.U1, CorElementType.I2, CorElementType.U2,
@@ -283,21 +307,48 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
         else -> error("Unknown local type encountered: "+type.type)
     }
 
+    private fun narrowConversion(i: Instruction): String? = when {
+        i is InstructionType && i.type == "System.SByte" -> "i1"
+        i is InstructionType && i.type == "System.Int16" -> "i2"
+        i is InstructionType && i.type == "System.Byte" -> "u1"
+        i is InstructionType && (i.type == "System.UInt16" || i.type == "System.Char") -> "u2"
+        i.instructionArgs.firstOrNull() in listOf("u1", "u2") -> i.instructionArgs.first()
+        else -> null
+    }
+
     private fun emit(i: Instruction) {
         when (i.instruction) {
-            "nop", "break" -> Unit
+            "nop", "break", "readonly" -> Unit
             "dup" -> { materialize(); stack.add(stack.last()) }
             "pop" -> { materialize(); pop() }
-            "ldarg" -> push { b.emitLoadArgument(number(i, true)) }
-            "ldloc" -> { val index = number(i); push(method.locals[index].type == CorElementType.BOOLEAN) { b.emitLoadLocal(locals[index]) } }
-            "stloc" -> {
+            "ldarga" -> push { b.emitLoadLocal(arguments[number(i, true)]!!) }
+            "ldloca" -> push { b.emitLoadLocal(locals[number(i)]) }
+            "ldarg", "ldloc" -> {
+                val argument = i.instruction == "ldarg"
+                val index = number(i, argument)
+                val type = if (argument) argumentTypes[index] else method.locals[index]
+                val local = if (argument) arguments[index] else locals[index]
+                val addressed = index in if (argument) addressedArguments else addressedLocals
+                val emitLoad = { if (local == null) b.emitLoadArgument(index) else b.emitLoadLocal(local) }
+                push(!argument && !addressed && type.type == CorElementType.BOOLEAN) {
+                    if (addressed) { b.beginReferenceLoad(); emitLoad(); b.endReferenceLoad() }
+                    else if (argument && index == 0 && !method.static) emitLoad()
+                    else copy(type, emitLoad)
+                }
+            }
+            "stloc", "starg" -> {
+                val argument = i.instruction == "starg"
                 val value = pop()
-                val index = number(i)
+                val index = number(i, argument)
+                val type = if (argument) argumentTypes[index] else method.locals[index]
+                val local = if (argument) arguments[index]!! else locals[index]
                 materialize()
-                store(locals[index]) {
-                    if (method.locals[index].type == CorElementType.BOOLEAN && !value.isBoolean) {
+                if (index in if (argument) addressedArguments else addressedLocals) {
+                    b.beginReferenceStore(); b.emitLoadLocal(local); load(value); b.endReferenceStore()
+                } else store(local) {
+                    if (type.type == CorElementType.BOOLEAN && !value.isBoolean) {
                         b.beginTruth(); load(value); b.endTruth()
-                    } else load(value)
+                    } else copy(type) { load(value) }
                 }
             }
             "ldnull" -> push { b.emitLoadConstant(CTSNull) }
@@ -327,23 +378,96 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
             }
             "neg" -> { val v = pop(); push { b.beginNeg(); load(v); b.endNeg() } }
             "ceq", "clt", "cgt" -> { val right = pop(); val left = pop(); push { b.beginCmp(condition(i.instruction), "un" in i.instructionArgs); load(left, right); b.endCmp() } }
-            "conv", "castclass", "unbox" -> Unit // Preserve the existing pass-through semantics.
-            "isinst" -> { materialize(); pop(); push { b.emitLoadConstant(false) } }
-            "ldind" -> { materialize(); pop(); push { b.emitLoadConstant(0) } }
-            "box" -> { val v = pop(); push { b.beginBox(); load(v); b.endBox() } }
-            "newarr" -> { val size = pop(); val type = context.types.getValue((i as InstructionType).type).info.type
-                push { b.beginArrayNew(type); load(size); b.endArrayNew() } }
+            "conv" -> {
+                require("ovf" !in i.instructionArgs) { "Checked conversion is unsupported: $i" }
+                val value = pop(); push { b.beginConvert(i.instructionArgs.first()); load(value); b.endConvert() }
+            }
+            "castclass", "isinst" -> {
+                val value = pop(); val name = (i as InstructionType).type
+                if (name.endsWith("[]")) {
+                    val element = context.types.getValue(name.removeSuffix("[]"))
+                    push { b.beginArrayTypeTest(element, i.instruction == "castclass"); load(value); b.endArrayTypeTest() }
+                } else {
+                    val type = context.types.getValue(name)
+                    push { b.beginTypeTest(type, i.instruction == "castclass"); load(value); b.endTypeTest() }
+                }
+            }
+            "unbox" -> {
+                val value = pop(); val type = context.types.getValue((i as InstructionType).type)
+                if (!type.isValueType && !type.info.isPrimitive && "any" in i.instructionArgs) {
+                    push { b.beginTypeTest(type, true); load(value); b.endTypeTest() }
+                } else push { b.beginUnbox(type, "any" in i.instructionArgs); load(value); b.endUnbox() }
+            }
+            "ldind", "ldobj" -> {
+                val value = pop()
+                val conversion = if (i.instruction == "ldind") i.instructionArgs.first() else narrowConversion(i)
+                push {
+                    if (conversion != null) b.beginConvert(conversion)
+                    b.beginReferenceLoad(); load(value); b.endReferenceLoad()
+                    if (conversion != null) b.endConvert()
+                }
+            }
+            "stind", "stobj", "cpobj" -> {
+                val value = pop(); val reference = pop(); materialize()
+                b.beginReferenceStore(); load(reference)
+                if (i.instruction == "cpobj") { b.beginReferenceLoad(); load(value); b.endReferenceLoad() }
+                else if (i.instruction == "stind") { b.beginConvert(i.instructionArgs.first()); load(value); b.endConvert() }
+                else if (narrowConversion(i) != null) { b.beginConvert(narrowConversion(i)!!); load(value); b.endConvert() }
+                else load(value)
+                b.endReferenceStore()
+            }
+            "initobj" -> {
+                val reference = pop(); materialize()
+                val type = context.types.getValue((i as InstructionType).type)
+                b.beginReferenceStore(); load(reference)
+                if (type.isValueType) b.emitDefaultValue(type) else b.emitLoadConstant(when (type.info.type) {
+                    CorElementType.I8, CorElementType.U8 -> 0L
+                    CorElementType.R4 -> 0.0f
+                    CorElementType.R8 -> 0.0
+                    CorElementType.CLASS, CorElementType.OBJECT, CorElementType.STRING -> CTSNull
+                    else -> 0
+                })
+                b.endReferenceStore()
+            }
+            "box" -> { val v = pop(); val type = context.types.getValue((i as InstructionType).type); push { b.beginBox(type); load(v); b.endBox() } }
+            "newarr" -> { val size = pop(); val type = context.types.getValue((i as InstructionType).type)
+                push {
+                    if (type.isValueType || (!type.info.isPrimitive && type.name != "System.Object" && type.name != "System.String")) { b.beginObjectArrayNew(type); load(size); b.endObjectArrayNew() }
+                    else { b.beginArrayNew(type.info.type); load(size); b.endArrayNew() }
+                } }
             "ldlen" -> { val v = pop(); push { b.beginArrayLength(); load(v); b.endArrayLength() } }
             "ldelem", "ldelema" -> {
-                if (i.instruction == "ldelem" && i is InstructionType) throw NotImplementedError("not implemented")
-                val index = pop(); val array = pop(); push { b.beginArrayLoad(); load(array, index); b.endArrayLoad() }
+                val index = pop(); val array = pop()
+                val conversion = narrowConversion(i)
+                push {
+                    if (i.instruction == "ldelema") { b.beginArrayAddress(context.types.getValue((i as InstructionType).type)); load(array, index); b.endArrayAddress() }
+                    else {
+                        if (conversion != null) b.beginConvert(conversion)
+                        b.beginArrayLoad(); load(array, index); b.endArrayLoad()
+                        if (conversion != null) b.endConvert()
+                    }
+                }
             }
             "stelem" -> {
-                if (i !is InstructionNone) throw NotImplementedError("not implemented")
-                require(i.instructionArgs[0] in listOf("i1", "i4", "i", "ref", "r8")) { "Unknown element type" }
                 val value = pop(); val index = pop(); val array = pop()
                 materialize()
                 b.beginArrayStore(); load(array, index, value); b.endArrayStore()
+            }
+            "ldflda" -> {
+                i as InstructionField
+                val field = context.types.getValue(i.member).resolveField(i.name)
+                val receiver = pop()
+                if (field.metadata.static) {
+                    materialize(); b.beginBlock(); load(receiver); b.endBlock()
+                    push { b.emitStaticAddress(field) }
+                }
+                else push { b.beginFieldAddress(field); load(receiver); b.endFieldAddress() }
+            }
+            "ldsflda" -> {
+                i as InstructionField
+                val field = context.types.getValue(i.member).resolveField(i.name)
+                require(field.metadata.static) { "Not a static field: $i" }
+                push { b.emitStaticAddress(field) }
             }
             "ldfld", "stfld" -> {
                 i as InstructionField
@@ -357,6 +481,15 @@ class CilCompiler(private val method: IlMethod, private val language: Clr, priva
                     } else {
                         val value = pop(); pop()
                         b.beginStaticStore(field); load(value); b.endStaticStore()
+                    }
+                    return
+                }
+                if (field.owner.isValueType) {
+                    if (i.instruction == "ldfld") {
+                        val receiver = pop(); push { b.beginStructFieldLoad(field); load(receiver); b.endStructFieldLoad() }
+                    } else {
+                        val value = pop(); val receiver = pop(); materialize()
+                        b.beginStructFieldStore(field); load(receiver, value); b.endStructFieldStore()
                     }
                     return
                 }

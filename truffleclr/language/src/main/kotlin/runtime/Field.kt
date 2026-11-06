@@ -1,5 +1,6 @@
 package runtime
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal
 import com.oracle.truffle.api.interop.TruffleObject
 import com.oracle.truffle.api.staticobject.StaticProperty
 import metadata.IlField
@@ -19,11 +20,30 @@ class Field(val metadata: IlField, val owner: Type) : StaticProperty(), TruffleO
         CorElementType.R8 -> Double::class.javaPrimitiveType!!
         else -> Any::class.java
     }
+    /** Resolved only after all runtime shapes exist. Null for primitive/reference fields. */
+    @CompilationFinal var valueType: Type? = null
+        internal set
+
     override fun getId(): String = metadata.name
+
+    /** Ordinary CIL loads/stores transfer ownership; location access uses the raw APIs. */
+    fun read(receiver: ClrObject): Any {
+        val value = readRaw(receiver)
+        return valueType?.copyValue(value as ClrObject) ?: value
+    }
+
+    fun write(receiver: ClrObject, value: Any) {
+        val structType = valueType
+        if (structType == null) {
+            writeRaw(receiver, value)
+        } else {
+            structType.copyInto(readRaw(receiver) as ClrObject, value as ClrObject)
+        }
+    }
 
     // Direct enum comparisons fold during PE; Kotlin enum-switch mapping arrays do not.
     // Small integers are sign/zero extended to the CIL int32 evaluation-stack type.
-    fun read(receiver: ClrObject): Any = when {
+    fun readRaw(receiver: ClrObject): Any = when {
         kind == CorElementType.BOOLEAN -> if (getBoolean(receiver)) 1 else 0
         kind == CorElementType.I1 -> getByte(receiver).toInt()
         kind == CorElementType.U1 -> getByte(receiver).toInt() and 0xff
@@ -37,7 +57,14 @@ class Field(val metadata: IlField, val owner: Type) : StaticProperty(), TruffleO
         else -> getObject(receiver) ?: CTSNull
     }
 
-    fun write(receiver: ClrObject, value: Any) {
+    /** Install owned storage during initialization. Pointer stores must use write,
+     * not replace struct slots through this API: interior pointers retain slot identity.
+     */
+    fun writeRaw(receiver: ClrObject, value: Any) {
+        val structType = valueType
+        if (structType != null && (value !is ClrObject || value.type !== structType)) {
+            throw ClassCastException("Expected ${structType.name} for ${metadata.name}")
+        }
         when {
             kind == CorElementType.BOOLEAN -> setBoolean(receiver, if (value is Boolean) value else (value as Number).toInt() != 0)
             kind == CorElementType.I1 || kind == CorElementType.U1 -> setByte(receiver, (value as Number).toByte())

@@ -9,6 +9,7 @@ class ToString() :
     ExpressionNode() {
 
     override fun execute(env: VirtualFrame): Any? {
-        return env.arguments[0].toString()
+        val value = env.arguments[0]
+        return (if (value is main.bytecode.ManagedReference) value.get() else value).toString()
     }
 }
